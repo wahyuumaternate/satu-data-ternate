@@ -341,8 +341,7 @@
                     <i class="bi bi-shield-check"></i>
                 </div>
                 <div>
-                    <div class="logo-text">Single sign-on</div>
-                    <div class="logo-text">(SSO)</div>
+                    <div class="logo-text">SATU DATA TERNATE</div>
                 </div>
             </div>
 
@@ -408,7 +407,7 @@
             </form>
 
             <div class="copyright">
-                Copyright © 2024 Competere Inno Tech Ltd. All rights reserved.
+                Copyright © 2024 DISKOMSANDI KOTA TERNATE. All rights reserved.
             </div>
         </div>
     </div>
