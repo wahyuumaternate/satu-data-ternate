@@ -62,7 +62,7 @@ class DatasetController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'tags' => 'required|string',
-            'topic' => 'required|string',
+            'topic' => 'required|in:Ekonomi,Infrastruktur,Kemiskinan,Kependudukan,Kesehatan,Lingkungan Hidup,Pariwisata & Kebudayaan,Pemerintah & Desa,Pendidikan,Sosial',
             'classification' => 'required|in:publik,internal,terbatas,rahasia',
             'status' => 'required|in:sementara,tetap',
             'license' => 'nullable|string',

@@ -34,18 +34,18 @@
         </li><!-- End Dataset Nav -->
 
         <li class="nav-item">
-            <a class="nav-link collapsed" data-bs-target="#indikator-nav" data-bs-toggle="collapse" href="#">
-                <i class="bi bi-bar-chart-line"></i><span>Indikator</span><i class="bi bi-chevron-down ms-auto"></i>
+            <a class="nav-link collapsed" data-bs-target="#infografis-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-bar-chart-line"></i><span>Infografis</span><i class="bi bi-chevron-down ms-auto"></i>
             </a>
-            <ul id="indikator-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+            <ul id="infografis-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
                 <li>
                     <a href="#!">
-                        <i class="bi bi-circle"></i><span>Kelola Indikator</span>
+                        <i class="bi bi-circle"></i><span>Kelola Infografis</span>
                     </a>
                 </li>
                 <li>
                     <a href="#!">
-                        <i class="bi bi-circle"></i><span>Kategori Indikator</span>
+                        <i class="bi bi-circle"></i><span>Kategori Infografis</span>
                     </a>
                 </li>
                 <li>
@@ -64,7 +64,39 @@
                     </a>
                 </li>
             </ul>
-        </li><!-- End Indikator Nav -->
+        </li><!-- End Infografis Nav -->
+        <li class="nav-item">
+            <a class="nav-link collapsed" data-bs-target="#mapset-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-bar-chart-line"></i><span>Mapset</span><i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+            <ul id="mapset-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+                <li>
+                    <a href="{{ route('mapset.index') }}">
+                        <i class="bi bi-circle"></i><span>Kelola Mapset</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#!">
+                        <i class="bi bi-circle"></i><span>Kategori Mapset</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#!">
+                        <i class="bi bi-circle"></i><span>Formula Perhitungan</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#!">
+                        <i class="bi bi-circle"></i><span>Target & Capaian</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#!">
+                        <i class="bi bi-circle"></i><span>Analisis Tren</span>
+                    </a>
+                </li>
+            </ul>
+        </li><!-- End Mapset Nav -->
 
         <li class="nav-item">
             <a class="nav-link collapsed" data-bs-target="#visualisasi-nav" data-bs-toggle="collapse" href="#">

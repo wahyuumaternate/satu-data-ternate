@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DatasetController;
+use App\Http\Controllers\MapsetController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -34,6 +35,10 @@ Route::middleware('auth')->group(function () {
     Route::prefix('api')->group(function () {
         Route::get('/dataset/{id}', [DatasetController::class, 'api'])->name('dataset.api');
     });
+
+    Route::resource('mapset', MapsetController::class);
+    Route::get('mapset/{mapset}/download-geojson', [MapsetController::class, 'downloadGeojson'])
+    ->name('mapset.download-geojson');
 });
 
 require __DIR__.'/auth.php';

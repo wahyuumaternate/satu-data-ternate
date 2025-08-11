@@ -35,7 +35,19 @@ return new class extends Migration
             
             // Dataset Metadata
             $table->string('license')->nullable(); // Lisensi
-            $table->string('topic'); // Topik (required)
+          // Kategori/topik
+            $table->enum('topic', [
+                'Ekonomi',
+                'Infrastruktur', 
+                'Kemiskinan',
+                'Kependudukan',
+                'Kesehatan',
+                'Lingkungan Hidup',
+                'Pariwisata & Kebudayaan',
+                'Pemerintah & Desa',
+                'Pendidikan',
+                'Sosial'
+            ])->required();
             $table->string('sector')->nullable(); // Bidang
             $table->string('responsible_person')->nullable(); // Penanggung Jawab
             $table->string('contact')->nullable(); // Kontak

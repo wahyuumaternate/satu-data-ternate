@@ -467,24 +467,36 @@
                                                 <select class="form-select @error('topic') is-invalid @enderror"
                                                     name="topic" required>
                                                     <option value="">Pilih Topik</option>
-                                                    <option value="ekonomi"
-                                                        {{ old('topic') == 'ekonomi' ? 'selected' : '' }}>Ekonomi</option>
-                                                    <option value="pendidikan"
-                                                        {{ old('topic') == 'pendidikan' ? 'selected' : '' }}>Pendidikan
-                                                    </option>
-                                                    <option value="kesehatan"
-                                                        {{ old('topic') == 'kesehatan' ? 'selected' : '' }}>Kesehatan
-                                                    </option>
-                                                    <option value="infrastruktur"
-                                                        {{ old('topic') == 'infrastruktur' ? 'selected' : '' }}>
+                                                    <option value="Ekonomi"
+                                                        {{ old('topic') == 'Ekonomi' ? 'selected' : '' }}>Ekonomi</option>
+                                                    <option value="Infrastruktur"
+                                                        {{ old('topic') == 'Infrastruktur' ? 'selected' : '' }}>
                                                         Infrastruktur</option>
-                                                    <option value="teknologi"
-                                                        {{ old('topic') == 'teknologi' ? 'selected' : '' }}>Teknologi
+                                                    <option value="Kemiskinan"
+                                                        {{ old('topic') == 'Kemiskinan' ? 'selected' : '' }}>Kemiskinan
                                                     </option>
-                                                    <option value="lingkungan"
-                                                        {{ old('topic') == 'lingkungan' ? 'selected' : '' }}>Lingkungan
+                                                    <option value="Kependudukan"
+                                                        {{ old('topic') == 'Kependudukan' ? 'selected' : '' }}>Kependudukan
                                                     </option>
+                                                    <option value="Kesehatan"
+                                                        {{ old('topic') == 'Kesehatan' ? 'selected' : '' }}>Kesehatan
+                                                    </option>
+                                                    <option value="Lingkungan Hidup"
+                                                        {{ old('topic') == 'Lingkungan Hidup' ? 'selected' : '' }}>
+                                                        Lingkungan Hidup</option>
+                                                    <option value="Pariwisata & Kebudayaan"
+                                                        {{ old('topic') == 'Pariwisata & Kebudayaan' ? 'selected' : '' }}>
+                                                        Pariwisata & Kebudayaan</option>
+                                                    <option value="Pemerintah & Desa"
+                                                        {{ old('topic') == 'Pemerintah & Desa' ? 'selected' : '' }}>
+                                                        Pemerintah & Desa</option>
+                                                    <option value="Pendidikan"
+                                                        {{ old('topic') == 'Pendidikan' ? 'selected' : '' }}>Pendidikan
+                                                    </option>
+                                                    <option value="Sosial"
+                                                        {{ old('topic') == 'Sosial' ? 'selected' : '' }}>Sosial</option>
                                                 </select>
+
                                                 @error('topic')
                                                     <div class="text-danger help-text">{{ $message }}</div>
                                                 @enderror
@@ -690,9 +702,6 @@
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary-custom" name="action" value="save">
                                     <i class="bi bi-check-circle me-2"></i>Simpan Dataset
-                                </button>
-                                <button type="submit" class="btn btn-outline-secondary" name="action" value="draft">
-                                    <i class="bi bi-save me-2"></i>Simpan Sebagai Draf
                                 </button>
                             </div>
                         </div>
