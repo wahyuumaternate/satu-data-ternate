@@ -4,6 +4,55 @@
 
 @push('styles')
     <style>
+        /* Additional filter-specific styles */
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e9ecef;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            padding: 12px 20px 12px 45px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            border-color: #4154f1;
+            box-shadow: 0 0 0 0.2rem rgba(65, 84, 241, 0.25);
+        }
+
+        .search-box .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .stats-icon {
+            font-size: 1.5rem;
+        }
+
+        .badge a {
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .badge a:hover {
+            opacity: 0.8;
+        }
+    </style>
+    <style>
         .dataset-card {
             border: none;
             border-radius: 12px;
@@ -337,24 +386,231 @@
         </div>
 
         <!-- Filter Section -->
+        <!-- Filter Section -->
         <div class="filter-section">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="search-box">
-                        <i class="bi bi-search search-icon"></i>
-                        <input type="text" class="form-control" placeholder="Cari dataset berdasarkan nama file...">
+            <form method="GET" action="{{ route('dataset.index') }}" id="filterForm">
+                <div class="row g-3">
+                    <!-- Search Box -->
+                    <div class="col-md-4">
+                        <div class="search-box">
+                            <i class="bi bi-search search-icon"></i>
+                            <input type="text" name="search" class="form-control" placeholder="Cari dataset..."
+                                value="{{ request('search') }}">
+                        </div>
+                    </div>
+
+                    <!-- Approval Status Filter -->
+                    <div class="col-md-2">
+                        <select name="approval_status" class="form-select" onchange="this.form.submit()">
+                            <option value="">Semua Status</option>
+                            <option value="pending" {{ request('approval_status') == 'pending' ? 'selected' : '' }}>
+                                <i class="bi bi-clock"></i> Pending
+                            </option>
+                            <option value="approved" {{ request('approval_status') == 'approved' ? 'selected' : '' }}>
+                                <i class="bi bi-check-circle"></i> Approved
+                            </option>
+                            <option value="rejected" {{ request('approval_status') == 'rejected' ? 'selected' : '' }}>
+                                <i class="bi bi-x-circle"></i> Rejected
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Topic Filter -->
+                    <div class="col-md-2">
+                        <select name="topic" class="form-select" onchange="this.form.submit()">
+                            <option value="">Semua Topik</option>
+                            @if (isset($filterOptions['topics']))
+                                @foreach ($filterOptions['topics'] as $topic)
+                                    <option value="{{ $topic }}" {{ request('topic') == $topic ? 'selected' : '' }}>
+                                        {{ ucfirst($topic) }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                    </div>
+
+                    <!-- Classification Filter -->
+                    <div class="col-md-2">
+                        <select name="classification" class="form-select" onchange="this.form.submit()">
+                            <option value="">Semua Klasifikasi</option>
+                            @if (isset($filterOptions['classifications']))
+                                @foreach ($filterOptions['classifications'] as $classification)
+                                    <option value="{{ $classification }}"
+                                        {{ request('classification') == $classification ? 'selected' : '' }}>
+                                        {{ ucfirst($classification) }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                    </div>
+
+                    <!-- Organization Filter -->
+                    <div class="col-md-2">
+                        <select name="organization" class="form-select" onchange="this.form.submit()">
+                            <option value="">Semua Organisasi</option>
+                            @if (isset($filterOptions['organizations']))
+                                @foreach ($filterOptions['organizations'] as $organization)
+                                    <option value="{{ $organization }}"
+                                        {{ request('organization') == $organization ? 'selected' : '' }}>
+                                        {{ $organization }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
                     </div>
                 </div>
-                <div class="col-md-6 text-md-end mt-3 mt-md-0">
-                    <select class="form-select d-inline-block w-auto">
-                        <option>Semua Dataset</option>
-                        <option>Terbaru</option>
-                        <option>Terlama</option>
-                        <option>Terbanyak Rows</option>
-                    </select>
+
+                <!-- Advanced Filters (Collapsible) -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse"
+                            data-bs-target="#advancedFilters">
+                            <i class="bi bi-funnel me-1"></i>Filter Lanjutan
+                            <i class="bi bi-chevron-down ms-1"></i>
+                        </button>
+
+                        <!-- Clear Filters Button -->
+                        @if (request()->hasAny([
+                                'search',
+                                'approval_status',
+                                'topic',
+                                'classification',
+                                'organization',
+                                'submitter',
+                                'date_from',
+                                'date_to',
+                                'rejection_reason',
+                                'approver',
+                            ]))
+                            <a href="{{ route('dataset.index') }}" class="btn btn-outline-danger btn-sm ms-2">
+                                <i class="bi bi-x-circle me-1"></i>Clear Filters
+                            </a>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="collapse mt-3 pt03" id="advancedFilters">
+                    <div class="row g-3">
+                        <!-- Submitter Filter -->
+                        <div class="col-md-3">
+                            <label class="form-label">Submitter</label>
+                            <input type="text" name="submitter" class="form-control" placeholder="Nama atau email..."
+                                value="{{ request('submitter') }}">
+                        </div>
+
+                        <!-- Date Range -->
+                        <div class="col-md-3">
+                            <label class="form-label">Tanggal Dari</label>
+                            <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Tanggal Sampai</label>
+                            <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
+                        </div>
+
+                        <!-- Approver Filter (for approved/rejected) -->
+                        @if (request('approval_status') && in_array(request('approval_status'), ['approved', 'rejected']))
+                            <div class="col-md-3">
+                                <label class="form-label">
+                                    {{ request('approval_status') == 'approved' ? 'Approver' : 'Rejector' }}
+                                </label>
+                                <input type="text" name="approver" class="form-control" placeholder="Nama approver..."
+                                    value="{{ request('approver') }}">
+                            </div>
+                        @endif
+
+                        <!-- Rejection Reason Filter (for rejected only) -->
+                        @if (request('approval_status') == 'rejected' && isset($filterOptions['rejection_reasons']))
+                            <div class="col-md-6">
+                                <label class="form-label">Alasan Penolakan</label>
+                                <select name="rejection_reason" class="form-select">
+                                    <option value="">Semua Alasan</option>
+                                    @foreach ($filterOptions['rejection_reasons'] as $reason)
+                                        <option value="{{ $reason }}"
+                                            {{ request('rejection_reason') == $reason ? 'selected' : '' }}>
+                                            {{ $reason }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
+
+                        <!-- Apply Advanced Filters Button -->
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-funnel me-1"></i>Terapkan Filter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+
+
+        <!-- Active Filters Display -->
+        @if (request()->hasAny([
+                'search',
+                'approval_status',
+                'topic',
+                'classification',
+                'organization',
+                'submitter',
+                'date_from',
+                'date_to',
+                'rejection_reason',
+                'approver',
+            ]))
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <span class="text-muted me-2">Filter Aktif:</span>
+
+                        @if (request('search'))
+                            <span class="badge bg-primary">
+                                Search: "{{ request('search') }}"
+                                <a href="{{ request()->fullUrlWithQuery(['search' => null]) }}"
+                                    class="text-white ms-1">×</a>
+                            </span>
+                        @endif
+
+                        @if (request('approval_status'))
+                            <span class="badge bg-info">
+                                Status: {{ ucfirst(request('approval_status')) }}
+                                <a href="{{ request()->fullUrlWithQuery(['approval_status' => null]) }}"
+                                    class="text-white ms-1">×</a>
+                            </span>
+                        @endif
+
+                        @if (request('topic'))
+                            <span class="badge bg-secondary">
+                                Topic: {{ request('topic') }}
+                                <a href="{{ request()->fullUrlWithQuery(['topic' => null]) }}"
+                                    class="text-white ms-1">×</a>
+                            </span>
+                        @endif
+
+                        @if (request('classification'))
+                            <span class="badge bg-warning">
+                                Classification: {{ request('classification') }}
+                                <a href="{{ request()->fullUrlWithQuery(['classification' => null]) }}"
+                                    class="text-white ms-1">×</a>
+                            </span>
+                        @endif
+
+                        @if (request('organization'))
+                            <span class="badge bg-success">
+                                Organization: {{ request('organization') }}
+                                <a href="{{ request()->fullUrlWithQuery(['organization' => null]) }}"
+                                    class="text-white ms-1">×</a>
+                            </span>
+                        @endif
+                    </div>
                 </div>
             </div>
-        </div>
+        @endif
+
 
         @if ($datasets->count() > 0)
             <div class="row">
@@ -448,8 +704,8 @@
                                                 <hr class="dropdown-divider">
                                             </li>
                                             <li>
-                                                <form action="{{ route('dataset.destroy', $dataset->id) }}" method="POST"
-                                                    class="d-inline"
+                                                <form action="{{ route('dataset.destroy', $dataset->id) }}"
+                                                    method="POST" class="d-inline"
                                                     onsubmit="return confirm('Apakah Anda yakin ingin menghapus dataset ini?')">
                                                     @csrf
                                                     @method('DELETE')
@@ -573,5 +829,48 @@
     }
 `;
         document.head.appendChild(style);
+    </script>
+
+    <!-- JavaScript for Filter Enhancement -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-submit search after typing stops
+            let searchTimeout;
+            const searchInput = document.querySelector('input[name="search"]');
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        this.form.submit();
+                    }, 800); // Wait 800ms after user stops typing
+                });
+            }
+
+            // Advanced filters toggle icon rotation
+            const advancedToggle = document.querySelector('[data-bs-target="#advancedFilters"]');
+            const advancedFilters = document.getElementById('advancedFilters');
+
+            if (advancedToggle && advancedFilters) {
+                advancedFilters.addEventListener('show.bs.collapse', function() {
+                    advancedToggle.querySelector('.bi-chevron-down').classList.replace('bi-chevron-down',
+                        'bi-chevron-up');
+                });
+
+                advancedFilters.addEventListener('hide.bs.collapse', function() {
+                    advancedToggle.querySelector('.bi-chevron-up').classList.replace('bi-chevron-up',
+                        'bi-chevron-down');
+                });
+            }
+
+            // Show advanced filters if any advanced filter is active
+            const hasAdvancedFilters =
+                {{ request()->hasAny(['submitter', 'date_from', 'date_to', 'rejection_reason', 'approver']) ? 'true' : 'false' }};
+            if (hasAdvancedFilters && advancedFilters) {
+                new bootstrap.Collapse(advancedFilters, {
+                    show: true
+                });
+            }
+        });
     </script>
 @endpush

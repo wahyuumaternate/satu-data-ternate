@@ -16,9 +16,9 @@
             border-color: #2563eb;
         }
 
-        .approved-indicator {
-            border-left: 5px solid #2563eb;
-        }
+        /* .approved-indicator {
+                            border-left: 5px solid #2563eb;
+                        } */
 
         .approval-header {
             background: #f8faff;
@@ -34,7 +34,7 @@
             left: 0;
             right: 0;
             height: 3px;
-            background: #2563eb;
+            /* background: #2563eb; */
             border-radius: 14px 14px 0 0;
         }
 
@@ -382,7 +382,7 @@
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
                                         <li>
-                                            <a class="dropdown-item" href="{{ route('dataset.show', $dataset) }}">
+                                            <a class="dropdown-item" href="{{ route('dataset.show', $dataset->slug) }}">
                                                 <i class="bi bi-eye me-2"></i>View Dataset
                                             </a>
                                         </li>
@@ -404,8 +404,7 @@
                                 </div>
                             </div>
 
-                            <p class="mb-0" style="color: #64748b; line-height: 1.6;">
-                                {{ Str::limit($dataset->description, 120) }}</p>
+
                         </div>
 
                         <div class="card-body p-4">
@@ -463,10 +462,10 @@
                                 </div>
                             @endif
 
-                            <!-- Action Buttons -->
+                            {{-- <!-- Action Buttons -->
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="d-flex gap-2">
-                                    <a href="{{ route('dataset.show', $dataset) }}"
+                                    <a href="{{ route('dataset.show', $dataset->slug) }}"
                                         class="btn btn-primary-custom btn-action">
                                         <i class="bi bi-eye me-1"></i>View Details
                                     </a>
@@ -480,21 +479,22 @@
                                     Approved {{ $dataset->approved_at->diffForHumans() }}
                                 </small>
                             </div>
+                        </div> --}}
                         </div>
                     </div>
-                </div>
-            @empty
-                <div class="col-12">
-                    <div class="empty-state">
-                        <i class="bi bi-inbox display-1" style="color: #cbd5e1;"></i>
-                        <h4 class="mt-4 mb-2" style="color: #64748b; font-weight: 600;">No Approved Datasets</h4>
-                        <p style="color: #94a3b8; margin-bottom: 24px;">No datasets have been approved yet. Check back
-                            later or review pending submissions.</p>
-                        <a href="{{ route('admin.dataset-approval.index') }}" class="btn btn-primary-custom btn-action">
-                            <i class="bi bi-arrow-left me-2"></i>View Pending Datasets
-                        </a>
+                @empty
+                    <div class="col-12">
+                        <div class="empty-state">
+                            <i class="bi bi-inbox display-1" style="color: #cbd5e1;"></i>
+                            <h4 class="mt-4 mb-2" style="color: #64748b; font-weight: 600;">No Approved Datasets</h4>
+                            <p style="color: #94a3b8; margin-bottom: 24px;">No datasets have been approved yet. Check back
+                                later or review pending submissions.</p>
+                            <a href="{{ route('admin.dataset-approval.index') }}"
+                                class="btn btn-primary-custom btn-action">
+                                <i class="bi bi-arrow-left me-2"></i>View Pending Datasets
+                            </a>
+                        </div>
                     </div>
-                </div>
             @endforelse
         </div>
 

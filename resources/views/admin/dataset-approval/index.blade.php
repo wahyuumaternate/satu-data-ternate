@@ -30,7 +30,7 @@
             left: 0;
             right: 0;
             height: 3px;
-            background: #f59e0b;
+            /* background: #f59e0b; */
             border-radius: 14px 14px 0 0;
         }
 
@@ -141,9 +141,9 @@
             border: 1px solid #cbd5e1;
         }
 
-        .pending-indicator {
-            border-left: 5px solid #f59e0b;
-        }
+        /* .pending-indicator {
+                        border-left: 5px solid #f59e0b;
+                    } */
 
         .filter-card {
             background: #ffffff;
@@ -659,7 +659,7 @@
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item" href="{{ route('dataset.show', $dataset) }}">
+                                            <a class="dropdown-item" href="{{ route('dataset.show', $dataset->slug) }}">
                                                 <i class="bi bi-database me-2"></i>View Dataset
                                             </a>
                                         </li>
@@ -667,8 +667,7 @@
                                 </div>
                             </div>
 
-                            <p class="mb-0" style="color: #64748b; line-height: 1.6;">
-                                {{ Str::limit($dataset->description, 120) }}</p>
+
                         </div>
 
                         <div class="card-body p-4">

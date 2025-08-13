@@ -412,7 +412,8 @@
 
                                     <div class="form-group">
                                         <label class="form-label">Deskripsi <span class="required">*</span></label>
-                                        <textarea class="form-control @error('description') is-invalid @enderror" name="description" rows="4"
+                                        <textarea id="description" class="form-control @error('description') is-invalid @enderror" name="description"
+                                            rows="4"
                                             placeholder="Contoh: Dataset ini berisi data Indeks Keamanan Informasi di Provinsi Jawa Barat periode tahun 2019"
                                             required>{{ old('description') }}</textarea>
                                         @error('description')
@@ -1090,6 +1091,22 @@
             form.addEventListener('submit', function() {
                 localStorage.removeItem('dataset_form_draft');
             });
+        });
+        const textarea = document.getElementById("description");
+
+        textarea.addEventListener("input", function(e) {
+            // Pisahkan baris
+            let lines = textarea.value.split("\n");
+
+            // Ubah setiap baris yang dimulai dengan "* " menjadi bullet
+            lines = lines.map(line => {
+                if (line.startsWith("* ")) {
+                    return "• " + line.substring(2);
+                }
+                return line;
+            });
+
+            textarea.value = lines.join("\n");
         });
     </script>
 @endpush

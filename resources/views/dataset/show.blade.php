@@ -142,9 +142,10 @@
 
                         @if ($dataset->description)
                             <div class="mt-3 p-2 bg-light rounded">
-                                <small class="text-muted">{{ $dataset->description }}</small>
+                                <small class="text-muted">{!! nl2br(e($dataset->description)) !!}</small>
                             </div>
                         @endif
+
                     </div>
 
                     <div class="card-body mt-3">

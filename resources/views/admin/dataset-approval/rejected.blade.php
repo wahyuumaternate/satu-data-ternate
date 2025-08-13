@@ -16,9 +16,9 @@
             border-color: #2563eb;
         }
 
-        .rejected-indicator {
-            border-left: 5px solid #2563eb;
-        }
+        /* .rejected-indicator {
+                border-left: 5px solid #2563eb;
+            } */
 
         .approval-header {
             background: #f8faff;
@@ -34,7 +34,7 @@
             left: 0;
             right: 0;
             height: 3px;
-            background: #2563eb;
+            /* background: #2563eb; */
             border-radius: 14px 14px 0 0;
         }
 
@@ -447,8 +447,7 @@
                                 </div>
                             </div>
 
-                            <p class="mb-0" style="color: #64748b; line-height: 1.6;">
-                                {{ Str::limit($dataset->description, 120) }}</p>
+
                         </div>
 
                         <div class="card-body p-4">
