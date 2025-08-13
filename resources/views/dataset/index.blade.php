@@ -425,7 +425,7 @@
 
                             <div class="card-footer">
                                 <div class="d-flex gap-2">
-                                    <a href="{{ route('dataset.show', $dataset->id) }}" class="btn btn-view flex-fill">
+                                    <a href="{{ route('dataset.show', $dataset->slug) }}" class="btn btn-view flex-fill">
                                         <i class="bi bi-eye me-1"></i>Lihat Data
                                     </a>
                                     <div class="dropdown">

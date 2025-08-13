@@ -45,7 +45,13 @@ class Dataset extends Model
         'notes',
         'processing_log',
         'download_count',
-        'view_count'
+        'view_count',
+        // 🎯 TAMBAH KOLOM APPROVAL INI
+        'approval_status',
+        'approved_by',
+        'approved_at',
+        'approval_notes',
+        'rejection_reason'
     ];
 
     protected $casts = [
@@ -59,12 +65,25 @@ class Dataset extends Model
         'download_count' => 'integer',
         'view_count' => 'integer',
         'is_public' => 'boolean',
-        'published_at' => 'datetime'
+        'published_at' => 'datetime',
+        // 🎯 TAMBAH CAST UNTUK APPROVAL
+        'approved_at' => 'datetime'
     ];
 
     protected $dates = [
-        'published_at'
+        'published_at',
+        'approved_at' // 🎯 TAMBAH INI
     ];
+
+    // Approval status constants
+    const APPROVAL_PENDING = 'pending';
+    const APPROVAL_APPROVED = 'approved';
+    const APPROVAL_REJECTED = 'rejected';
+   
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
 
     // Relationships
     public function user(): BelongsTo
@@ -137,11 +156,49 @@ class Dataset extends Model
         return "<span class='badge bg-{$color}'>" . ucfirst($this->classification) . "</span>";
     }
 
+    // 🎯 TAMBAH APPROVAL METHODS
+    public function isApproved(): bool
+    {
+        return $this->approval_status === self::APPROVAL_APPROVED;
+    }
+
+    public function isPending(): bool
+    {
+        return $this->approval_status === self::APPROVAL_PENDING;
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->approval_status === self::APPROVAL_REJECTED;
+    }
+
+    public function canBePublished(): bool
+    {
+        return $this->isApproved() && $this->publish_status !== 'published';
+    }
+
     // Scopes
     public function scopePublished($query)
     {
         return $query->where('publish_status', 'published')
-                    ->where('is_public', true);
+                    ->where('is_public', true)
+                    ->where('approval_status', self::APPROVAL_APPROVED); // 🎯 TAMBAH INI
+    }
+
+    // 🎯 TAMBAH APPROVAL SCOPES
+    public function scopePendingApproval($query)
+    {
+        return $query->where('approval_status', self::APPROVAL_PENDING);
+    }
+
+    public function scopeApproved($query)
+    {
+        return $query->where('approval_status', self::APPROVAL_APPROVED);
+    }
+
+    public function scopeRejected($query)
+    {
+        return $query->where('approval_status', self::APPROVAL_REJECTED);
     }
 
     public function scopeByTopic($query, $topic)
@@ -219,6 +276,44 @@ class Dataset extends Model
         ]);
     }
 
+    // 🎯 TAMBAH APPROVAL METHODS
+    public function approve($approvedById, $notes = null)
+    {
+        return $this->update([
+            'approval_status' => self::APPROVAL_APPROVED,
+            'publish_status' => 'published',
+            'approved_by' => $approvedById,
+            'approved_at' => now(),
+            'approval_notes' => $notes,
+            'published_at' => now(),
+            'rejection_reason' => null
+        ]);
+    }
+
+    public function reject($rejectedById, $reason, $notes = null)
+    {
+        return $this->update([
+            'approval_status' => self::APPROVAL_REJECTED,
+            'approved_by' => $rejectedById,
+            'approved_at' => now(),
+            'rejection_reason' => $reason,
+            'approval_notes' => $notes,
+            'publish_status' => 'draft'
+        ]);
+    }
+
+    public function resubmit()
+    {
+        return $this->update([
+            'approval_status' => self::APPROVAL_PENDING,
+            'approved_by' => null,
+            'approved_at' => null,
+            'rejection_reason' => null,
+            'approval_notes' => null,
+            'publish_status' => 'draft'
+        ]);
+    }
+
     public function getPreviewData($limit = 5)
     {
         $data = $this->data ?? [];
@@ -266,15 +361,16 @@ class Dataset extends Model
     public static function getTopics()
     {
         return [
-            'ekonomi' => 'Ekonomi',
-            'pendidikan' => 'Pendidikan',
-            'kesehatan' => 'Kesehatan',
-            'infrastruktur' => 'Infrastruktur',
-            'teknologi' => 'Teknologi',
-            'lingkungan' => 'Lingkungan',
-            'sosial' => 'Sosial',
-            'budaya' => 'Budaya',
-            'pemerintahan' => 'Pemerintahan'
+            'Ekonomi' => 'Ekonomi',
+            'Infrastruktur' => 'Infrastruktur', 
+            'Kemiskinan' => 'Kemiskinan',
+            'Kependudukan' => 'Kependudukan',
+            'Kesehatan' => 'Kesehatan',
+            'Lingkungan Hidup' => 'Lingkungan Hidup',
+            'Pariwisata & Kebudayaan' => 'Pariwisata & Kebudayaan',
+            'Pemerintah & Desa' => 'Pemerintah & Desa',
+            'Pendidikan' => 'Pendidikan',
+            'Sosial' => 'Sosial'
         ];
     }
 
@@ -307,6 +403,16 @@ class Dataset extends Model
             'public-domain' => 'Public Domain',
             'proprietary' => 'Proprietary',
             'other' => 'Other'
+        ];
+    }
+
+    // 🎯 TAMBAH GET APPROVAL STATUSES
+    public static function getApprovalStatuses()
+    {
+        return [
+            self::APPROVAL_PENDING => 'Pending',
+            self::APPROVAL_APPROVED => 'Approved',
+            self::APPROVAL_REJECTED => 'Rejected'
         ];
     }
 }

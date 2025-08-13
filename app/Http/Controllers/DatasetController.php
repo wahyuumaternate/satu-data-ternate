@@ -59,7 +59,7 @@ class DatasetController extends Controller
     {
         $request->validate([
             'file' => 'required|mimes:xlsx,xls,csv|max:10240', // 10MB max
-            'title' => 'required|string|max:255',
+           'title' => 'required|string|max:255|unique:datasets,title',
             'description' => 'required|string',
             'tags' => 'required|string',
             'topic' => 'required|string',
@@ -220,9 +220,9 @@ class DatasetController extends Controller
         }
     }
 
-    public function show($id, Request $request)
+    public function show($slug, Request $request)
     {
-        $dataset = Dataset::findOrFail($id);
+        $dataset = Dataset::where('slug', $slug)->firstOrFail();
         
         $page = $request->get('page', 1);
         $perPage = $request->get('per_page', 10);
@@ -269,7 +269,7 @@ class DatasetController extends Controller
         $dataset = Dataset::findOrFail($id);
 
         $request->validate([
-            'title' => 'required|string|max:255',
+           'title' => 'required|string|max:255|unique:datasets,title',
             'description' => 'required|string',
             'tags' => 'required|string',
             'topic' => 'required|string',

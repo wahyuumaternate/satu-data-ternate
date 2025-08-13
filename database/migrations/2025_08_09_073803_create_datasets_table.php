@@ -13,6 +13,13 @@ return new class extends Migration
     {
         Schema::create('datasets', function (Blueprint $table) {
             $table->id();
+             // Tambah kolom approval
+            $table->enum('approval_status', ['pending', 'approved', 'rejected'])->default('pending')->after('publish_status');
+            $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null')->after('approval_status');
+            $table->timestamp('approved_at')->nullable()->after('approved_by');
+            $table->text('approval_notes')->nullable()->after('approved_at');
+            $table->text('rejection_reason')->nullable()->after('approval_notes');
+            
             
             // Basic Information
             $table->string('title'); // Judul
@@ -82,6 +89,9 @@ return new class extends Migration
             $table->index(['topic', 'sector']);
             $table->index('publish_status');
             $table->index('created_at');
+            // Index untuk performa
+            $table->index(['approval_status', 'created_at']);
+            $table->index('approved_by');
         });
     }
 
