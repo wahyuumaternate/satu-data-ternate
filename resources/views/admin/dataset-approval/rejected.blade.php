@@ -293,7 +293,7 @@
 @section('content')
     <div class="page-header">
         <div class="pagetitle">
-            <h1 style="color: #2563eb; font-weight: 700; margin-bottom: 8px;">Rejected Datasets</h1>
+            <h1 style="color: #000000; font-weight: 700; margin-bottom: 8px;">Rejected Datasets</h1>
             <nav>
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
@@ -337,17 +337,17 @@
                     <form method="GET" action="{{ route('admin.dataset-approval.rejected') }}">
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <label class="form-label fw-600" style="color: #2563eb;">Search Keywords</label>
+                                <label class="form-label fw-600" style="color: #000000;">Search Keywords</label>
                                 <input type="text" name="search" class="form-control"
                                     placeholder="Search by title or description..." value="{{ request('search') }}">
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label fw-600" style="color: #2563eb;">Rejection Date</label>
+                                <label class="form-label fw-600" style="color: #000000;">Rejection Date</label>
                                 <input type="date" name="rejected_date" class="form-control"
                                     value="{{ request('rejected_date') }}">
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label fw-600" style="color: #2563eb;">Rejected By</label>
+                                <label class="form-label fw-600" style="color: #000000;">Rejected By</label>
                                 <select name="rejected_by" class="form-select">
                                     <option value="">All Administrators</option>
                                     @foreach (\App\Models\User::where('role', 'admin')->get() as $admin)
@@ -381,7 +381,7 @@
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h4 class="mb-1" style="color: #2563eb; font-weight: 700;">Rejected Datasets</h4>
+                        <h4 class="mb-1" style="color: #000000; font-weight: 700;">Rejected Datasets</h4>
                         <p class="text-muted mb-0">{{ $rejectedDatasets->total() }} datasets have been rejected and require
                             attention</p>
                     </div>
@@ -402,7 +402,7 @@
                         <div class="approval-header p-4">
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <div class="flex-grow-1">
-                                    <h5 class="fw-bold mb-2" style="color: #2563eb;">{{ $dataset->title }}</h5>
+                                    <h5 class="fw-bold mb-2" style="color: #000000;">{{ $dataset->title }}</h5>
                                     <span class="dataset-badge badge-rejected">
                                         <i class="bi bi-x-circle me-1"></i>Rejected
                                     </span>
@@ -457,17 +457,17 @@
                                 <div class="col-6">
                                     <div class="user-info">
                                         <small class="text-muted d-block mb-1">Submitted by</small>
-                                        <div class="fw-bold" style="color: #2563eb;">{{ $dataset->user->name }}</div>
-                                        <small style="color: #2563eb;">{{ $dataset->user->email }}</small>
+                                        <div class="fw-bold" style="color: #000000;">{{ $dataset->user->name }}</div>
+                                        <small style="color: #000000;">{{ $dataset->user->email }}</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <div class="user-info">
                                         <small class="text-muted d-block mb-1">Rejected by</small>
-                                        <div class="fw-bold" style="color: #2563eb;">
+                                        <div class="fw-bold" style="color: #000000;">
                                             {{ $dataset->approvedBy->name ?? 'System' }}</div>
                                         <small
-                                            style="color: #2563eb;">{{ $dataset->approved_at->format('M d, Y H:i') }}</small>
+                                            style="color: #000000;">{{ $dataset->approved_at->format('M d, Y H:i') }}</small>
                                     </div>
                                 </div>
                             </div>

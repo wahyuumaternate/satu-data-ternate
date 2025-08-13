@@ -54,7 +54,6 @@
         </li><!-- End Dataset Nav -->
 
         <!-- Admin Only - Dataset Approval -->
-        {{-- @if (auth()->check() && auth()->user()->role === 'admin') --}}
         <li class="nav-item">
             <a class="nav-link {{ request()->routeIs('admin.dataset-approval.*') ? 'active' : 'collapsed' }}"
                 data-bs-target="#dataset-approval-nav" data-bs-toggle="collapse" href="#"
@@ -95,7 +94,6 @@
                 </li>
             </ul>
         </li>
-        {{-- @endif --}}
 
         <!-- Infografis -->
         <li class="nav-item">
@@ -218,50 +216,18 @@
 
         <!-- Organisasi -->
         <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('organisasi.*') ? 'active' : 'collapsed' }}"
-                data-bs-target="#organisasi-nav" data-bs-toggle="collapse" href="#"
-                aria-expanded="{{ request()->routeIs('organisasi.*') ? 'true' : 'false' }}">
+            <a class="nav-link {{ request()->routeIs('organisasi.profile') ? 'active' : '' }}" href="">
                 <i class="bi bi-building"></i>
-                <span>Organisasi</span>
-                <i class="bi bi-chevron-down ms-auto"></i>
+                <span>Profil Organisasi</span>
             </a>
-            <ul id="organisasi-nav"
-                class="nav-content collapse {{ request()->routeIs('organisasi.*') ? 'show' : '' }}"
-                data-bs-parent="#sidebar-nav">
-                <li>
-                    <a href="#!" class="{{ request()->routeIs('organisasi.profile') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Profil Organisasi</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#!" class="{{ request()->routeIs('organisasi.structure') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Struktur Organisasi</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#!" class="{{ request()->routeIs('organisasi.users') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Manajemen User</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#!" class="{{ request()->routeIs('organisasi.permissions') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Hak Akses</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#!" class="{{ request()->routeIs('organisasi.settings') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Pengaturan</span>
-                    </a>
-                </li>
-            </ul>
-        </li><!-- End Organisasi Nav -->
+        </li>
 
         <!-- Separator -->
         <li class="nav-heading">Sistem</li>
 
         <!-- Settings -->
         <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}" href="#!">
+            <a class="nav-link" href="#!">
                 <i class="bi bi-gear"></i>
                 <span>Pengaturan</span>
             </a>
@@ -269,7 +235,7 @@
 
         <!-- Security -->
         <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('security.*') ? 'active' : '' }}" href="#!">
+            <a class="nav-link" href="#!">
                 <i class="bi bi-shield-check"></i>
                 <span>Keamanan</span>
             </a>
@@ -277,7 +243,7 @@
 
         <!-- Activity Log -->
         <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('logs.*') ? 'active' : '' }}" href="#!">
+            <a class="nav-link" href="#!">
                 <i class="bi bi-clock-history"></i>
                 <span>Log Aktivitas</span>
             </a>

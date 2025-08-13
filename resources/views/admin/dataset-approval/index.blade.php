@@ -445,7 +445,7 @@
     </div>
 
     <section class="section">
-        <!-- Statistics Cards -->
+        {{-- <!-- Statistics Cards -->
         <div class="row mb-5">
             <div class="col-lg-3 col-md-6 mb-3">
                 <div class="stat-card stat-warning">
@@ -483,7 +483,7 @@
                     <div class="stat-label">Total Datasets</div>
                 </div>
             </div>
-        </div>
+        </div> --}}
 
         <!-- Navigation Tabs -->
         <div class="row mb-4">
