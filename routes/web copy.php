@@ -7,6 +7,8 @@ use App\Http\Controllers\MapsetController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
+
+
 Route::get('/', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -16,6 +18,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
+    
     Route::prefix('dataset')->name('dataset.')->group(function () {
         Route::get('/', [DatasetController::class, 'index'])->name('index');
         Route::get('/create', [DatasetController::class, 'create'])->name('create');
@@ -23,19 +26,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/compare', [DatasetController::class, 'compare'])->name('compare');
         Route::get('/bulk-actions', [DatasetController::class, 'bulkActions'])->name('bulk');
         Route::post('/bulk-action', [DatasetController::class, 'executeBulkAction'])->name('bulk.execute');
-        
-        // TAMBAHKAN ROUTE HISTORY DI SINI
-        Route::get('/history', [DatasetController::class, 'history'])->name('history');
-        
         Route::get('/{slug}', [DatasetController::class, 'show'])->name('show');
         Route::get('/{id}/statistics', [DatasetController::class, 'statistics'])->name('statistics');
         Route::get('/{id}/search', [DatasetController::class, 'search'])->name('search');
         Route::delete('/{id}', [DatasetController::class, 'destroy'])->name('destroy');
+         Route::get('/history', [DatasetController::class, 'history'])->name('history');
     });
-    
-    // HAPUS ROUTE HISTORY YANG DI LUAR GRUP INI
-    // Route::get('/dataset/history', [DatasetController::class, 'history'])->name('dataset.history');
-    
     Route::get('dataset/{id}/download', [DatasetController::class, 'download'])->name('dataset.download');
     
     // API Routes
@@ -54,6 +50,10 @@ Route::middleware('auth')->group(function () {
     Route::get('dataset/{dataset}/download', [DatasetController::class, 'download'])->name('dataset.download');
     Route::get('dataset/{dataset}/api', [DatasetController::class, 'api'])->name('dataset.api');
 });
+
+// // 🎯 PUBLIC DATASET ROUTES (no auth required)
+// Route::get('browse-datasets', [DatasetController::class, 'publicIndex'])->name('dataset.public');
+// Route::get('view-dataset/{dataset:slug}', [DatasetController::class, 'publicShow'])->name('dataset.public.show');
 
 // 🎯 ADMIN APPROVAL ROUTES (tanpa middleware admin untuk sementara)
 Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {

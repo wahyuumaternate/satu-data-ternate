@@ -17,7 +17,9 @@ class DatasetController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Dataset::with(['user', 'approvedBy']);
+        
+        $query = Dataset::with(['user', 'approvedBy'])
+        ->where('approval_status', 'approved'); // hanya tampilkan yang approved
 
         // Base filter - only show user's own datasets (optional)
         // $query->where('user_id', Auth::id());
@@ -828,4 +830,159 @@ public function update(Request $request, $id)
 
         return redirect()->back()->with('success', "Berhasil menghapus {$deletedCount} dataset.");
     }
+
+    
+// public function history(Request $request)
+// {
+//     // Ambil semua dataset milik user yang approval_status bukan 'approved'
+//     $dataArray = Dataset::where('user_id', Auth::id())
+//         ->where('approval_status', '!=', 'approved') // filter tambahan
+//         ->with(['user'])
+//         ->orderBy('updated_at', 'desc')
+//         ->get()
+//         ->toArray();
+
+//     // Apply filter
+//     $filteredData = $this->applyFilters($dataArray, request());
+
+//     // Ubah array hasil filter menjadi Collection of Dataset model lagi
+//     $filteredCollection = collect($filteredData)->map(function ($item) {
+//         return (new Dataset)->forceFill($item);
+//     });
+
+//     // Pagination manual
+//     $perPage = 15;
+//     $page = request()->get('page', 1);
+//     $datasets = new \Illuminate\Pagination\LengthAwarePaginator(
+//         $filteredCollection->forPage($page, $perPage),
+//         $filteredCollection->count(),
+//         $perPage,
+//         $page,
+//         [
+//             'path' => request()->url(),
+//             'query' => request()->query()
+//         ]
+//     );
+
+//     return view('dataset.history', compact('datasets'));
+// }
+
+
+public function history(Request $request)
+{
+    // Get base query with necessary relationships
+    $query = Dataset::where('user_id', Auth::id())
+        ->where('approval_status', '!=', 'approved')
+        ->with(['user']);
+
+    // Apply filters directly to the query instead of after fetching all data
+    $query = $this->applyFiltersToQuery($query, $request);
+
+    // Get paginated results
+    $datasets = $query->orderBy('updated_at', 'desc')
+        ->paginate(15)
+        ->appends($request->query());
+
+    return view('dataset.history', compact('datasets'));
+}
+
+/**
+ * Apply filters directly to the database query for better performance
+ */
+private function applyFiltersToQuery($query, Request $request)
+{
+    // Example filter implementations
+    if ($request->has('approval_status') && $request->approval_status !== '') {
+        $query->where('approval_status', $request->approval_status);
+    }
+
+    if ($request->has('search') && $request->search !== '') {
+        $searchTerm = $request->search;
+        $query->where(function ($q) use ($searchTerm) {
+            $q->where('title', 'LIKE', "%{$searchTerm}%")
+              ->orWhere('description', 'LIKE', "%{$searchTerm}%")
+              ->orWhere('tags', 'LIKE', "%{$searchTerm}%");
+        });
+    }
+
+    // Add date range filter example
+    if ($request->has('date_from') && $request->date_from !== '') {
+        $query->whereDate('created_at', '>=', $request->date_from);
+    }
+
+    if ($request->has('date_to') && $request->date_to !== '') {
+        $query->whereDate('created_at', '<=', $request->date_to);
+    }
+
+    return $query;
+}
+
+/**
+ * Alternative: If you need to keep the existing applyFilters method for array processing
+ */
+public function historyWithArrayFiltering(Request $request)
+{
+    try {
+        // Get data with optimized query
+        $dataArray = Dataset::where('user_id', Auth::id())
+            ->where('approval_status', '!=', 'approved')
+            ->with(['user'])
+            ->orderBy('updated_at', 'desc')
+            ->get()
+            ->toArray();
+
+        // Apply existing filter method
+        $filteredData = $this->applyFilters($dataArray, $request);
+
+        // More efficient way to convert back to models
+        $filteredCollection = Dataset::hydrate($filteredData);
+
+        // Manual pagination with better error handling
+        $perPage = (int) $request->get('per_page', 15);
+        $page = (int) $request->get('page', 1);
+        
+        $datasets = new \Illuminate\Pagination\LengthAwarePaginator(
+            $filteredCollection->forPage($page, $perPage)->values(),
+            $filteredCollection->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+                'pageName' => 'page'
+            ]
+        );
+
+        return view('dataset.history', compact('datasets'));
+    } catch (\Exception $e) {
+        // Log error and return with error message
+        return back()->with('error', 'Unable to load dataset history.');
+    }
+}
+
+/**
+ * Optimized version using Laravel's built-in filtering
+ */
+public function historyOptimized(Request $request)
+{
+    $datasets = Dataset::where('user_id', Auth::id())
+        ->where('approval_status', '!=', 'approved')
+        ->with(['user'])
+        ->when($request->approval_status, function ($query, $status) {
+            return $query->where('approval_status', $status);
+        })
+        ->when($request->search, function ($query, $search) {
+            return $query->where(function ($q) use ($search) {
+                $q->where('title', 'LIKE', "%{$search}%")
+                  ->orWhere('description', 'LIKE', "%{$search}%")
+                  ->orWhere('tags', 'LIKE', "%{$search}%");
+            });
+        })
+        ->orderBy('updated_at', 'desc')
+        ->paginate(15)
+        ->appends($request->query());
+
+    return view('dataset.history', compact('datasets'));
+}
+
 }

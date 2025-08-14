@@ -415,4 +415,9 @@ class Dataset extends Model
             self::APPROVAL_REJECTED => 'Rejected'
         ];
     }
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
 }

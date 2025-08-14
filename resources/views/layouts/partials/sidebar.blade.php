@@ -29,7 +29,7 @@
                         <span>Kelola Dataset</span>
                         @php
                             $myPendingDatasets = \App\Models\Dataset::where('user_id', auth()->id())
-                                ->where('approval_status', 'pending')
+                                ->where('approval_status', 'approved')
                                 ->count();
                         @endphp
                         @if ($myPendingDatasets > 0)
@@ -45,9 +45,18 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#!" class="{{ request()->routeIs('dataset.history') ? 'active' : '' }}">
+                    <a href="{{ route('dataset.history') }}"
+                        class="{{ request()->routeIs('dataset.history') ? 'active' : '' }}">
                         <i class="bi bi-circle"></i>
                         <span>Riwayat Dataset</span>
+                        @php
+                            $myHistoryCount = \App\Models\Dataset::where('user_id', auth()->id())
+                                ->whereNotNull('approval_status')
+                                ->count();
+                        @endphp
+                        @if ($myHistoryCount > 0)
+                            <span class="badge bg-secondary ms-auto">{{ $myHistoryCount }}</span>
+                        @endif
                     </a>
                 </li>
             </ul>
