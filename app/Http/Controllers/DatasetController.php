@@ -15,139 +15,220 @@ use Illuminate\Support\Str;
 
 class DatasetController extends Controller
 {
-   public function index(Request $request)
-{
-    $query = Dataset::orderBy('created_at', 'desc');
+    public function index(Request $request)
+    {
+        $query = Dataset::with(['user', 'approvedBy']);
 
-    // Search functionality
-    if ($request->has('search') && $request->search) {
-        $search = $request->search;
-        $query->where(function ($q) use ($search) {
-            $q->where('title', 'like', "%{$search}%")
-              ->orWhere('description', 'like', "%{$search}%")
-              ->orWhere('filename', 'like', "%{$search}%")
-              ->orWhere('original_filename', 'like', "%{$search}%");
-        });
-    }
+        // Base filter - only show user's own datasets (optional)
+        // $query->where('user_id', Auth::id());
 
-    // Filter by topic
-    if ($request->has('topic') && $request->topic) {
-        $query->where('topic', $request->topic);
-    }
-
-    // Filter by classification
-    if ($request->has('classification') && $request->classification) {
-        $query->where('classification', $request->classification);
-    }
-
-    // Filter by approval status (NEW)
-    if ($request->has('approval_status') && $request->approval_status) {
-        $query->where('approval_status', $request->approval_status);
-        
-        // Jika filter approved atau rejected, urutkan berdasarkan approved_at
-        if (in_array($request->approval_status, ['approved', 'rejected'])) {
-            $query->orderBy('approved_at', 'desc');
+        // Search functionality - pencarian di multiple kolom
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('organization', 'like', "%{$search}%")
+                  ->orWhere('filename', 'like', "%{$search}%")
+                  ->orWhere('original_filename', 'like', "%{$search}%")
+                  ->orWhere('sector', 'like', "%{$search}%")
+                  ->orWhere('data_source', 'like', "%{$search}%")
+                  // Search dalam tags JSON
+                  ->orWhereJsonContains('tags', $search)
+                  ->orWhere('tags', 'like', "%{$search}%");
+            });
         }
-    }
 
-    // Filter by organization (NEW)
-    if ($request->has('organization') && $request->organization) {
-        $query->where('organization', 'like', "%{$request->organization}%");
-    }
+        // Filter by topic
+        if ($request->has('topic') && $request->topic) {
+            $query->where('topic', $request->topic);
+        }
 
-    // Filter by submitter/user (NEW)
-    if ($request->has('submitter') && $request->submitter) {
-        $query->whereHas('user', function ($q) use ($request) {
-            $q->where('name', 'like', "%{$request->submitter}%")
-              ->orWhere('email', 'like', "%{$request->submitter}%");
+        // Filter by classification
+        if ($request->has('classification') && $request->classification) {
+            $query->where('classification', $request->classification);
+        }
+
+        // Filter by status
+        if ($request->has('status') && $request->status) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by approval status
+        if ($request->has('approval_status') && $request->approval_status) {
+            $query->where('approval_status', $request->approval_status);
+            
+            // Jika filter approved atau rejected, urutkan berdasarkan approved_at
+            if (in_array($request->approval_status, ['approved', 'rejected'])) {
+                $query->orderBy('approved_at', 'desc');
+            }
+        }
+
+        // Filter by organization
+        if ($request->has('organization') && $request->organization) {
+            $query->where('organization', 'like', "%{$request->organization}%");
+        }
+
+        // Filter by date range
+        if ($request->has('date_from') && $request->date_from) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->has('date_to') && $request->date_to) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Filter by file type
+        if ($request->has('file_type') && $request->file_type) {
+            $query->where('file_type', $request->file_type);
+        }
+
+        // Filter by data size
+        if ($request->has('data_size') && $request->data_size) {
+            switch ($request->data_size) {
+                case 'small':
+                    $query->where('total_rows', '<', 1000);
+                    break;
+                case 'medium':
+                    $query->whereBetween('total_rows', [1000, 10000]);
+                    break;
+                case 'large':
+                    $query->where('total_rows', '>', 10000);
+                    break;
+            }
+        }
+
+        // Filter untuk rejected datasets - search berdasarkan rejection reason
+        if ($request->has('rejection_reason') && $request->rejection_reason) {
+            $query->where('rejection_reason', 'like', "%{$request->rejection_reason}%");
+        }
+
+        // Filter by approver (untuk yang sudah approved/rejected)
+        if ($request->has('approver') && $request->approver) {
+            $query->whereHas('approvedBy', function ($q) use ($request) {
+                $q->where('name', 'like', "%{$request->approver}%");
+            });
+        }
+
+        // Filter by publish status
+        if ($request->has('publish_status') && $request->publish_status) {
+            $query->where('publish_status', $request->publish_status);
+        }
+
+        // Sorting
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortDirection = $request->get('sort_direction', 'desc');
+
+        // Validasi sort columns untuk security
+        $allowedSortColumns = [
+            'created_at', 'title', 'view_count', 'download_count', 
+            'total_rows', 'total_columns', 'file_size', 'updated_at'
+        ];
+
+        if (in_array($sortBy, $allowedSortColumns)) {
+            $query->orderBy($sortBy, $sortDirection);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        // Default ordering jika tidak ada approval_status filter
+        if (!$request->has('approval_status')) {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        // Paginate results
+        $datasets = $query->paginate(12)->withQueryString();
+
+        // Process tags untuk setiap dataset
+        $datasets->getCollection()->transform(function ($dataset) {
+            // Decode JSON tags jika masih dalam format JSON
+            if (is_string($dataset->tags)) {
+                $dataset->tags = json_decode($dataset->tags, true) ?? [];
+            }
+            
+            // Pastikan tags adalah array
+            if (!is_array($dataset->tags)) {
+                $dataset->tags = [];
+            }
+
+            return $dataset;
         });
+
+        // Get statistics untuk dashboard/info cards
+        $stats = [
+            'total_datasets' => Dataset::count(),
+            'pending_approval' => Dataset::where('approval_status', 'pending')->count(),
+            'approved_datasets' => Dataset::where('approval_status', 'approved')->count(),
+            'rejected_datasets' => Dataset::where('approval_status', 'rejected')->count(),
+            'published_datasets' => Dataset::where('publish_status', 'published')->count(),
+            'draft_datasets' => Dataset::where('publish_status', 'draft')->count(),
+            'total_views' => Dataset::sum('view_count'),
+            'total_downloads' => Dataset::sum('download_count'),
+        ];
+
+        // Get filter options untuk dropdown (dengan data yang ada di database)
+        $filterOptions = [
+            'topics' => Dataset::distinct()->pluck('topic')->filter()->sort()->values(),
+            'classifications' => Dataset::distinct()->pluck('classification')->filter()->sort()->values(),
+            'organizations' => Dataset::distinct()->pluck('organization')->filter()->sort()->values(),
+            'file_types' => Dataset::distinct()->pluck('file_type')->filter()->sort()->values(),
+            'sectors' => Dataset::distinct()->pluck('sector')->filter()->sort()->values(),
+            'approval_statuses' => [
+                'pending' => 'Pending Review',
+                'approved' => 'Approved',
+                'rejected' => 'Rejected'
+            ],
+            'publish_statuses' => [
+                'draft' => 'Draft',
+                'published' => 'Published',
+                'archived' => 'Archived'
+            ]
+        ];
+
+        // Jika ada filter approval_status, tambahkan info spesifik
+        $currentFilter = $request->approval_status;
+        $pageTitle = 'All Datasets';
+        
+        switch ($currentFilter) {
+            case 'pending':
+                $pageTitle = 'Pending Datasets';
+                break;
+            case 'approved':
+                $pageTitle = 'Approved Datasets';
+                break;
+            case 'rejected':
+                $pageTitle = 'Rejected Datasets';
+                // Get common rejection reasons untuk filter
+                $filterOptions['rejection_reasons'] = Dataset::where('approval_status', 'rejected')
+                                                            ->whereNotNull('rejection_reason')
+                                                            ->distinct()
+                                                            ->pluck('rejection_reason')
+                                                            ->filter()
+                                                            ->map(function ($reason) {
+                                                                // Potong text untuk dropdown
+                                                                return strlen($reason) > 50 ? substr($reason, 0, 50) . '...' : $reason;
+                                                            })
+                                                            ->unique()
+                                                            ->sort()
+                                                            ->values();
+                break;
+        }
+
+        // Add breadcrumb info based on filters
+        $breadcrumbs = ['Home', 'Dataset'];
+        if ($currentFilter) {
+            $breadcrumbs[] = ucfirst($currentFilter);
+        }
+
+        return view('dataset.index', compact(
+            'datasets', 
+            'stats', 
+            'filterOptions', 
+            'pageTitle', 
+            'currentFilter',
+            'breadcrumbs'
+        ));
     }
-
-    // Filter by date range (NEW)
-    if ($request->has('date_from') && $request->date_from) {
-        $query->whereDate('created_at', '>=', $request->date_from);
-    }
-
-    if ($request->has('date_to') && $request->date_to) {
-        $query->whereDate('created_at', '<=', $request->date_to);
-    }
-
-    // Filter untuk rejected datasets - bisa search berdasarkan rejection reason
-    if ($request->has('rejection_reason') && $request->rejection_reason) {
-        $query->where('rejection_reason', 'like', "%{$request->rejection_reason}%");
-    }
-
-    // Filter by approver (untuk yang sudah approved/rejected)
-    if ($request->has('approver') && $request->approver) {
-        $query->whereHas('approvedBy', function ($q) use ($request) {
-            $q->where('name', 'like', "%{$request->approver}%");
-        });
-    }
-
-    // Legacy filter by status (keep for backward compatibility)
-    if ($request->has('status') && $request->status) {
-        $query->where('publish_status', $request->status);
-    }
-
-    // Load relationships untuk display yang optimal
-    $query->with(['user', 'approvedBy']);
-
-    $datasets = $query->paginate(12);
-
-    // Get statistics untuk dashboard/info cards
-    $stats = [
-        'total_datasets' => Dataset::count(),
-        'pending_approval' => Dataset::where('approval_status', 'pending')->count(),
-        'approved_datasets' => Dataset::where('approval_status', 'approved')->count(),
-        'rejected_datasets' => Dataset::where('approval_status', 'rejected')->count(),
-        'approved_today' => Dataset::where('approval_status', 'approved')
-                                  ->whereDate('approved_at', today())->count(),
-        'rejected_today' => Dataset::where('approval_status', 'rejected')
-                                  ->whereDate('approved_at', today())->count(),
-    ];
-
-    // Get filter options untuk dropdown
-    $filterOptions = [
-        'topics' => Dataset::distinct()->pluck('topic')->filter()->sort(),
-        'classifications' => Dataset::distinct()->pluck('classification')->filter()->sort(),
-        'organizations' => Dataset::distinct()->pluck('organization')->filter()->sort(),
-        'approval_statuses' => [
-            'pending' => 'Pending Review',
-            'approved' => 'Approved',
-            'rejected' => 'Rejected'
-        ]
-    ];
-
-    // Jika ada filter approval_status, tambahkan info spesifik
-    $currentFilter = $request->approval_status;
-    $pageTitle = 'All Datasets';
-    
-    switch ($currentFilter) {
-        case 'pending':
-            $pageTitle = 'Pending Datasets';
-            break;
-        case 'approved':
-            $pageTitle = 'Approved Datasets';
-            break;
-        case 'rejected':
-            $pageTitle = 'Rejected Datasets';
-            // Get common rejection reasons untuk filter
-            $filterOptions['rejection_reasons'] = Dataset::where('approval_status', 'rejected')
-                                                        ->whereNotNull('rejection_reason')
-                                                        ->distinct()
-                                                        ->pluck('rejection_reason')
-                                                        ->filter()
-                                                        ->map(function ($reason) {
-                                                            // Potong text untuk dropdown
-                                                            return strlen($reason) > 50 ? substr($reason, 0, 50) . '...' : $reason;
-                                                        })
-                                                        ->unique()
-                                                        ->sort();
-            break;
-    }
-
-    return view('dataset.index', compact('datasets', 'stats', 'filterOptions', 'pageTitle', 'currentFilter'));
-}
 
 
     public function create()
@@ -364,60 +445,146 @@ class DatasetController extends Controller
 
     public function edit($id)
     {
-        $dataset = Dataset::findOrFail($id);
+        
+       $dataset = Dataset::where('slug', $id)->firstOrFail();
+
         return view('dataset.edit', compact('dataset'));
     }
+public function update(Request $request, $id)
+{
+    $dataset = Dataset::findOrFail($id);
+    
+    // // Check if user has permission to edit this dataset
+    // if ($dataset->user_id !== Auth::user()->id && !Auth::user()->hasRole('admin')) {
+    //     abort(403, 'Unauthorized action.');
+    // }
 
-    public function update(Request $request, $id)
-    {
-        $dataset = Dataset::findOrFail($id);
+    $request->validate([
+        'file' => 'nullable|mimes:xlsx,xls,csv|max:10240', // 10MB max, optional for edit
+        'title' => 'required|string|max:255|unique:datasets,title,' . $dataset->id,
+        'description' => 'required|string',
+        'tags' => 'required|string',
+        'topic' => 'required|string',
+        'classification' => 'required|in:publik,internal,terbatas,rahasia',
+        'status' => 'required|in:sementara,tetap',
+        'license' => 'nullable|string',
+        'sector' => 'nullable|string',
+        'responsible_person' => 'nullable|string',
+        'contact' => 'nullable|string',
+        'data_source' => 'nullable|string',
+        'data_period' => 'nullable|string',
+        'update_frequency' => 'nullable|string',
+        'geographic_coverage' => 'nullable|string',
+    ], [
+        'title.unique' => 'Judul dataset sudah digunakan, silakan pilih judul lain.',
+    ]);
 
-        $request->validate([
-           'title' => 'required|string|max:255|unique:datasets,title',
-            'description' => 'required|string',
-            'tags' => 'required|string',
-            'topic' => 'required|string',
-            'classification' => 'required|in:publik,internal,terbatas,rahasia',
-            'status' => 'required|in:sementara,tetap',
-            'license' => 'nullable|string',
-            'sector' => 'nullable|string',
-            'responsible_person' => 'nullable|string',
-            'contact' => 'nullable|string',
-            'data_source' => 'nullable|string',
-            'data_period' => 'nullable|string',
-            'update_frequency' => 'nullable|string',
-            'geographic_coverage' => 'nullable|string',
+    try {
+        DB::beginTransaction();
+        
+        $hasNewFile = $request->hasFile('file');
+        $shouldReprocessData = $request->has('action') && $request->action === 'update_and_reprocess';
+        
+        // Handle file replacement if new file is uploaded
+        if ($hasNewFile) {
+            $file = $request->file('file');
+            $originalFilename = $file->getClientOriginalName();
+            $filename = time() . '_' . $originalFilename;
+            $fileSize = $file->getSize();
+            $fileType = $file->getClientOriginalExtension();
+            
+            // Delete old file
+            if ($dataset->file_path && Storage::disk('public')->exists($dataset->file_path)) {
+                Storage::disk('public')->delete($dataset->file_path);
+            }
+            
+            // Store new file
+            $filePath = $file->storeAs('datasets', $filename, 'public');
+            
+            // Update file-related fields
+            $dataset->filename = $filename;
+            $dataset->original_filename = $originalFilename;
+            $dataset->file_path = $filePath;
+            $dataset->file_size = $fileSize;
+            $dataset->file_type = $fileType;
+        }
+        
+        // Update dataset information
+        $dataset->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'tags' => $this->processTags($request->tags),
+            'topic' => $request->topic,
+            'classification' => $request->classification,
+            'status' => $request->status,
+            'license' => $request->license ?? '',
+            'sector' => $request->sector ?? '',
+            'responsible_person' => $request->responsible_person ?? '',
+            'contact' => $request->contact ?? '',
+            'data_source' => $request->data_source ?? '',
+            'data_period' => $request->data_period ?? '',
+            'update_frequency' => $request->update_frequency ?? '',
+            'geographic_coverage' => $request->geographic_coverage ?? '',
+            'updated_at' => now(),
         ]);
 
-        try {
+        Log::info('Dataset updated with ID: ' . $dataset->id);
+        
+        // Re-import data if new file uploaded or reprocess requested
+        if ($hasNewFile || $shouldReprocessData) {
+            // Reset data fields before reimporting
             $dataset->update([
-                'title' => $request->title,
-                'description' => $request->description,
-                'tags' => $this->processTags($request->tags),
-                'topic' => $request->topic,
-                'classification' => $request->classification,
-                'status' => $request->status,
-                'license' => $request->license,
-                'sector' => $request->sector,
-                'responsible_person' => $request->responsible_person,
-                'contact' => $request->contact,
-                'data_source' => $request->data_source,
-                'data_period' => $request->data_period,
-                'update_frequency' => $request->update_frequency,
-                'geographic_coverage' => $request->geographic_coverage,
+                'headers' => [],
+                'data' => [],
+                'total_rows' => 0,
+                'total_columns' => 0
             ]);
-
-            return redirect()->route('dataset.show', $dataset)
-                ->with('success', 'Dataset berhasil diperbarui.');
-
-        } catch (\Exception $e) {
-            Log::error('Dataset update failed: ' . $e->getMessage());
             
-            return redirect()->back()
-                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage())
-                ->withInput();
+            // Import Excel data using updated DynamicImport
+            if ($hasNewFile) {
+                Excel::import(new DynamicImport($dataset->id), $file);
+                $successMessage = 'Dataset dan file berhasil diupdate: ' . $dataset->original_filename;
+            } else {
+                // Reprocess existing file
+                $existingFilePath = storage_path('app/public/' . $dataset->file_path);
+                if (file_exists($existingFilePath)) {
+                    Excel::import(new DynamicImport($dataset->id), $existingFilePath);
+                    $successMessage = 'Dataset berhasil diupdate dan data berhasil diproses ulang.';
+                } else {
+                    throw new \Exception('File dataset tidak ditemukan untuk diproses ulang.');
+                }
+            }
+        } else {
+            $successMessage = 'Informasi dataset berhasil diupdate.';
         }
+        
+        DB::commit();
+        
+        // Determine redirect route
+        $slug = Str::slug($request->title);
+        if ($dataset->slug !== $slug) {
+            $dataset->update(['slug' => $slug]);
+        }
+        
+        return redirect()->route('dataset.show', $dataset->slug ?? $dataset->id)
+            ->with('success', $successMessage);
+            
+    } catch (\Exception $e) {
+        DB::rollback();
+        
+        // Delete uploaded file if exists and there was an error
+        if (isset($filePath) && Storage::disk('public')->exists($filePath)) {
+            Storage::disk('public')->delete($filePath);
+        }
+        
+        Log::error('Dataset update failed: ' . $e->getMessage());
+        Log::error('Stack trace: ' . $e->getTraceAsString());
+        
+        return redirect()->back()
+            ->with('error', 'Terjadi kesalahan saat mengupdate dataset: ' . $e->getMessage())
+            ->withInput();
     }
+}
 
     /**
      * Apply filters and search to dataset
