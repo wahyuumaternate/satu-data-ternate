@@ -21,6 +21,7 @@ return new class extends Migration
         $table->string('nama', 255);
         $table->text('deskripsi')->nullable();
         $table->string('gambar')->nullable();
+        $table->jsonb('dbf_attributes')->nullable();
         $table->enum('topic', [
             'Ekonomi',
             'Infrastruktur', 
@@ -38,15 +39,18 @@ return new class extends Migration
         $table->boolean('is_visible')->default(true);
         $table->boolean('is_active')->default(true);
         $table->integer('views')->default(0);
-
+        $table->index('dbf_attributes', null, 'gin');
         $table->timestamps();
 
-        // Kolom geometri
-        $table->geometry('geom')->required();
-
-        // Index
-        $table->spatialIndex('geom');
     });
+    // Tambahkan kolom geometri menggunakan PostGIS
+     DB::statement('ALTER TABLE mapsets ADD COLUMN geom GEOMETRY');
+
+     // Buat spatial index untuk geometri
+     DB::statement('CREATE INDEX idx_mapsets_geom ON mapsets USING GIST (geom)');
+     
+     // Buat index untuk pencarian teks dalam JSONB
+     DB::statement('CREATE INDEX idx_mapsets_dbf_gin ON mapsets USING GIN (dbf_attributes jsonb_path_ops)');
 }
 
 

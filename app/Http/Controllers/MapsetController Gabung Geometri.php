@@ -119,18 +119,18 @@ class MapsetController extends Controller
         try {
             DB::beginTransaction();
 
-            $recordCount = 0;
             $inputType = $request->input('input_type');
 
+            // Proses berdasarkan tipe input dan simpan sebagai satu mapset
             switch ($inputType) {
                 case 'shapefile':
-                    $recordCount = $this->processShapefileInput($request);
+                    $this->processShapefileInputCombined($request);
                     break;
                 case 'coordinates':
-                    $recordCount = $this->processCoordinatesInput($request);
+                    $this->processCoordinatesInputCombined($request);
                     break;
                 case 'kmz':
-                    $recordCount = $this->processKmzInput($request);
+                    $this->processKmzInputCombined($request);
                     break;
                 default:
                     throw new \Exception('Jenis input tidak valid');
@@ -138,7 +138,7 @@ class MapsetController extends Controller
 
             DB::commit();
 
-            $message = "Berhasil menyimpan {$recordCount} mapset dengan metode {$inputType}.";
+            $message = "Berhasil menyimpan mapset dengan metode {$inputType}.";
             
             return redirect()->route('mapset.index')->with('success', $message);
 
@@ -154,7 +154,6 @@ class MapsetController extends Controller
      */
     public function show($uuid)
     {
-        // dd($uuid);
         $mapset = Mapset::where('uuid', $uuid)->firstOrFail();
 
         // Check authorization - only owner or public mapsets
@@ -167,15 +166,21 @@ class MapsetController extends Controller
             $mapset->increment('views');
         }
 
-        // Get GeoJSON data
-        $geojsonQuery = DB::select("SELECT ST_AsGeoJSON(geom) as geojson FROM mapsets WHERE id = ?", [$mapset->id]);
-        $geojson = $geojsonQuery ? json_decode($geojsonQuery[0]->geojson, true) : null;
+        // Get topics for display
+        $topics = [
+            'Ekonomi' => 'Ekonomi',
+            'Infrastruktur' => 'Infrastruktur',
+            'Kemiskinan' => 'Kemiskinan',
+            'Kependudukan' => 'Kependudukan',
+            'Kesehatan' => 'Kesehatan',
+            'Lingkungan Hidup' => 'Lingkungan Hidup',
+            'Pariwisata & Kebudayaan' => 'Pariwisata & Kebudayaan',
+            'Pemerintah & Desa' => 'Pemerintah & Desa',
+            'Pendidikan' => 'Pendidikan',
+            'Sosial' => 'Sosial'
+        ];
 
-        // Get bounds
-        $boundsQuery = DB::select("SELECT ST_AsText(ST_Envelope(geom)) as bounds FROM mapsets WHERE id = ?", [$mapset->id]);
-        $bounds = $boundsQuery ? $boundsQuery[0]->bounds : null;
-
-        return view('mapset.show', compact('mapset', 'geojson', 'bounds'));
+        return view('mapset.show', compact('mapset', 'topics'));
     }
 
     /**
@@ -203,11 +208,7 @@ class MapsetController extends Controller
             'Sosial' => 'Sosial'
         ];
 
-        // Get existing GeoJSON
-        $geojsonQuery = DB::select("SELECT ST_AsGeoJSON(geom) as geojson FROM mapsets WHERE id = ?", [$mapset->id]);
-        $geojson = $geojsonQuery ? json_decode($geojsonQuery[0]->geojson, true) : null;
-
-        return view('mapset.edit', compact('mapset', 'topics', 'geojson'));
+        return view('mapset.edit', compact('mapset', 'topics'));
     }
 
     /**
@@ -226,8 +227,8 @@ class MapsetController extends Controller
             'nama' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
             'topic' => 'required|in:Ekonomi,Infrastruktur,Kemiskinan,Kependudukan,Kesehatan,Lingkungan Hidup,Pariwisata & Kebudayaan,Pemerintah & Desa,Pendidikan,Sosial',
-            'dbf_attributes' => 'nullable|string',
-            'gambar' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:2048'
+            'gambar' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:2048',
+            'input_type' => 'nullable|in:shapefile,coordinates,kmz,keep'
         ], [
             'nama.required' => 'Nama mapset harus diisi',
             'topic.required' => 'Topic harus dipilih',
@@ -243,17 +244,7 @@ class MapsetController extends Controller
         }
 
         try {
-            // Handle DBF Attributes
-            $dbfAttributes = [];
-            if ($request->dbf_attributes) {
-                $json = $request->dbf_attributes;
-                $dbfAttributes = json_decode($json, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    return redirect()->back()
-                        ->withErrors(['dbf_attributes' => 'Format JSON atribut tidak valid: ' . json_last_error_msg()])
-                        ->withInput();
-                }
-            }
+            DB::beginTransaction();
 
             // Handle Image Upload
             $imagePath = $mapset->gambar; // Keep existing image path
@@ -270,19 +261,36 @@ class MapsetController extends Controller
                 $imagePath = $file->storeAs('mapsets', $fileName, 'public');
             }
 
-            // Update mapset
+            // Handle geometry update if new data is provided
+            $inputType = $request->input('input_type');
+            if ($inputType && $inputType !== 'keep') {
+                switch ($inputType) {
+                    case 'shapefile':
+                        $this->updateShapefileGeometry($request, $mapset);
+                        break;
+                    case 'coordinates':
+                        $this->updateCoordinatesGeometry($request, $mapset);
+                        break;
+                    case 'kmz':
+                        $this->updateKmzGeometry($request, $mapset);
+                        break;
+                }
+            }
+
+            // Update mapset basic info
             $mapset->nama = $request->nama;
             $mapset->deskripsi = $request->deskripsi;
             $mapset->topic = $request->topic;
-            $mapset->dbf_attributes = $dbfAttributes;
             $mapset->gambar = $imagePath;
             $mapset->is_visible = $request->has('is_visible');
             $mapset->save();
 
+            DB::commit();
+
             Log::info('Mapset updated successfully', [
                 'id' => $mapset->id,
                 'uuid' => $uuid,
-                'attributes_count' => count($dbfAttributes),
+                'geometry_updated' => $inputType !== 'keep',
                 'image_uploaded' => $request->hasFile('gambar')
             ]);
 
@@ -290,6 +298,8 @@ class MapsetController extends Controller
                 ->with('success', 'Mapset berhasil diperbarui!');
                 
         } catch (\Exception $e) {
+            DB::rollback();
+            
             // If there was an error and a new image was uploaded, delete it
             if ($request->hasFile('gambar') && isset($imagePath) && $imagePath !== $mapset->gambar) {
                 Storage::disk('public')->delete($imagePath);
@@ -387,9 +397,9 @@ class MapsetController extends Controller
         ]);
     }
 
-    // === PROCESSING INPUT METHODS ===
+    // === PROCESSING INPUT METHODS (COMBINED) ===
     
-    private function processShapefileInput(Request $request)
+    private function processShapefileInputCombined(Request $request)
     {
         $request->validate([
             'shp_file' => 'required|file',
@@ -414,39 +424,40 @@ class MapsetController extends Controller
             throw new \Exception('Gagal menyimpan file shapefile.');
         }
 
-        $reader = new ShapefileReader($shpPath);
-        $recordCount = 0;
+        $reader =  new ShapefileReader($shpPath);
+        $geometries = [];
+        $allDbfData = [];
 
+        // Collect all geometries and DBF data
         while ($geometry = $reader->fetchRecord()) {
             if ($geometry->isDeleted()) continue;
 
             $wkt = $geometry->getWKT();
             $dbfData = $geometry->getDataArray();
 
-            // Bersihkan dan normalisasi data DBF
-            $cleanDbfData = $this->cleanDbfData($dbfData);
-
-            // Tentukan nama dari DBF data
-            $namaMapset = $this->determineMapsetName($request->nama, $cleanDbfData, $recordCount + 1);
-
-            // Proses geometri
+            // Clean and process geometry
             $processedWkt = $this->processGeometryDimensions($wkt);
             $this->validateGeometryCoordinates($processedWkt);
-
-            // Simpan mapset
-            $this->saveMapset($request, $namaMapset, $cleanDbfData, $processedWkt);
-
-            $recordCount++;
+            
+            $geometries[] = $processedWkt;
+            $allDbfData[] = $this->cleanDbfData($dbfData);
         }
 
-        if ($recordCount === 0) {
+        if (empty($geometries)) {
             throw new \Exception('Shapefile tidak berisi data geometrik yang valid.');
         }
 
-        return $recordCount;
+        // Create GeometryCollection or MultiGeometry
+        $combinedGeometry = $this->createCombinedGeometry($geometries);
+        
+        // Combine all DBF attributes
+        $combinedDbfData = $this->combineDdfAttributes($allDbfData);
+
+        // Save as single mapset
+        $this->saveMapsetCombined($request, $request->nama, $combinedDbfData, $combinedGeometry, 'shapefile');
     }
 
-    private function processCoordinatesInput(Request $request)
+    private function processCoordinatesInputCombined(Request $request)
     {
         $request->validate([
             'coordinates' => 'required|array|min:1',
@@ -456,7 +467,8 @@ class MapsetController extends Controller
         ]);
 
         $coordinates = $request->input('coordinates');
-        $recordCount = 0;
+        $geometries = [];
+        $allCoordData = [];
 
         foreach ($coordinates as $index => $coord) {
             if (empty($coord['latitude']) || empty($coord['longitude'])) {
@@ -465,33 +477,41 @@ class MapsetController extends Controller
 
             $lat = (float) $coord['latitude'];
             $lng = (float) $coord['longitude'];
-            $name = $coord['name'] ?? ($request->nama . ' - ' . ($index + 1));
+            $name = $coord['name'] ?? ('Point ' . ($index + 1));
 
-            // Buat WKT Point
+            // Create WKT Point
             $wkt = "POINT({$lng} {$lat})";
+            $geometries[] = $wkt;
 
-            // Buat DBF attributes dari input koordinat
-            $dbfAttributes = [
-                'NAMA' => $name,
-                'LATITUDE' => $lat,
-                'LONGITUDE' => $lng,
-                'INPUT_TYPE' => 'manual_coordinates'
+            $allCoordData[] = [
+                'name' => $name,
+                'latitude' => $lat,
+                'longitude' => $lng,
+                'index' => $index + 1
             ];
-
-            // Simpan mapset
-            $this->saveMapset($request, $name, $dbfAttributes, $wkt);
-
-            $recordCount++;
         }
 
-        if ($recordCount === 0) {
+        if (empty($geometries)) {
             throw new \Exception('Tidak ada koordinat valid yang dapat disimpan.');
         }
 
-        return $recordCount;
+        // Create combined geometry
+        $combinedGeometry = $this->createCombinedGeometry($geometries);
+
+        // Create combined attributes
+        $combinedDbfData = [
+            'INPUT_TYPE' => 'manual_coordinates',
+            'ORIGINAL_INPUT_TYPE' => 'coordinates',
+            'TOTAL_POINTS' => count($geometries),
+            'COORDINATES' => $allCoordData,
+            'CREATED_FROM' => 'coordinate_input'
+        ];
+
+        // Save as single mapset
+        $this->saveMapsetCombined($request, $request->nama, $combinedDbfData, $combinedGeometry, 'coordinates');
     }
 
-    private function processKmzInput(Request $request)
+    private function processKmzInputCombined(Request $request)
     {
         $request->validate([
             'kmz_file' => 'required|file',
@@ -536,55 +556,174 @@ class MapsetController extends Controller
             throw new \Exception('Tidak dapat menemukan file KML dalam arsip.');
         }
 
-        return $this->parseKmlContent($kmlContent, $request);
+        $this->parseKmlContentCombined($kmlContent, $request);
     }
 
-    private function parseKmlContent($kmlContent, $request)
+    private function parseKmlContentCombined($kmlContent, $request)
     {
+       
+        // $mapset = Mapset::findOrFail($request->mapset_id);
         $dom = new DOMDocument();
         $dom->loadXML($kmlContent);
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('kml', 'http://www.opengis.net/kml/2.2');
 
-        $recordCount = 0;
+        $geometries = [];
+        $allPlacemarkData = [];
         $placemarks = $xpath->query('//kml:Placemark');
 
-        foreach ($placemarks as $placemark) {
+        foreach ($placemarks as $index => $placemark) {
             $name = $xpath->query('.//kml:name', $placemark)->item(0);
             $description = $xpath->query('.//kml:description', $placemark)->item(0);
             
-            $nameText = $name ? trim($name->textContent) : ($request->nama . ' - ' . ($recordCount + 1));
+            $nameText = $name ? trim($name->textContent) : ('Feature ' . ($index + 1));
             $descText = $description ? trim($description->textContent) : '';
 
-            // Parse geometri
-            $geometries = $this->parseKmlGeometry($xpath, $placemark);
+            $placemarkGeometries = $this->parseKmlGeometry($xpath, $placemark);
 
-            foreach ($geometries as $geometry) {
-                $dbfAttributes = [
-                    'NAMA' => $nameText,
-                    'DESCRIPTION' => $descText,
-                    'INPUT_TYPE' => 'kmz_import',
-                    'ORIGINAL_FILE' => $request->file('kmz_file')->getClientOriginalName()
+            foreach ($placemarkGeometries as $geometry) {
+                $geometries[] = $geometry;
+                $allPlacemarkData[] = [
+                    'name' => $nameText,
+                    'description' => $descText,
+                    'feature_index' => $index + 1
                 ];
-
-                $this->saveMapset($request, $nameText, $dbfAttributes, $geometry);
-
-                $recordCount++;
             }
         }
 
-        if ($recordCount === 0) {
+        if (empty($geometries)) {
             throw new \Exception('File KMZ/KML tidak berisi data geometrik yang valid.');
         }
 
-        return $recordCount;
+        $combinedGeometry = $this->createCombinedGeometry($geometries);
+        $combinedDbfData = [
+            'INPUT_TYPE' => 'kmz_import',
+            'ORIGINAL_FILE' => $request->file('kmz_file')->getClientOriginalName(),
+            'TOTAL_FEATURES' => count($geometries),
+            'PLACEMARKS' => $allPlacemarkData,
+            'ORIGINAL_INPUT_TYPE' => 'kmz',
+            'UPDATED_FROM' => 'kmz_input'
+        ];
+
+        // Update geometry in database
+        DB::statement("UPDATE mapsets SET geom = ST_GeomFromText(?, 4326), dbf_attributes = ? WHERE id = ?", 
+            [$combinedGeometry, json_encode($combinedDbfData), $mapset->id]);
     }
 
     // === HELPER METHODS ===
-    
-    private function saveMapset(Request $request, $nama, $dbfAttributes, $wkt)
+
+    private function createCombinedGeometry($geometries)
     {
-        
+        if (empty($geometries)) {
+            throw new \Exception('Tidak ada geometri untuk digabungkan.');
+        }
+
+        if (count($geometries) === 1) {
+            return $geometries[0];
+        }
+
+        // Classify geometries by type
+        $points = [];
+        $linestrings = [];
+        $polygons = [];
+        $others = [];
+
+        foreach ($geometries as $wkt) {
+            if (stripos($wkt, 'POINT') === 0) {
+                $points[] = $wkt;
+            } elseif (stripos($wkt, 'LINESTRING') === 0) {
+                $linestrings[] = $wkt;
+            } elseif (stripos($wkt, 'POLYGON') === 0) {
+                $polygons[] = $wkt;
+            } else {
+                $others[] = $wkt;
+            }
+        }
+
+        // If all geometries are of the same type, create Multi* geometry
+        if (!empty($points) && empty($linestrings) && empty($polygons) && empty($others)) {
+            return $this->createMultiPoint($points);
+        } elseif (!empty($linestrings) && empty($points) && empty($polygons) && empty($others)) {
+            return $this->createMultiLineString($linestrings);
+        } elseif (!empty($polygons) && empty($points) && empty($linestrings) && empty($others)) {
+            return $this->createMultiPolygon($polygons);
+        } else {
+            // Mixed geometry types - create GeometryCollection
+            return $this->createGeometryCollection($geometries);
+        }
+    }
+
+    private function createMultiPoint($points)
+    {
+        $coords = [];
+        foreach ($points as $point) {
+            if (preg_match('/POINT\s*\(([\d\.\-\s]+)\)/i', $point, $matches)) {
+                $coords[] = '(' . $matches[1] . ')';
+            }
+        }
+        return 'MULTIPOINT(' . implode(',', $coords) . ')';
+    }
+
+    private function createMultiLineString($linestrings)
+    {
+        $coords = [];
+        foreach ($linestrings as $linestring) {
+            if (preg_match('/LINESTRING\s*\((.*)\)/i', $linestring, $matches)) {
+                $coords[] = '(' . $matches[1] . ')';
+            }
+        }
+        return 'MULTILINESTRING(' . implode(',', $coords) . ')';
+    }
+
+    private function createMultiPolygon($polygons)
+    {
+        $coords = [];
+        foreach ($polygons as $polygon) {
+            if (preg_match('/POLYGON\s*\((.*)\)/i', $polygon, $matches)) {
+                $coords[] = '(' . $matches[1] . ')';
+            }
+        }
+        return 'MULTIPOLYGON(' . implode(',', $coords) . ')';
+    }
+
+    private function createGeometryCollection($geometries)
+    {
+        return 'GEOMETRYCOLLECTION(' . implode(',', $geometries) . ')';
+    }
+
+    private function combineDdfAttributes($allDbfData)
+    {
+        $combined = [
+            'INPUT_TYPE' => 'shapefile_import',
+            'ORIGINAL_INPUT_TYPE' => 'shapefile',
+            'TOTAL_FEATURES' => count($allDbfData),
+            'FEATURES' => $allDbfData
+        ];
+
+        // Extract common fields
+        if (!empty($allDbfData)) {
+            $firstRecord = $allDbfData[0];
+            foreach ($firstRecord as $key => $value) {
+                // Check if all records have the same value for this field
+                $allSame = true;
+                foreach ($allDbfData as $record) {
+                    if (!isset($record[$key]) || $record[$key] !== $value) {
+                        $allSame = false;
+                        break;
+                    }
+                }
+                
+                if ($allSame) {
+                    $combined['COMMON_' . $key] = $value;
+                }
+            }
+        }
+
+        return $combined;
+    }
+    
+    private function saveMapsetCombined(Request $request, $nama, $dbfAttributes, $wkt, $inputType)
+    {
         try {
             $mapset = new Mapset();
             $mapset->user_id = Auth::id();
@@ -592,13 +731,17 @@ class MapsetController extends Controller
             $mapset->nama = $nama;
             $mapset->deskripsi = $request->deskripsi;
             $mapset->topic = $request->topic;
+            
+            // Tambahkan input_type ke dalam dbf_attributes karena tidak ada kolom terpisah
+            $dbfAttributes['ORIGINAL_INPUT_TYPE'] = $inputType;
             $mapset->dbf_attributes = $dbfAttributes;
+            
             $mapset->is_visible = $request->has('is_visible');
             $mapset->is_active = true;
             $mapset->views = 0;
 
-            // Handle gambar upload (only for first record if multiple)
-            if ($request->hasFile('gambar') && !Mapset::where('user_id', Auth::id())->whereDate('created_at', today())->exists()) {
+            // Handle gambar upload
+            if ($request->hasFile('gambar')) {
                 $file = $request->file('gambar');
                 $filename = time() . '_' . Str::slug($nama) . '.' . $file->getClientOriginalExtension();
                 $file->storeAs('public/mapsets', $filename);
@@ -611,8 +754,15 @@ class MapsetController extends Controller
             DB::statement("UPDATE mapsets SET geom = ST_GeomFromText(?, 4326) WHERE id = ?", 
                 [$wkt, $mapset->id]);
 
+            Log::info('Combined Mapset saved successfully', [
+                'id' => $mapset->id,
+                'input_type' => $inputType,
+                'geometry_type' => $this->getGeometryType($wkt),
+                'total_features' => $dbfAttributes['TOTAL_FEATURES'] ?? $dbfAttributes['TOTAL_POINTS'] ?? 1
+            ]);
+
         } catch (\Exception $e) {
-            Log::error('Failed to save Mapset: ' . $e->getMessage());
+            Log::error('Failed to save Combined Mapset: ' . $e->getMessage());
             throw $e;
         }
     }
@@ -701,7 +851,7 @@ class MapsetController extends Controller
         }
 
         if (count($wktPoints) >= 4) {
-            // Pastikan polygon tertutup
+            // Ensure polygon is closed
             if ($wktPoints[0] !== $wktPoints[count($wktPoints) - 1]) {
                 $wktPoints[] = $wktPoints[0];
             }
@@ -725,20 +875,6 @@ class MapsetController extends Controller
             $cleanDbfData[$cleanKey] = $cleanValue;
         }
         return $cleanDbfData;
-    }
-
-    private function determineMapsetName($baseName, $dbfData, $index)
-    {
-        // Cari nama dari DBF data
-        $possibleNameFields = ['NAMA_OBJEK', 'NAMOBJ', 'NAMA', 'NAME'];
-        foreach ($possibleNameFields as $field) {
-            if (isset($dbfData[$field]) && !empty($dbfData[$field])) {
-                return $dbfData[$field];
-            }
-        }
-
-        // Jika tidak ada, gunakan base name + index
-        return $baseName . ' - ' . $index;
     }
 
     private function validateGeometryCoordinates($wkt)
@@ -770,9 +906,9 @@ class MapsetController extends Controller
         }
     }
 
-   private function stripGeometryDimensions($wkt)
+    private function stripGeometryDimensions($wkt)
     {
-        // Hapus suffix ZM, Z, atau M dari tipe geometri
+        // Remove ZM, Z, or M suffix from geometry types
         $wkt = preg_replace('/\b(MULTIPOLYGON|POLYGON|MULTIPOINT|POINT|MULTILINESTRING|LINESTRING|GEOMETRYCOLLECTION)(ZM|Z|M)\b/i', '$1', $wkt);
         
         $wkt = preg_replace_callback('/(\-?\d+\.?\d*)\s+(\-?\d+\.?\d*)\s+(\-?\d+\.?\d*)\s+(\-?\d+\.?\d*)/', function($matches) {
@@ -785,4 +921,237 @@ class MapsetController extends Controller
         
         return $wkt;
     }
+
+    private function getGeometryType($wkt)
+    {
+        if (stripos($wkt, 'MULTIPOINT') === 0) return 'MultiPoint';
+        if (stripos($wkt, 'MULTILINESTRING') === 0) return 'MultiLineString';
+        if (stripos($wkt, 'MULTIPOLYGON') === 0) return 'MultiPolygon';
+        if (stripos($wkt, 'GEOMETRYCOLLECTION') === 0) return 'GeometryCollection';
+        if (stripos($wkt, 'POINT') === 0) return 'Point';
+        if (stripos($wkt, 'LINESTRING') === 0) return 'LineString';
+        if (stripos($wkt, 'POLYGON') === 0) return 'Polygon';
+        return 'Unknown';
     }
+
+    private function parseKmlContentForUpdate($kmlContent, $request, Mapset $mapset)
+    {
+        $dom = new DOMDocument();
+        $dom->loadXML($kmlContent);
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace('kml', 'http://www.opengis.net/kml/2.2');
+
+        $geometries = [];
+        $allPlacemarkData = [];
+        $placemarks = $xpath->query('//kml:Placemark');
+
+        foreach ($placemarks as $index => $placemark) {
+            $name = $xpath->query('.//kml:name', $placemark)->item(0);
+            $description = $xpath->query('.//kml:description', $placemark)->item(0);
+            
+            $nameText = $name ? trim($name->textContent) : ('Feature ' . ($index + 1));
+            $descText = $description ? trim($description->textContent) : '';
+
+            // Parse geometries for this placemark
+            $placemarkGeometries = $this->parseKmlGeometry($xpath, $placemark);
+
+            foreach ($placemarkGeometries as $geometry) {
+                $geometries[] = $geometry;
+                $allPlacemarkData[] = [
+                    'name' => $nameText,
+                    'description' => $descText,
+                    'feature_index' => $index + 1
+                ];
+            }
+        }
+
+        if (empty($geometries)) {
+            throw new \Exception('File KMZ/KML tidak berisi data geometrik yang valid.');
+        }
+
+        // Create combined geometry
+        $combinedGeometry = $this->createCombinedGeometry($geometries);
+
+        // Create combined attributes
+        $combinedDbfData = [
+            'INPUT_TYPE' => 'kmz_import',
+            'ORIGINAL_INPUT_TYPE' => 'kmz',
+            'ORIGINAL_FILE' => $request->file('kmz_file')->getClientOriginalName(),
+            'TOTAL_FEATURES' => count($geometries),
+            'PLACEMARKS' => $allPlacemarkData,
+            'CREATED_FROM' => 'kmz_input'
+        ];
+
+        // Save as single mapset
+        $this->saveMapsetCombined($request, $request->nama, $combinedDbfData, $combinedGeometry, 'kmz');
+    }
+
+    // === UPDATE METHODS FOR EDIT ===
+
+    private function updateShapefileGeometry(Request $request, Mapset $mapset)
+    {
+        $request->validate([
+            'shp_file' => 'required|file',
+            'shx_file' => 'required|file',
+            'dbf_file' => 'required|file',
+        ]);
+
+        // Process shapefile (same as create but update existing mapset)
+        $this->processShapefileForUpdate($request, $mapset);
+    }
+
+    private function updateCoordinatesGeometry(Request $request, Mapset $mapset)
+    {
+        $request->validate([
+            'coordinates' => 'required|array|min:1',
+            'coordinates.*.latitude' => 'required|numeric',
+            'coordinates.*.longitude' => 'required|numeric',
+            'coordinates.*.name' => 'nullable|string|max:255',
+        ]);
+
+        // Process coordinates (same as create but update existing mapset)
+        $this->processCoordinatesForUpdate($request, $mapset);
+    }
+
+    private function updateKmzGeometry(Request $request, Mapset $mapset)
+    {
+        $request->validate([
+            'kmz_file' => 'required|file',
+        ]);
+
+        // Process KMZ (same as create but update existing mapset)
+        $this->processKmzForUpdate($request, $mapset);
+    }
+
+    private function processShapefileForUpdate(Request $request, Mapset $mapset)
+    {
+        $folder = storage_path('app/shapefiles');
+        if (!file_exists($folder)) {
+            mkdir($folder, 0755, true);
+        }
+        File::cleanDirectory($folder);
+
+        // Save files
+        $request->file('shp_file')->move($folder, 'data.shp');
+        $request->file('shx_file')->move($folder, 'data.shx');
+        $request->file('dbf_file')->move($folder, 'data.dbf');
+
+        $shpPath = "$folder/data.shp";
+        $reader = new ShapefileReader($shpPath);
+        $geometries = [];
+        $allDbfData = [];
+
+        while ($geometry = $reader->fetchRecord()) {
+            if ($geometry->isDeleted()) continue;
+
+            $wkt = $geometry->getWKT();
+            $dbfData = $geometry->getDataArray();
+
+            $processedWkt = $this->processGeometryDimensions($wkt);
+            $this->validateGeometryCoordinates($processedWkt);
+            
+            $geometries[] = $processedWkt;
+            $allDbfData[] = $this->cleanDbfData($dbfData);
+        }
+
+        if (empty($geometries)) {
+            throw new \Exception('Shapefile tidak berisi data geometrik yang valid.');
+        }
+
+        $combinedGeometry = $this->createCombinedGeometry($geometries);
+        $combinedDbfData = $this->combineDdfAttributes($allDbfData);
+
+        // Update DBF attributes to include input type
+        $combinedDbfData['ORIGINAL_INPUT_TYPE'] = 'shapefile';
+        $combinedDbfData['UPDATED_FROM'] = 'shapefile_input';
+
+        // Update geometry in database
+        DB::statement("UPDATE mapsets SET geom = ST_GeomFromText(?, 4326), dbf_attributes = ? WHERE id = ?", 
+            [$combinedGeometry, json_encode($combinedDbfData), $mapset->id]);
+    }
+
+    private function processCoordinatesForUpdate(Request $request, Mapset $mapset)
+    {
+        $coordinates = $request->input('coordinates');
+        $geometries = [];
+        $allCoordData = [];
+
+        foreach ($coordinates as $index => $coord) {
+            if (empty($coord['latitude']) || empty($coord['longitude'])) {
+                continue;
+            }
+
+            $lat = (float) $coord['latitude'];
+            $lng = (float) $coord['longitude'];
+            $name = $coord['name'] ?? ('Point ' . ($index + 1));
+
+            $wkt = "POINT({$lng} {$lat})";
+            $geometries[] = $wkt;
+
+            $allCoordData[] = [
+                'name' => $name,
+                'latitude' => $lat,
+                'longitude' => $lng,
+                'index' => $index + 1
+            ];
+        }
+
+        if (empty($geometries)) {
+            throw new \Exception('Tidak ada koordinat valid yang dapat disimpan.');
+        }
+
+        $combinedGeometry = $this->createCombinedGeometry($geometries);
+        $combinedDbfData = [
+            'INPUT_TYPE' => 'manual_coordinates',
+            'ORIGINAL_INPUT_TYPE' => 'coordinates',
+            'TOTAL_POINTS' => count($geometries),
+            'COORDINATES' => $allCoordData,
+            'UPDATED_FROM' => 'coordinate_input'
+        ];
+
+        // Update geometry in database
+        DB::statement("UPDATE mapsets SET geom = ST_GeomFromText(?, 4326), dbf_attributes = ? WHERE id = ?", 
+            [$combinedGeometry, json_encode($combinedDbfData), $mapset->id]);
+    }
+
+    private function processKmzForUpdate(Request $request, Mapset $mapset)
+    {
+        $file = $request->file('kmz_file');
+        $extension = $file->getClientOriginalExtension();
+
+        $tempDir = storage_path('app/temp_kmz');
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+        File::cleanDirectory($tempDir);
+
+        $kmlContent = null;
+
+        if ($extension === 'kmz') {
+            $kmzPath = $tempDir . '/temp.kmz';
+            $file->move($tempDir, 'temp.kmz');
+
+            $zip = new ZipArchive;
+            if ($zip->open($kmzPath) === TRUE) {
+                for ($i = 0; $i < $zip->numFiles; $i++) {
+                    $filename = $zip->getNameIndex($i);
+                    if (pathinfo($filename, PATHINFO_EXTENSION) === 'kml') {
+                        $kmlContent = $zip->getFromIndex($i);
+                        break;
+                    }
+                }
+                $zip->close();
+            } else {
+                throw new \Exception('Gagal membuka file KMZ.');
+            }
+        } else {
+            $kmlContent = file_get_contents($file->getRealPath());
+        }
+
+        if (!$kmlContent) {
+            throw new \Exception('Tidak dapat menemukan file KML dalam arsip.');
+        }
+
+        $this->parseKmlContentForUpdate($kmlContent, $request, $mapset);
+    }
+}

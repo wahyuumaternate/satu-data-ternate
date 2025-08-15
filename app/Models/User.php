@@ -46,4 +46,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function mapsets()
+    {
+        return $this->hasMany(Mapset::class);
+    }
 }

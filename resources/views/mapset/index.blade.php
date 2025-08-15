@@ -21,8 +21,8 @@
                     <h2><i class="bi bi-geo-alt me-3"></i>Mapset Saya</h2>
                     <p>Kelola data geografis dan peta Anda dengan mudah</p>
                 </div>
-                <div class="col-md-4 text-md-end">
-                    <a href="{{ route('mapset.create') }}" class="btn btn-primary-custom">
+                <div class="col-md-4  text-md-end">
+                    <a href="{{ route('mapset.create') }}" class="text-white btn btn-primary-custom">
                         <i class="bi bi-plus-circle me-2"></i>Buat Mapset Baru
                     </a>
                 </div>
@@ -74,137 +74,135 @@
                 @foreach ($mapsets as $mapset)
                     <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
                         <div class="card mapset-card h-100">
-                            <div class="card-header"
-                                style="background: linear-gradient(135deg, {{ $mapset->topic_color }}, {{ $mapset->topic_color }}CC);">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <h6 class="mb-0 text-white fw-bold">
-                                        <i class="{{ $mapset->topic_icon }} me-2"></i>
-                                        {{ Str::limit($mapset->nama, 22) }}
-                                    </h6>
-                                    <span class="header-badge">
-                                        <i class="bi bi-clock me-1"></i>
-                                        {{ $mapset->created_at->format('d M') }}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- Map Preview -->
-                            <div class="map-preview" style="height: 200px; background: #f8f9fa;">
-                                @if ($mapset->gambar)
-                                    <img src="{{ $mapset->gambar_url }}" alt="Map Preview"
-                                        style="width: 100%; height: 100%; object-fit: cover;">
-                                @else
-                                    <div class="d-flex align-items-center justify-content-center h-100">
-                                        <div class="text-center text-muted">
-                                            <i class="bi bi-map" style="font-size: 3rem;"></i>
-                                            <p class="mt-2 mb-0">No Preview</p>
-                                        </div>
+                            <!-- Card Header with Topic Color -->
+                            <div class="card-header-custom" style="background: {{ $mapset->getTopicColor() }};">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="topic-info">
+                                        <i class="{{ $mapset->getTopicIcon() }} me-2"></i>
+                                        <span class="topic-name">{{ $mapset->topic }}</span>
                                     </div>
-                                @endif
-                            </div>
-
-                            <div class="card-body">
-                                <!-- Topic Badge -->
-                                <div class="mb-3">
-                                    <span class="topic-badge" style="background-color: {{ $mapset->topic_color }};">
-                                        <i class="{{ $mapset->topic_icon }} me-1"></i>
-                                        {{ $mapset->topic }}
-                                    </span>
-                                </div>
-
-                                <!-- Description -->
-                                @if ($mapset->deskripsi)
-                                    <p class="card-text text-muted small mb-3">
-                                        {{ Str::limit($mapset->deskripsi, 100) }}
-                                    </p>
-                                @endif
-
-                                <!-- Statistics -->
-                                <div class="row g-3 mb-3">
-                                    <div class="col-6">
-                                        <div class="stats-item">
-                                            <div class="stats-icon">
-                                                <i class="bi bi-eye"></i>
-                                            </div>
-                                            <div class="stats-number">{{ number_format($mapset->views) }}</div>
-                                            <div class="stats-label">Views</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="stats-item">
-                                            <div class="stats-icon">
-                                                <i class="bi bi-geo-alt"></i>
-                                            </div>
-                                            <div class="stats-number">
-                                                @if ($mapset->geom)
-                                                    <i class="bi bi-check-circle text-success"></i>
-                                                @else
-                                                    <i class="bi bi-x-circle text-danger"></i>
-                                                @endif
-                                            </div>
-                                            <div class="stats-label">Geometry</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Status -->
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div class="d-flex gap-2">
+                                    <div class="status-badges">
                                         @if ($mapset->is_visible)
-                                            <span class="badge bg-success">
-                                                <i class="bi bi-eye me-1"></i>Visible
+                                            <span class="status-badge visible">
+                                                <i class="bi bi-eye"></i>
                                             </span>
                                         @else
-                                            <span class="badge bg-secondary">
-                                                <i class="bi bi-eye-slash me-1"></i>Hidden
+                                            <span class="status-badge hidden">
+                                                <i class="bi bi-eye-slash"></i>
                                             </span>
                                         @endif
                                     </div>
-                                    <span class="time-badge">
-                                        <i class="bi bi-upload me-1"></i>
-                                        {{ $mapset->created_at->diffForHumans() }}
-                                    </span>
                                 </div>
                             </div>
 
-                            <div class="card-footer">
-                                <div class="d-flex gap-2">
-                                    <a href="{{ route('mapset.show', $mapset->id) }}" class="btn btn-view flex-fill">
-                                        <i class="bi bi-eye me-1"></i>Lihat Peta
+                            <div class="card-body">
+                                <!-- Mapset Name -->
+                                <h5 class="mapset-title mt-2 mb-3">{{ $mapset->nama }}</h5>
+
+                                <!-- Description -->
+                                @if ($mapset->deskripsi)
+                                    <p class="mapset-description mb-3">
+                                        {{ Str::limit($mapset->deskripsi, 120) }}
+                                    </p>
+                                @else
+                                    <p class="mapset-description text-muted mb-3">
+                                        <em>Tidak ada deskripsi</em>
+                                    </p>
+                                @endif
+
+                                <!-- Statistics Grid -->
+                                <div class="stats-grid mb-4">
+                                    <div class="stat-item">
+                                        <div class="stat-icon">
+                                            <i class="bi bi-eye"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <div class="stat-number">{{ number_format($mapset->views) }}</div>
+                                            <div class="stat-label">Views</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="stat-item">
+                                        <div class="stat-icon">
+                                            <i class="bi bi-geo-alt"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <div class="stat-number">
+                                                @if ($mapset->hasGeometry())
+                                                    <i class="bi bi-check-circle text-success fs-5"></i>
+                                                @else
+                                                    <i class="bi bi-x-circle text-danger fs-5"></i>
+                                                @endif
+                                            </div>
+                                            <div class="stat-label">Geometry</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="stat-item">
+                                        <div class="stat-icon">
+                                            <i class="bi bi-clock"></i>
+                                        </div>
+                                        <div class="stat-content">
+                                            <div class="stat-number time-number">{{ $mapset->created_at->diffForHumans() }}
+                                            </div>
+                                            <div class="stat-label">Created</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="action-buttons">
+                                    <a href="{{ route('mapset.show', $mapset->uuid) }}" class="btn btn-primary-action">
+                                        <i class="bi bi-eye me-1"></i>Detail
                                     </a>
+
+                                    <!-- Dropdown Actions -->
                                     <div class="dropdown">
-                                        <button class="btn btn-outline-secondary btn-sm" type="button"
-                                            data-bs-toggle="dropdown">
+                                        <button class="btn btn-light btn-sm rounded-circle border-0 shadow-sm"
+                                            type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                             <i class="bi bi-three-dots-vertical"></i>
                                         </button>
-                                        <ul class="dropdown-menu">
+                                        <ul class="dropdown-menu dropdown-menu-end shadow">
                                             <li>
-                                                <a class="dropdown-item" href="{{ route('mapset.edit', $mapset->id) }}">
-                                                    <i class="bi bi-pencil me-2"></i>Edit Mapset
+                                                <a class="dropdown-item" href="{{ route('mapset.edit', $mapset->uuid) }}">
+                                                    <i class="bi bi-pencil me-2 text-primary"></i>Edit
                                                 </a>
                                             </li>
                                             <li>
                                                 <a class="dropdown-item"
-                                                    href="{{ route('mapset.download-geojson', $mapset->id) }}">
-                                                    <i class="bi bi-download me-2"></i>Download GeoJSON
+                                                    href="{{ route('mapset.download.geojson', $mapset->uuid) }}">
+                                                    <i class="bi bi-download me-2 text-success"></i>Download GeoJSON
                                                 </a>
                                             </li>
                                             <li>
                                                 <hr class="dropdown-divider">
                                             </li>
                                             <li>
-                                                <form action="{{ route('mapset.destroy', $mapset->id) }}" method="POST"
-                                                    class="d-inline"
-                                                    onsubmit="return confirm('Apakah Anda yakin ingin menghapus mapset ini?')">
+                                                <form action="{{ route('mapset.destroy', $mapset->uuid) }}" method="POST"
+                                                    class="d-inline delete-form">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="dropdown-item text-danger">
-                                                        <i class="bi bi-trash me-2"></i>Hapus Mapset
+                                                        <i class="bi bi-trash me-2"></i>Hapus
                                                     </button>
                                                 </form>
                                             </li>
                                         </ul>
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- Card Footer with Metadata -->
+                            <div class="card-footer-custom">
+                                <div class="metadata">
+                                    <span class="metadata-item">
+                                        <i class="bi bi-calendar3 me-1"></i>
+                                        {{ $mapset->created_at->format('d M Y') }}
+                                    </span>
+                                    <span class="metadata-item">
+                                        <i class="bi bi-pencil me-1"></i>
+                                        {{ $mapset->updated_at->format('d M Y') }}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -234,9 +232,9 @@
                 <div class="row mt-5">
                     <div class="col-md-4">
                         <div class="text-center">
-                            <i class="bi bi-geo-alt" style="font-size: 2rem; color: #4154f1;"></i>
-                            <h6 class="mt-2">Import GeoJSON</h6>
-                            <small class="text-muted">Upload file .geojson atau .json</small>
+                            <i class="bi bi-file-earmark-arrow-up" style="font-size: 2rem; color: #4154f1;"></i>
+                            <h6 class="mt-2">Upload Data</h6>
+                            <small class="text-muted">Import Shapefile, KMZ, atau koordinat manual</small>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -264,88 +262,162 @@
         .mapset-card {
             transition: all 0.3s ease;
             border: none;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            overflow: hidden;
         }
 
         .mapset-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
         }
 
-        .topic-badge {
+        .card-header-custom {
+            background: linear-gradient(135deg, #4154f1, #2940d3);
             color: white;
-            padding: 4px 12px;
-            border-radius: 15px;
+            padding: 15px 20px;
+            border: none;
+        }
+
+        .topic-info {
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .status-badges {
+            display: flex;
+            gap: 5px;
+        }
+
+        .status-badge {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 0.8rem;
+        }
+
+        .status-badge.visible {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .status-badge.hidden {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .mapset-title {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1rem;
+            line-height: 1.3;
+            margin-bottom: 0.75rem;
+        }
+
+        .mapset-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 12px 8px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            color: #4154f1;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+
+        .stat-number {
+            font-weight: 700;
+            color: #2c3e50;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .stat-number.time-number {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             font-weight: 500;
         }
 
-        .header-badge {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 10px;
-            font-size: 0.75rem;
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
 
-        .stats-item {
-            text-align: center;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-
-        .stats-icon {
-            color: #4154f1;
-            font-size: 1.2rem;
-            margin-bottom: 5px;
-        }
-
-        .stats-number {
-            font-weight: bold;
-            color: #2c3e50;
-            font-size: 1.1rem;
-        }
-
-        .stats-label {
-            font-size: 0.8rem;
-            color: #6c757d;
-            margin-top: 2px;
-        }
-
-        .btn-view {
+        .btn-primary-action {
             background: linear-gradient(135deg, #4154f1, #2940d3);
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 8px 20px;
+            border-radius: 8px;
             font-weight: 500;
+            flex: 1;
+            transition: all 0.3s ease;
         }
 
-        .btn-view:hover {
+        .btn-primary-action:hover {
             background: linear-gradient(135deg, #2940d3, #1f2db5);
             color: white;
             transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(65, 84, 241, 0.3);
         }
 
-        .time-badge {
-            background: #e9ecef;
-            color: #6c757d;
-            padding: 4px 8px;
-            border-radius: 10px;
+        .card-footer-custom {
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            padding: 10px 20px;
+        }
+
+        .metadata {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .metadata-item {
             font-size: 0.75rem;
-        }
-
-        .map-preview {
-            position: relative;
-            overflow: hidden;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
         }
 
         .filter-section {
             background: white;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
             margin-bottom: 30px;
         }
 
@@ -364,6 +436,23 @@
 
         .search-box input {
             padding-left: 45px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .search-box input:focus {
+            border-color: #4154f1;
+            box-shadow: 0 0 0 0.2rem rgba(65, 84, 241, 0.25);
+        }
+
+        .form-select {
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .form-select:focus {
+            border-color: #4154f1;
+            box-shadow: 0 0 0 0.2rem rgba(65, 84, 241, 0.25);
         }
 
         .empty-state {
@@ -378,7 +467,7 @@
         }
 
         .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, rgb(67, 96, 221) 0%, #4154f1 100%);
             color: white;
             padding: 30px;
             border-radius: 15px;
@@ -425,6 +514,56 @@
         .mapset-card {
             animation: fadeIn 0.5s ease;
         }
+
+        /* Dropdown improvements */
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+        }
+
+        .dropdown-item {
+            padding: 8px 16px;
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background: #f8f9fa;
+            transform: translateX(3px);
+        }
+
+        /* Topic color mapping helper */
+        .card-header-custom[style*="#0d6efd"] {
+            background: linear-gradient(135deg, #0d6efd, #0056b3) !important;
+        }
+
+        .card-header-custom[style*="#6c757d"] {
+            background: linear-gradient(135deg, #6c757d, #495057) !important;
+        }
+
+        .card-header-custom[style*="#ffc107"] {
+            background: linear-gradient(135deg, #ffc107, #e0a800) !important;
+        }
+
+        .card-header-custom[style*="#0dcaf0"] {
+            background: linear-gradient(135deg, #0dcaf0, #0aa2c0) !important;
+        }
+
+        .card-header-custom[style*="#198754"] {
+            background: linear-gradient(135deg, #198754, #146c43) !important;
+        }
+
+        .card-header-custom[style*="#20c997"] {
+            background: linear-gradient(135deg, #20c997, #1aa179) !important;
+        }
+
+        .card-header-custom[style*="#6f42c1"] {
+            background: linear-gradient(135deg, #6f42c1, #59359a) !important;
+        }
+
+        .card-header-custom[style*="#212529"] {
+            background: linear-gradient(135deg, #212529, #16181b) !important;
+        }
     </style>
 @endpush
 
@@ -456,295 +595,63 @@
                 });
             }
 
-            // Card hover animations
-            const mapsetCards = document.querySelectorAll('.mapset-card');
-            mapsetCards.forEach(card => {
-                card.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-8px) scale(1.02)';
-                });
-
-                card.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0) scale(1)';
-                });
-            });
-
-            // Confirm delete with better styling
-            const deleteForms = document.querySelectorAll('form[action*="destroy"]');
+            // Enhanced delete confirmation
+            const deleteForms = document.querySelectorAll('.delete-form');
             deleteForms.forEach(form => {
                 form.addEventListener('submit', function(e) {
                     e.preventDefault();
 
+                    // Get mapset name from card title
+                    const mapsetTitle = this.closest('.mapset-card').querySelector('.mapset-title')
+                        .textContent;
+
                     if (confirm(
-                            'Apakah Anda yakin ingin menghapus mapset ini?\n\nTindakan ini tidak dapat dibatalkan dan akan menghapus semua data geografis yang terkait.'
+                            `Apakah Anda yakin ingin menghapus mapset "${mapsetTitle}"?\n\nTindakan ini tidak dapat dibatalkan dan akan menghapus semua data geografis yang terkait.`
                         )) {
                         this.submit();
                     }
                 });
             });
 
-            // Lazy loading for map previews
-            const mapPreviews = document.querySelectorAll('.map-preview img');
-            const imageObserver = new IntersectionObserver((entries, observer) => {
+            // Card entrance animation
+            const cards = document.querySelectorAll('.mapset-card');
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const cardObserver = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        const img = entry.target;
-                        img.style.opacity = '0';
-                        img.onload = () => {
-                            img.style.transition = 'opacity 0.3s ease';
-                            img.style.opacity = '1';
-                        };
-                        observer.unobserve(img);
+                        entry.target.style.opacity = '0';
+                        entry.target.style.transform = 'translateY(30px)';
+
+                        setTimeout(() => {
+                            entry.target.style.transition = 'all 0.6s ease';
+                            entry.target.style.opacity = '1';
+                            entry.target.style.transform = 'translateY(0)';
+                        }, Math.random() * 200);
+
+                        cardObserver.unobserve(entry.target);
                     }
                 });
+            }, observerOptions);
+
+            cards.forEach(card => {
+                cardObserver.observe(card);
             });
 
-            mapPreviews.forEach(img => imageObserver.observe(img));
+            // Stat item hover effects
+            const statItems = document.querySelectorAll('.stat-item');
+            statItems.forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-3px) scale(1.05)';
+                });
+
+                item.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
         });
     </script>
 @endpush
-{{-- 
-@endsection
-
-@push('styles')
-<style>
-    .mapset-card {
-        transition: all 0.3s ease;
-        border: none;
-        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .mapset-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
-    }
-
-    .topic-badge {
-        color: white;
-        padding: 4px 12px;
-        border-radius: 15px;
-        font-size: 0.8rem;
-        font-weight: 500;
-    }
-
-    .header-badge {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-        padding: 4px 8px;
-        border-radius: 10px;
-        font-size: 0.75rem;
-    }
-
-    .stats-item {
-        text-align: center;
-        padding: 10px;
-        background: #f8f9fa;
-        border-radius: 8px;
-    }
-
-    .stats-icon {
-        color: #4154f1;
-        font-size: 1.2rem;
-        margin-bottom: 5px;
-    }
-
-    .stats-number {
-        font-weight: bold;
-        color: #2c3e50;
-        font-size: 1.1rem;
-    }
-
-    .stats-label {
-        font-size: 0.8rem;
-        color: #6c757d;
-        margin-top: 2px;
-    }
-
-    .btn-view {
-        background: linear-gradient(135deg, #4154f1, #2940d3);
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-weight: 500;
-    }
-
-    .btn-view:hover {
-        background: linear-gradient(135deg, #2940d3, #1f2db5);
-        color: white;
-        transform: translateY(-1px);
-    }
-
-    .time-badge {
-        background: #e9ecef;
-        color: #6c757d;
-        padding: 4px 8px;
-        border-radius: 10px;
-        font-size: 0.75rem;
-    }
-
-    .map-preview {
-        position: relative;
-        overflow: hidden;
-    }
-
-    .filter-section {
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        margin-bottom: 30px;
-    }
-
-    .search-box {
-        position: relative;
-    }
-
-    .search-icon {
-        position: absolute;
-        left: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #6c757d;
-        z-index: 5;
-    }
-
-    .search-box input {
-        padding-left: 45px;
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-    }
-
-    .empty-state-icon {
-        font-size: 6rem;
-        color: #e9ecef;
-        margin-bottom: 30px;
-    }
-
-    .page-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 30px;
-        border-radius: 15px;
-        margin-bottom: 30px;
-    }
-
-    .page-header h2 {
-        margin: 0;
-        font-weight: 600;
-    }
-
-    .page-header p {
-        margin: 0;
-        opacity: 0.9;
-    }
-
-    .btn-primary-custom {
-        background: linear-gradient(135deg, #4154f1, #2940d3);
-        border: none;
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-    }
-
-    .btn-primary-custom:hover {
-        background: linear-gradient(135deg, #2940d3, #1f2db5);
-        transform: translateY(-1px);
-        box-shadow: 0 5px 15px rgba(65, 84, 241, 0.3);
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .mapset-card {
-        animation: fadeIn 0.5s ease;
-    }
-</style>
-@endpush
-
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Auto submit form on filter change
-        const topicSelect = document.querySelector('select[name="topic"]');
-        const sortSelect = document.querySelector('select[name="sort"]');
-
-        [topicSelect, sortSelect].forEach(select => {
-            if (select) {
-                select.addEventListener('change', function() {
-                    this.closest('form').submit();
-                });
-            }
-        });
-
-        // Search functionality with debounce
-        const searchInput = document.querySelector('input[name="search"]');
-        let searchTimeout;
-
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    this.closest('form').submit();
-                }, 500);
-            });
-        }
-
-        // Card hover animations
-        const mapsetCards = document.querySelectorAll('.mapset-card');
-        mapsetCards.forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-8px) scale(1.02)';
-            });
-
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0) scale(1)';
-            });
-        });
-
-        // Confirm delete with better styling
-        const deleteForms = document.querySelectorAll('form[action*="destroy"]');
-        deleteForms.forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-
-                if (confirm(
-                        'Apakah Anda yakin ingin menghapus mapset ini?\n\nTindakan ini tidak dapat dibatalkan dan akan menghapus semua data geografis yang terkait.'
-                    )) {
-                    this.submit();
-                }
-            });
-        });
-
-        // Lazy loading for map previews
-        const mapPreviews = document.querySelectorAll('.map-preview img');
-        const imageObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    img.style.opacity = '0';
-                    img.onload = () => {
-                        img.style.transition = 'opacity 0.3s ease';
-                        img.style.opacity = '1';
-                    };
-                    observer.unobserve(img);
-                }
-            });
-        });
-
-        mapPreviews.forEach(img => imageObserver.observe(img));
-    });
-</script>
-@endpush --}}

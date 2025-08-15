@@ -30,7 +30,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/{slug}', [DatasetController::class, 'show'])->name('show');
         Route::get('/{id}/statistics', [DatasetController::class, 'statistics'])->name('statistics');
         Route::get('/{id}/search', [DatasetController::class, 'search'])->name('search');
-        Route::delete('/{id}', [DatasetController::class, 'destroy'])->name('destroy');
+        Route::delete('/{slug}', [DatasetController::class, 'destroy'])->name('destroy');
     });
     
     // HAPUS ROUTE HISTORY YANG DI LUAR GRUP INI
@@ -43,9 +43,31 @@ Route::middleware('auth')->group(function () {
         Route::get('/dataset/{id}', [DatasetController::class, 'api'])->name('dataset.api');
     });
 
-    Route::resource('mapset', MapsetController::class);
-    Route::get('mapset/{mapset}/download-geojson', [MapsetController::class, 'downloadGeojson'])
-    ->name('mapset.download-geojson');
+    // Main mapset routes
+    Route::get('/mapset', [MapsetController::class, 'index'])->name('mapset.index');
+    Route::get('/mapset/create', [MapsetController::class, 'create'])->name('mapset.create');
+    Route::post('/mapset', [MapsetController::class, 'store'])->name('mapset.store');
+    Route::get('/mapset/{uuid}', [MapsetController::class, 'show'])->name('mapset.show');
+    Route::get('/mapset/{uuid}/edit', [MapsetController::class, 'edit'])->name('mapset.edit');
+    Route::put('/mapset/{uuid}', [MapsetController::class, 'update'])->name('mapset.update');
+    Route::delete('/mapset/{uuid}', [MapsetController::class, 'destroy'])->name('mapset.destroy');
+    
+    // Map view
+    Route::get('/mapset-map', [MapsetController::class, 'map'])->name('mapset.map');
+    
+    // API endpoints
+    Route::get('/api/mapset/geojson', [MapsetController::class, 'geojson'])->name('mapset.geojson');
+    Route::get('/api/mapset/{uuid}/data', [MapsetController::class, 'getMapsetData'])->name('mapset.data');
+    Route::get('/api/mapset/statistics', [MapsetController::class, 'getStatistics'])->name('mapset.statistics');
+    Route::get('/api/mapset/dbf-columns', [MapsetController::class, 'getDbfColumns'])->name('mapset.dbf-columns');
+    Route::get('/api/mapset/dbf-values/{column}', [MapsetController::class, 'getDbfColumnValues'])->name('mapset.dbf-values');
+    
+    // Download endpoints
+    Route::get('/mapset/{uuid}/download/geojson', [MapsetController::class, 'downloadGeojson'])->name('mapset.download.geojson');
+    
+    // Debug endpoints (only in development)
+    Route::post('/api/mapset/debug/shapefile', [MapsetController::class, 'debugShapefile'])->name('mapset.debug.shapefile');
+    Route::post('/api/mapset/debug/kmz', [MapsetController::class, 'debugKmz'])->name('mapset.debug.kmz');
 });
 
 // 🎯 DATASET ROUTES (for all users)

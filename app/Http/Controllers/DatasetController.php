@@ -665,10 +665,10 @@ public function update(Request $request, $id)
         }
     }
 
-    public function destroy($id)
+    public function destroy($slug)
     {
         try {
-            $dataset = Dataset::findOrFail($id);
+           $dataset = Dataset::where('slug', $slug)->firstOrFail();
             
             // Delete file from storage if exists
             if (isset($dataset->file_path) && Storage::disk('public')->exists($dataset->file_path)) {
@@ -677,7 +677,7 @@ public function update(Request $request, $id)
             
             $dataset->delete();
             
-            return redirect()->route('dataset.index')
+            return redirect()->back()
                 ->with('success', 'Dataset berhasil dihapus!');
                 
         } catch (\Exception $e) {

@@ -331,10 +331,24 @@
     </div>
 
     <section class="section">
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+
         <div class="row">
             <div class="col-12">
                 <div class="history-container">
-
 
                     <div class="history-content">
                         <!-- Filter Section -->
@@ -347,17 +361,17 @@
                                         <option value="pending"
                                             {{ request('approval_status') == 'pending' ? 'selected' : '' }}>Menunggu
                                         </option>
-                                        <option value="approved"
+                                        {{-- <option value="approved"
                                             {{ request('approval_status') == 'approved' ? 'selected' : '' }}>Disetujui
-                                        </option>
+                                        </option> --}}
                                         <option value="rejected"
                                             {{ request('approval_status') == 'rejected' ? 'selected' : '' }}>Ditolak
                                         </option>
                                         <option value="revision"
                                             {{ request('approval_status') == 'revision' ? 'selected' : '' }}>Perlu Revisi
                                         </option>
-                                        <option value="draft"
-                                            {{ request('approval_status') == 'draft' ? 'selected' : '' }}>Draft</option>
+                                        {{-- <option value="draft"
+                                            {{ request('approval_status') == 'draft' ? 'selected' : '' }}>Draft</option> --}}
                                     </select>
                                 </div>
 
@@ -429,6 +443,44 @@
                                                         <i class="bi bi-file-text me-1"></i>Draft
                                                 @endswitch
                                             </span>
+
+                                            <!-- Tombol Titik Tiga -->
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-link text-muted p-0" type="button"
+                                                    id="dropdownMenuButton{{ $dataset->id }}" data-bs-toggle="dropdown"
+                                                    aria-expanded="false">
+                                                    <i class="bi bi-three-dots-vertical"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end"
+                                                    aria-labelledby="dropdownMenuButton{{ $dataset->id }}">
+                                                    <li>
+                                                        <a class="dropdown-item"
+                                                            href="{{ route('dataset.show', $dataset->slug) }}">
+                                                            <i class="bi bi-eye"></i> View Detail
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item"
+                                                            href="{{ route('dataset.edit', $dataset->slug) }}">
+                                                            <i class="bi bi-pencil"></i> Edit
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <hr class="dropdown-divider">
+                                                    </li>
+                                                    <li>
+                                                        <form action="{{ route('dataset.destroy', $dataset->slug) }}"
+                                                            method="POST" class="d-inline"
+                                                            onsubmit="return confirm('Apakah Anda yakin ingin menghapus dataset ini?')">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="dropdown-item text-danger">
+                                                                <i class="bi bi-trash"></i> Hapus
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                </ul>
+                                            </div>
                                         </div>
                                     </div>
 
