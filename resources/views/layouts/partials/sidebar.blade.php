@@ -3,18 +3,18 @@
 
     <ul class="sidebar-nav" id="sidebar-nav">
 
+        <!-- Beranda -->
         <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+            <a class="nav-link {{ request()->routeIs('dashboard') ? '' : 'collapsed' }}" href="{{ route('dashboard') }}">
                 <i class="bi bi-house-door"></i>
                 <span>Beranda</span>
             </a>
-        </li><!-- End Beranda Nav -->
+        </li>
 
         <!-- Dataset Management -->
         <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('dataset.*') && !request()->routeIs('admin.*') ? 'active' : 'collapsed' }}"
-                data-bs-target="#dataset-nav" data-bs-toggle="collapse" href="#"
-                aria-expanded="{{ request()->routeIs('dataset.*') && !request()->routeIs('admin.*') ? 'true' : 'false' }}">
+            <a class="nav-link {{ request()->routeIs('dataset.*') && !request()->routeIs('admin.*') ? '' : 'collapsed' }}"
+                data-bs-target="#dataset-nav" data-bs-toggle="collapse" href="#">
                 <i class="bi bi-database"></i>
                 <span>Dataset</span>
                 <i class="bi bi-chevron-down ms-auto"></i>
@@ -60,13 +60,12 @@
                     </a>
                 </li>
             </ul>
-        </li><!-- End Dataset Nav -->
+        </li>
 
         <!-- Admin Only - Dataset Approval -->
         <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('admin.dataset-approval.*') ? 'active' : 'collapsed' }}"
-                data-bs-target="#dataset-approval-nav" data-bs-toggle="collapse" href="#"
-                aria-expanded="{{ request()->routeIs('admin.dataset-approval.*') ? 'true' : 'false' }}">
+            <a class="nav-link {{ request()->routeIs('admin.dataset-approval.*') ? '' : 'collapsed' }}"
+                data-bs-target="#dataset-approval-nav" data-bs-toggle="collapse" href="#">
                 <i class="bi bi-shield-check"></i>
                 <span>Dataset Approval</span>
                 <i class="bi bi-chevron-down ms-auto"></i>
@@ -106,9 +105,8 @@
 
         <!-- Infografis -->
         <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('infografis.*') ? 'active' : 'collapsed' }}"
-                data-bs-target="#infografis-nav" data-bs-toggle="collapse" href="#"
-                aria-expanded="{{ request()->routeIs('infografis.*') ? 'true' : 'false' }}">
+            <a class="nav-link {{ request()->routeIs('infografis.*') ? '' : 'collapsed' }}"
+                data-bs-target="#infografis-nav" data-bs-toggle="collapse" href="#">
                 <i class="bi bi-bar-chart-line"></i>
                 <span>Infografis</span>
                 <i class="bi bi-chevron-down ms-auto"></i>
@@ -141,53 +139,21 @@
                     </a>
                 </li>
             </ul>
-        </li><!-- End Infografis Nav -->
+        </li>
 
         <!-- Mapset -->
         <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('mapset.*') ? 'active' : 'collapsed' }}"
-                data-bs-target="#mapset-nav" data-bs-toggle="collapse" href="#"
-                aria-expanded="{{ request()->routeIs('mapset.*') ? 'true' : 'false' }}">
+            <a class="nav-link {{ request()->routeIs('mapset.*') ? '' : 'collapsed' }}"
+                href="{{ route('mapset.index') }}">
                 <i class="bi bi-geo-alt"></i>
                 <span>Mapset</span>
-                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-            <ul id="mapset-nav" class="nav-content collapse {{ request()->routeIs('mapset.*') ? 'show' : '' }}"
-                data-bs-parent="#sidebar-nav">
-                <li>
-                    <a href="{{ route('mapset.index') }}"
-                        class="{{ request()->routeIs('mapset.index') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Kelola Mapset</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#!" class="{{ request()->routeIs('mapset.category') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Kategori Mapset</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#!" class="{{ request()->routeIs('mapset.formula') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Formula Perhitungan</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#!" class="{{ request()->routeIs('mapset.target') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Target & Capaian</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#!" class="{{ request()->routeIs('mapset.analysis') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Analisis Tren</span>
-                    </a>
-                </li>
-            </ul>
-        </li><!-- End Mapset Nav -->
+        </li>
 
         <!-- Visualisasi -->
         <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('visualisasi.*') ? 'active' : 'collapsed' }}"
-                data-bs-target="#visualisasi-nav" data-bs-toggle="collapse" href="#"
-                aria-expanded="{{ request()->routeIs('visualisasi.*') ? 'true' : 'false' }}">
+            <a class="nav-link {{ request()->routeIs('visualisasi.*') ? '' : 'collapsed' }}"
+                data-bs-target="#visualisasi-nav" data-bs-toggle="collapse" href="#">
                 <i class="bi bi-graph-up"></i>
                 <span>Visualisasi</span>
                 <i class="bi bi-chevron-down ms-auto"></i>
@@ -221,11 +187,11 @@
                     </a>
                 </li>
             </ul>
-        </li><!-- End Visualisasi Nav -->
+        </li>
 
         <!-- Organisasi -->
         <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('organisasi.profile') ? 'active' : '' }}" href="">
+            <a class="nav-link {{ request()->routeIs('organisasi.*') ? '' : 'collapsed' }}" href="">
                 <i class="bi bi-building"></i>
                 <span>Profil Organisasi</span>
             </a>
@@ -236,27 +202,27 @@
 
         <!-- Settings -->
         <li class="nav-item">
-            <a class="nav-link" href="#!">
+            <a class="nav-link collapsed" href="#!">
                 <i class="bi bi-gear"></i>
                 <span>Pengaturan</span>
             </a>
-        </li><!-- End Pengaturan Nav -->
+        </li>
 
         <!-- Security -->
         <li class="nav-item">
-            <a class="nav-link" href="#!">
+            <a class="nav-link collapsed" href="#!">
                 <i class="bi bi-shield-check"></i>
                 <span>Keamanan</span>
             </a>
-        </li><!-- End Keamanan Nav -->
+        </li>
 
         <!-- Activity Log -->
         <li class="nav-item">
-            <a class="nav-link" href="#!">
+            <a class="nav-link collapsed" href="#!">
                 <i class="bi bi-clock-history"></i>
                 <span>Log Aktivitas</span>
             </a>
-        </li><!-- End Log Aktivitas Nav -->
+        </li>
 
     </ul>
 
