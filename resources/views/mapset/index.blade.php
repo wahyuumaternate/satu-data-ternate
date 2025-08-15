@@ -128,13 +128,9 @@
                                         </div>
                                         <div class="stat-content">
                                             <div class="stat-number">
-                                                @if ($mapset->hasGeometry())
-                                                    <i class="bi bi-check-circle text-success fs-5"></i>
-                                                @else
-                                                    <i class="bi bi-x-circle text-danger fs-5"></i>
-                                                @endif
+                                                {{ $mapset->getFeaturesWithGeometryCount() }}
                                             </div>
-                                            <div class="stat-label">Geometry</div>
+                                            <div class="stat-label">Features</div>
                                         </div>
                                     </div>
 
@@ -148,6 +144,35 @@
                                             <div class="stat-label">Created</div>
                                         </div>
                                     </div>
+                                </div>
+
+                                <!-- Geometry Status Indicator -->
+                                <div class="geometry-status mb-3">
+                                    @if ($mapset->hasGeometry())
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-check-circle text-success me-2"></i>
+                                            <span class="text-success fw-medium">
+                                                {{ $mapset->getFeaturesCount() }} features
+                                                ({{ $mapset->getFeaturesWithGeometryCount() }} dengan geometri)
+                                            </span>
+                                        </div>
+                                        <!-- Show geometry types -->
+                                        @php
+                                            $geometryTypes = $mapset->getGeometryTypes();
+                                        @endphp
+                                        @if (!empty($geometryTypes))
+                                            <div class="geometry-types mt-1">
+                                                @foreach ($geometryTypes as $type)
+                                                    <span class="badge bg-light text-dark me-1">{{ $type }}</span>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    @else
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-x-circle text-danger me-2"></i>
+                                            <span class="text-danger">Tidak ada geometri</span>
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <!-- Action Buttons -->
@@ -168,18 +193,20 @@
                                                     <i class="bi bi-pencil me-2 text-primary"></i>Edit
                                                 </a>
                                             </li>
-                                            <li>
-                                                <a class="dropdown-item"
-                                                    href="{{ route('mapset.download.geojson', $mapset->uuid) }}">
-                                                    <i class="bi bi-download me-2 text-success"></i>Download GeoJSON
-                                                </a>
-                                            </li>
+                                            @if ($mapset->hasGeometry())
+                                                <li>
+                                                    <a class="dropdown-item"
+                                                        href="{{ route('mapset.download.geojson', $mapset->uuid) }}">
+                                                        <i class="bi bi-download me-2 text-success"></i>Download GeoJSON
+                                                    </a>
+                                                </li>
+                                            @endif
                                             <li>
                                                 <hr class="dropdown-divider">
                                             </li>
                                             <li>
-                                                <form action="{{ route('mapset.destroy', $mapset->uuid) }}" method="POST"
-                                                    class="d-inline delete-form">
+                                                <form action="{{ route('mapset.destroy', $mapset->uuid) }}"
+                                                    method="POST" class="d-inline delete-form">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="dropdown-item text-danger">
@@ -370,6 +397,24 @@
             font-weight: 500;
         }
 
+        .geometry-status {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+
+        .geometry-types {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .geometry-types .badge {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+        }
+
         .action-buttons {
             display: flex;
             gap: 10px;
@@ -530,39 +575,6 @@
         .dropdown-item:hover {
             background: #f8f9fa;
             transform: translateX(3px);
-        }
-
-        /* Topic color mapping helper */
-        .card-header-custom[style*="#0d6efd"] {
-            background: linear-gradient(135deg, #0d6efd, #0056b3) !important;
-        }
-
-        .card-header-custom[style*="#6c757d"] {
-            background: linear-gradient(135deg, #6c757d, #495057) !important;
-        }
-
-        .card-header-custom[style*="#ffc107"] {
-            background: linear-gradient(135deg, #ffc107, #e0a800) !important;
-        }
-
-        .card-header-custom[style*="#0dcaf0"] {
-            background: linear-gradient(135deg, #0dcaf0, #0aa2c0) !important;
-        }
-
-        .card-header-custom[style*="#198754"] {
-            background: linear-gradient(135deg, #198754, #146c43) !important;
-        }
-
-        .card-header-custom[style*="#20c997"] {
-            background: linear-gradient(135deg, #20c997, #1aa179) !important;
-        }
-
-        .card-header-custom[style*="#6f42c1"] {
-            background: linear-gradient(135deg, #6f42c1, #59359a) !important;
-        }
-
-        .card-header-custom[style*="#212529"] {
-            background: linear-gradient(135deg, #212529, #16181b) !important;
         }
     </style>
 @endpush

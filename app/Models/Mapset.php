@@ -18,7 +18,6 @@ class Mapset extends Model
         'nama',
         'deskripsi',
         'gambar',
-        'dbf_attributes',
         'topic',
         'is_visible',
         'is_active',
@@ -26,7 +25,6 @@ class Mapset extends Model
     ];
 
     protected $casts = [
-        'dbf_attributes' => 'array',
         'is_visible' => 'boolean',
         'is_active' => 'boolean',
         'views' => 'integer',
@@ -55,6 +53,14 @@ class Mapset extends Model
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Get the features associated with this mapset
+     */
+    public function features()
+    {
+        return $this->hasMany(MapsetFeature::class);
+    }
+
     // === SCOPES ===
 
     /**
@@ -81,7 +87,9 @@ class Mapset extends Model
         return $query->where(function($q) use ($search) {
             $q->where('nama', 'like', "%{$search}%")
               ->orWhere('deskripsi', 'like', "%{$search}%")
-              ->orWhereRaw("dbf_attributes::text ILIKE ?", ["%{$search}%"]);
+              ->orWhereHas('features', function($featureQuery) use ($search) {
+                  $featureQuery->whereRaw("attributes::text ILIKE ?", ["%{$search}%"]);
+              });
         });
     }
 
@@ -138,21 +146,29 @@ class Mapset extends Model
         return $this->is_visible ? 'success' : 'secondary';
     }
 
-    // === GEOMETRY METHODS ===
+    // === GEOMETRY METHODS (UPDATED FOR NEW SCHEMA) ===
 
     /**
-     * Get coordinates as GeoJSON
+     * Get all coordinates as GeoJSON FeatureCollection
      */
     public function getCoordinates()
     {
         try {
-            $result = DB::select("SELECT ST_AsGeoJSON(geom) as geojson FROM mapsets WHERE id = ?", [$this->id]);
+            $features = $this->features()->whereNotNull('geom')->get();
             
-            if ($result && $result[0]->geojson) {
-                return json_decode($result[0]->geojson, true);
+            if ($features->isEmpty()) {
+                return null;
             }
-            
-            return null;
+
+            $geojsonFeatures = [];
+            foreach ($features as $feature) {
+                $geojsonFeatures[] = $feature->toGeoJsonFeature();
+            }
+
+            return [
+                'type' => 'FeatureCollection',
+                'features' => $geojsonFeatures
+            ];
         } catch (\Exception $e) {
             Log::error('Error getting coordinates for mapset ' . $this->id . ': ' . $e->getMessage());
             return null;
@@ -160,22 +176,22 @@ class Mapset extends Model
     }
 
     /**
-     * Get geometry bounds
+     * Get geometry bounds from all features
      */
     public function getBounds()
     {
         try {
             $result = DB::select("
                 SELECT 
-                    ST_XMin(ST_Envelope(geom)) as min_lng,
-                    ST_YMin(ST_Envelope(geom)) as min_lat,
-                    ST_XMax(ST_Envelope(geom)) as max_lng,
-                    ST_YMax(ST_Envelope(geom)) as max_lat
-                FROM mapsets 
-                WHERE id = ? AND geom IS NOT NULL
+                    ST_XMin(ST_Envelope(ST_Collect(geom))) as min_lng,
+                    ST_YMin(ST_Envelope(ST_Collect(geom))) as min_lat,
+                    ST_XMax(ST_Envelope(ST_Collect(geom))) as max_lng,
+                    ST_YMax(ST_Envelope(ST_Collect(geom))) as max_lat
+                FROM mapset_features 
+                WHERE mapset_id = ? AND geom IS NOT NULL
             ", [$this->id]);
             
-            if ($result && $result[0]) {
+            if ($result && $result[0] && $result[0]->min_lng !== null) {
                 return [
                     [$result[0]->min_lat, $result[0]->min_lng],
                     [$result[0]->max_lat, $result[0]->max_lng]
@@ -190,17 +206,17 @@ class Mapset extends Model
     }
 
     /**
-     * Get geometry center point
+     * Get geometry center point from all features
      */
     public function getCenterPoint()
     {
         try {
             $result = DB::select("
                 SELECT 
-                    ST_X(ST_Centroid(geom)) as lng,
-                    ST_Y(ST_Centroid(geom)) as lat
-                FROM mapsets 
-                WHERE id = ? AND geom IS NOT NULL
+                    ST_X(ST_Centroid(ST_Collect(geom))) as lng,
+                    ST_Y(ST_Centroid(ST_Collect(geom))) as lat
+                FROM mapset_features 
+                WHERE mapset_id = ? AND geom IS NOT NULL
             ", [$this->id]);
             
             if ($result && $result[0]) {
@@ -223,29 +239,70 @@ class Mapset extends Model
     public function hasGeometry()
     {
         try {
-            $result = DB::select("SELECT 1 FROM mapsets WHERE id = ? AND geom IS NOT NULL", [$this->id]);
-            return !empty($result);
+            return $this->features()->whereNotNull('geom')->exists();
         } catch (\Exception $e) {
             return false;
         }
     }
 
     /**
-     * Get geometry type
+     * Get count of features with geometry
      */
-    public function getGeometryType()
+    public function getGeometryCount()
     {
         try {
-            $result = DB::select("SELECT ST_GeometryType(geom) as geom_type FROM mapsets WHERE id = ?", [$this->id]);
-            
-            if ($result && $result[0]->geom_type) {
-                return str_replace('ST_', '', $result[0]->geom_type);
-            }
-            
-            return null;
+            return $this->features()->whereNotNull('geom')->count();
         } catch (\Exception $e) {
-            return null;
+            return 0;
         }
+    }
+
+    /**
+     * Get geometry types present in this mapset
+     */
+    public function getGeometryTypes()
+    {
+        try {
+            $result = DB::select("
+                SELECT DISTINCT ST_GeometryType(geom) as geom_type 
+                FROM mapset_features 
+                WHERE mapset_id = ? AND geom IS NOT NULL
+            ", [$this->id]);
+            
+            return array_map(function($item) {
+                return str_replace('ST_', '', $item->geom_type);
+            }, $result);
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    // === FEATURE METHODS ===
+
+    /**
+     * Get features count
+     */
+    public function getFeaturesCount()
+    {
+        return $this->features()->count();
+    }
+
+    /**
+     * Get features with geometry count
+     */
+    public function getFeaturesWithGeometryCount()
+    {
+        return $this->features()->whereNotNull('geom')->count();
+    }
+
+    /**
+     * Search in features attributes
+     */
+    public function searchInFeaturesAttributes($search)
+    {
+        return $this->features()
+                   ->whereRaw("attributes::text ILIKE ?", ["%{$search}%"])
+                   ->exists();
     }
 
     // === UTILITY METHODS ===
@@ -283,19 +340,19 @@ class Mapset extends Model
     public function getTopicColor()
     {
         $colors = [
-            'Ekonomi' => 'primary',
-            'Infrastruktur' => 'secondary',
-            'Kemiskinan' => 'warning',
-            'Kependudukan' => 'info',
-            'Kesehatan' => 'success',
-            'Lingkungan Hidup' => 'success',
-            'Pariwisata & Kebudayaan' => 'purple',
-            'Pemerintah & Desa' => 'dark',
-            'Pendidikan' => 'primary',
-            'Sosial' => 'info'
+            'Ekonomi' => '#0d6efd',
+            'Infrastruktur' => '#6c757d',
+            'Kemiskinan' => '#ffc107',
+            'Kependudukan' => '#0dcaf0',
+            'Kesehatan' => '#198754',
+            'Lingkungan Hidup' => '#20c997',
+            'Pariwisata & Kebudayaan' => '#6f42c1',
+            'Pemerintah & Desa' => '#212529',
+            'Pendidikan' => '#0d6efd',
+            'Sosial' => '#0dcaf0'
         ];
 
-        return $colors[$this->topic] ?? 'secondary';
+        return $colors[$this->topic] ?? '#6c757d';
     }
 
     /**
@@ -304,50 +361,19 @@ class Mapset extends Model
     public function getTopicIcon()
     {
         $icons = [
-            'Ekonomi' => 'fas fa-chart-line',
-            'Infrastruktur' => 'fas fa-road',
-            'Kemiskinan' => 'fas fa-hand-holding-heart',
-            'Kependudukan' => 'fas fa-users',
-            'Kesehatan' => 'fas fa-heartbeat',
-            'Lingkungan Hidup' => 'fas fa-leaf',
-            'Pariwisata & Kebudayaan' => 'fas fa-camera',
-            'Pemerintah & Desa' => 'fas fa-landmark',
-            'Pendidikan' => 'fas fa-graduation-cap',
-            'Sosial' => 'fas fa-hands-helping'
+            'Ekonomi' => 'bi bi-graph-up',
+            'Infrastruktur' => 'bi bi-building',
+            'Kemiskinan' => 'bi bi-heart',
+            'Kependudukan' => 'bi bi-people',
+            'Kesehatan' => 'bi bi-heart-pulse',
+            'Lingkungan Hidup' => 'bi bi-tree',
+            'Pariwisata & Kebudayaan' => 'bi bi-camera',
+            'Pemerintah & Desa' => 'bi bi-building-gear',
+            'Pendidikan' => 'bi bi-mortarboard',
+            'Sosial' => 'bi bi-people-fill'
         ];
 
-        return $icons[$this->topic] ?? 'fas fa-map';
-    }
-
-    /**
-     * Search in DBF attributes
-     */
-    public function searchInAttributes($search)
-    {
-        if (!$this->dbf_attributes || empty($search)) {
-            return false;
-        }
-
-        $attributesText = json_encode($this->dbf_attributes);
-        return stripos($attributesText, $search) !== false;
-    }
-
-    /**
-     * Get specific DBF attribute
-     */
-    public function getDbfAttribute($key, $default = null)
-    {
-        return $this->dbf_attributes[$key] ?? $default;
-    }
-
-    /**
-     * Set DBF attribute
-     */
-    public function setDbfAttribute($key, $value)
-    {
-        $attributes = $this->dbf_attributes ?? [];
-        $attributes[$key] = $value;
-        $this->dbf_attributes = $attributes;
+        return $icons[$this->topic] ?? 'bi bi-geo-alt';
     }
 
     /**
@@ -416,26 +442,31 @@ class Mapset extends Model
     }
 
     /**
-     * Convert to GeoJSON Feature
+     * Convert to GeoJSON FeatureCollection
      */
-    public function toGeoJsonFeature()
+    public function toGeoJsonFeatureCollection()
     {
-        $geometry = $this->getCoordinates();
+        $features = $this->features()->whereNotNull('geom')->get();
+        
+        $geojsonFeatures = [];
+        foreach ($features as $feature) {
+            $geojsonFeatures[] = $feature->toGeoJsonFeature();
+        }
         
         return [
-            'type' => 'Feature',
+            'type' => 'FeatureCollection',
             'properties' => [
-                'id' => $this->id,
-                'uuid' => $this->uuid,
-                'nama' => $this->nama,
-                'deskripsi' => $this->deskripsi,
-                'topic' => $this->topic,
-                'views' => $this->views,
-                'is_visible' => $this->is_visible,
-                'created_at' => $this->created_at->toISOString(),
-                'dbf_attributes' => $this->dbf_attributes,
+                'mapset_id' => $this->id,
+                'mapset_uuid' => $this->uuid,
+                'mapset_name' => $this->nama,
+                'mapset_description' => $this->deskripsi,
+                'mapset_topic' => $this->topic,
+                'mapset_views' => $this->views,
+                'mapset_is_visible' => $this->is_visible,
+                'mapset_created_at' => $this->created_at->toISOString(),
+                'features_count' => count($geojsonFeatures),
             ],
-            'geometry' => $geometry
+            'features' => $geojsonFeatures
         ];
     }
 
@@ -458,8 +489,14 @@ class Mapset extends Model
                                ->groupBy('topic')
                                ->pluck('count', 'topic')
                                ->toArray(),
-            'with_geometry' => $query->whereNotNull('geom')->count(),
-            'without_geometry' => $query->whereNull('geom')->count(),
+            'with_geometry' => $query->whereHas('features', function($q) {
+                                  $q->whereNotNull('geom');
+                              })->count(),
+            'total_features' => DB::table('mapset_features')
+                                 ->join('mapsets', 'mapset_features.mapset_id', '=', 'mapsets.id')
+                                 ->where('mapsets.user_id', $userId)
+                                 ->where('mapsets.is_active', true)
+                                 ->count(),
         ];
     }
 
@@ -470,6 +507,7 @@ class Mapset extends Model
     {
         return static::visible()
                     ->active()
+                    ->with(['features', 'user'])
                     ->orderBy('views', 'desc')
                     ->limit($limit)
                     ->get();
@@ -482,6 +520,7 @@ class Mapset extends Model
     {
         return static::visible()
                     ->active()
+                    ->with(['features', 'user'])
                     ->orderBy('created_at', 'desc')
                     ->limit($limit)
                     ->get();
@@ -492,7 +531,7 @@ class Mapset extends Model
      */
     public static function searchMapsets($query, $filters = [])
     {
-        $builder = static::visible()->active();
+        $builder = static::visible()->active()->with(['features', 'user']);
 
         if (!empty($query)) {
             $builder->search($query);
@@ -516,8 +555,11 @@ class Mapset extends Model
     {
         return static::visible()
                     ->active()
-                    ->whereRaw("ST_Intersects(geom, ST_MakeEnvelope(?, ?, ?, ?, 4326))", 
-                             [$minLng, $minLat, $maxLng, $maxLat])
+                    ->whereHas('features', function($query) use ($minLat, $minLng, $maxLat, $maxLng) {
+                        $query->whereRaw("ST_Intersects(geom, ST_MakeEnvelope(?, ?, ?, ?, 4326))", 
+                                        [$minLng, $minLat, $maxLng, $maxLat]);
+                    })
+                    ->with(['features', 'user'])
                     ->get();
     }
 
@@ -528,19 +570,23 @@ class Mapset extends Model
     {
         return static::visible()
                     ->active()
-                    ->whereRaw("ST_DWithin(geom, ST_SetSRID(ST_MakePoint(?, ?), 4326), ?)", 
-                             [$lng, $lat, $radiusKm * 1000]) // Convert km to meters
+                    ->whereHas('features', function($query) use ($lat, $lng, $radiusKm) {
+                        $query->whereRaw("ST_DWithin(geom, ST_SetSRID(ST_MakePoint(?, ?), 4326), ?)", 
+                                        [$lng, $lat, $radiusKm * 1000]); // Convert km to meters
+                    })
+                    ->with(['features', 'user'])
                     ->get();
     }
 
-     public function getStatusColor(): string
+    public function getStatusColor(): string
     {
         if ($this->is_active) {
             return 'success'; // hijau
         }
         return 'danger'; // merah
     }
-     public function getStatusLabel(): string
+
+    public function getStatusLabel(): string
     {
         return $this->is_active ? 'Aktif' : 'Nonaktif';
     }

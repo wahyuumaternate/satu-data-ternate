@@ -38,12 +38,14 @@
                                                 <i class="bi bi-pencil me-2 text-primary"></i>Edit Mapset
                                             </a>
                                         </li>
-                                        <li>
-                                            <a class="dropdown-item"
-                                                href="{{ route('mapset.download.geojson', $mapset->uuid) }}">
-                                                <i class="bi bi-download me-2 text-success"></i>Download GeoJSON
-                                            </a>
-                                        </li>
+                                        @if ($mapset->hasGeometry())
+                                            <li>
+                                                <a class="dropdown-item"
+                                                    href="{{ route('mapset.download.geojson', $mapset->uuid) }}">
+                                                    <i class="bi bi-download me-2 text-success"></i>Download GeoJSON
+                                                </a>
+                                            </li>
+                                        @endif
                                         <li>
                                             <hr class="dropdown-divider">
                                         </li>
@@ -81,7 +83,7 @@
 
                         <!-- Statistics Row -->
                         <div class="row g-3">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="d-flex align-items-center p-3 bg-light rounded">
                                     <div class="stat-icon bg-primary text-white rounded-circle me-3">
                                         <i class="bi bi-eye"></i>
@@ -92,20 +94,31 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="d-flex align-items-center p-3 bg-light rounded">
-                                    <div class="stat-icon bg-primary text-white rounded-circle me-3">
+                                    <div class="stat-icon bg-success text-white rounded-circle me-3">
                                         <i class="bi bi-geo-alt"></i>
                                     </div>
                                     <div>
-                                        <h6 class="mb-0">{{ $mapset->getGeometryType() ?? 'Unknown' }}</h6>
-                                        <small class="text-muted">Tipe Geometri</small>
+                                        <h6 class="mb-0">{{ $mapset->getFeaturesCount() }}</h6>
+                                        <small class="text-muted">Total Features</small>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="d-flex align-items-center p-3 bg-light rounded">
-                                    <div class="stat-icon bg-primary text-white rounded-circle me-3">
+                                    <div class="stat-icon bg-info text-white rounded-circle me-3">
+                                        <i class="bi bi-layers"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">{{ $mapset->getFeaturesWithGeometryCount() }}</h6>
+                                        <small class="text-muted">With Geometry</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="d-flex align-items-center p-3 bg-light rounded">
+                                    <div class="stat-icon bg-warning text-white rounded-circle me-3">
                                         <i class="bi bi-calendar"></i>
                                     </div>
                                     <div>
@@ -115,65 +128,122 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Geometry Types -->
+                        @php
+                            $geometryTypes = $mapset->getGeometryTypes();
+                        @endphp
+                        @if (!empty($geometryTypes))
+                            <div class="mt-3">
+                                <small class="text-muted d-block mb-2">Tipe Geometri:</small>
+                                @foreach ($geometryTypes as $type)
+                                    <span class="badge bg-light text-dark me-1">{{ $type }}</span>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
                 </div>
 
                 <!-- Map Card -->
                 <div class="card mb-4">
                     <div class="card-header bg-primary text-white">
-                        <h5 class="card-title mb-0 text-white">
-                            <i class="bi bi-map me-2"></i>Peta Interaktif
-                        </h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div id="mapContainer"
-                            style="height: 500px; border-radius: 0 0 var(--bs-border-radius) var(--bs-border-radius);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0 text-white">
+                                <i class="bi bi-map me-2"></i>Peta Interaktif
+                            </h5>
+                            <small class="text-white-50">
+                                <i class="bi bi-layers me-1"></i>{{ $mapset->getFeaturesWithGeometryCount() }} Features
+                            </small>
                         </div>
                     </div>
-                    <div class="card-footer bg-light">
-                        <div class="row g-2">
-                            @if ($mapset->hasGeometry())
-                                <div class="col-md-6">
+                    <div class="card-body p-0">
+                        @if ($mapset->hasGeometry())
+                            <div id="mapContainer"
+                                style="height: 500px; border-radius: 0 0 var(--bs-border-radius) var(--bs-border-radius);">
+                            </div>
+                        @else
+                            <div class="text-center p-5">
+                                <i class="bi bi-geo text-muted" style="font-size: 4rem;"></i>
+                                <h5 class="text-muted mt-3">Tidak Ada Data Geometri</h5>
+                                <p class="text-muted">Mapset ini belum memiliki data geometri yang dapat ditampilkan pada
+                                    peta.</p>
+                            </div>
+                        @endif
+                    </div>
+                    @if ($mapset->hasGeometry())
+                        <div class="card-footer bg-light">
+                            <div class="row g-2">
+                                <div class="col-md-4">
                                     <button class="btn btn-outline-primary btn-sm w-100" onclick="centerMap()">
                                         <i class="bi bi-crosshair me-1"></i>Center Peta
                                     </button>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <button class="btn btn-outline-primary btn-sm w-100" onclick="fitBounds()">
                                         <i class="bi bi-arrows-expand me-1"></i>Fit to Bounds
                                     </button>
                                 </div>
-                            @endif
+                                <div class="col-md-4">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="toggleFeatureList()">
+                                        <i class="bi bi-list me-1"></i>List Features
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
 
-                <!-- Data Attributes -->
-                @if ($mapset->dbf_attributes && count($mapset->dbf_attributes) > 0)
-                    <div class="card mb-4">
+                <!-- Features List -->
+                @if ($mapset->features->count() > 0)
+                    <div class="card mb-4" id="featuresCard" style="display: none;">
                         <div class="card-header bg-primary text-white">
                             <h5 class="card-title mb-0 text-white">
-                                <i class="bi bi-table me-2"></i>Data Atribut
+                                <i class="bi bi-list me-2"></i>Daftar Features ({{ $mapset->features->count() }})
                             </h5>
                         </div>
                         <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-striped table-hover mb-0">
-                                    <thead class="table-primary">
-                                        <tr>
-                                            <th class="text-white">Atribut</th>
-                                            <th class="text-white">Nilai</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($mapset->dbf_attributes as $key => $value)
-                                            <tr>
-                                                <td><strong>{{ $key }}</strong></td>
-                                                <td class="text-muted">{!! is_array($value) ? json_encode($value) : $value !!}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                            <div class="row">
+                                @foreach ($mapset->features as $index => $feature)
+                                    <div class="col-md-6 mb-3">
+                                        <div class="feature-item p-3 border rounded">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="mb-0 text-primary">Feature #{{ $index + 1 }}</h6>
+                                                @if ($feature->hasGeometry())
+                                                    <span
+                                                        class="badge bg-success">{{ $feature->getGeometryType() }}</span>
+                                                @else
+                                                    <span class="badge bg-secondary">No Geometry</span>
+                                                @endif
+                                            </div>
+
+                                            @if ($feature->attributes && count($feature->attributes) > 0)
+                                                <div class="feature-attributes">
+                                                    @foreach (array_slice($feature->attributes, 0, 3) as $key => $value)
+                                                        <small class="d-block text-muted">
+                                                            <strong>{{ $key }}:</strong>
+                                                            {{ is_array($value) ? json_encode($value) : $value }}
+                                                        </small>
+                                                    @endforeach
+                                                    @if (count($feature->attributes) > 3)
+                                                        <small class="text-muted">
+                                                            <em>... dan {{ count($feature->attributes) - 3 }} atribut
+                                                                lainnya</em>
+                                                        </small>
+                                                    @endif
+                                                </div>
+                                            @else
+                                                <small class="text-muted">Tidak ada atribut</small>
+                                            @endif
+
+                                            @if ($feature->hasGeometry())
+                                                <button class="btn btn-outline-primary btn-sm mt-2"
+                                                    onclick="focusFeature({{ $index }})">
+                                                    <i class="bi bi-geo-alt me-1"></i>Fokus di Peta
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
                     </div>
@@ -262,7 +332,60 @@
                     </div>
                 </div>
 
+                <!-- Features Summary -->
+                @if ($mapset->features->count() > 0)
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="card-title mb-0 text-white">
+                                <i class="bi bi-pie-chart me-2"></i>Ringkasan Features
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="summary-stats">
+                                <div class="stat-row mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted">Total Features:</span>
+                                        <span class="fw-bold">{{ $mapset->features->count() }}</span>
+                                    </div>
+                                </div>
+                                <div class="stat-row mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted">Dengan Geometri:</span>
+                                        <span
+                                            class="fw-bold text-success">{{ $mapset->getFeaturesWithGeometryCount() }}</span>
+                                    </div>
+                                </div>
+                                <div class="stat-row mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted">Tanpa Geometri:</span>
+                                        <span
+                                            class="fw-bold text-warning">{{ $mapset->features->count() - $mapset->getFeaturesWithGeometryCount() }}</span>
+                                    </div>
+                                </div>
+                            </div>
 
+                            @if (!empty($geometryTypes))
+                                <hr>
+                                <div class="geometry-types">
+                                    <small class="text-muted d-block mb-2">Tipe Geometri:</small>
+                                    @foreach ($geometryTypes as $type)
+                                        @php
+                                            $typeCount = $mapset->features
+                                                ->filter(function ($feature) use ($type) {
+                                                    return $feature->getGeometryType() === $type;
+                                                })
+                                                ->count();
+                                        @endphp
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="badge bg-light text-dark">{{ $type }}</span>
+                                            <small class="text-muted">{{ $typeCount }} features</small>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
@@ -302,9 +425,20 @@
             align-items: center;
             justify-content: center;
             font-size: 1.4rem;
-            background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%);
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
+        }
+
+        .stat-icon.bg-success {
+            background: linear-gradient(135deg, #198754 0%, #146c43 100%) !important;
+        }
+
+        .stat-icon.bg-info {
+            background: linear-gradient(135deg, #0dcaf0 0%, #0aa2c0 100%) !important;
+        }
+
+        .stat-icon.bg-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
         }
 
         .info-item {
@@ -339,6 +473,24 @@
             font-size: 0.9rem;
             margin-left: 2rem;
             color: #6c757d;
+        }
+
+        /* Feature item styling */
+        .feature-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid rgba(13, 110, 253, 0.1) !important;
+            transition: all 0.3s ease;
+        }
+
+        .feature-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.1);
+            border-color: #0d6efd !important;
+        }
+
+        .feature-attributes {
+            max-height: 80px;
+            overflow-y: auto;
         }
 
         /* Map container modern styling */
@@ -393,18 +545,6 @@
             box-shadow: 0 6px 20px rgba(13, 110, 253, 0.3);
         }
 
-        .btn-outline-success {
-            border: 2px solid #198754;
-            background: transparent;
-            color: #198754;
-        }
-
-        .btn-outline-success:hover {
-            background: #198754;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(25, 135, 84, 0.3);
-        }
-
         .btn-outline-secondary {
             border: 2px solid #6c757d;
             background: transparent;
@@ -417,20 +557,18 @@
             box-shadow: 0 6px 20px rgba(108, 117, 125, 0.3);
         }
 
-        /* Table modern styling */
-        .table-primary th {
-            background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%);
-            border: none;
-            font-weight: 600;
-            letter-spacing: 0.5px;
+        /* Summary stats styling */
+        .summary-stats .stat-row {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f1f3f4;
         }
 
-        .table-striped>tbody>tr:nth-of-type(odd)>td {
-            background-color: rgba(13, 110, 253, 0.02);
+        .summary-stats .stat-row:last-child {
+            border-bottom: none;
         }
 
-        .table-hover>tbody>tr:hover>td {
-            background-color: rgba(13, 110, 253, 0.05);
+        .geometry-types .d-flex {
+            padding: 0.25rem 0;
         }
 
         /* Page title modern styling */
@@ -548,19 +686,6 @@
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         }
 
-        /* Modern form control */
-        .form-control {
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 0.7rem 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus {
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
-        }
-
         /* Custom popup styling for map */
         .custom-popup .leaflet-popup-content-wrapper {
             border-radius: 12px;
@@ -574,11 +699,14 @@
 
     <script>
         let map;
-        let mapsetLayer;
+        let featureLayers = [];
+        let mapsetData = null;
 
         // Initialize map
         document.addEventListener('DOMContentLoaded', function() {
-            initMap();
+            @if ($mapset->hasGeometry())
+                initMap();
+            @endif
         });
 
         function initMap() {
@@ -602,9 +730,10 @@
             try {
                 const response = await fetch('{{ route('mapset.data', $mapset->uuid) }}');
                 const data = await response.json();
+                mapsetData = data;
 
-                if (data.geojson) {
-                    displayMapset(data.geojson);
+                if (data.geojson && data.geojson.features) {
+                    displayFeatures(data.geojson);
                 }
 
                 if (data.bounds) {
@@ -613,176 +742,208 @@
 
             } catch (error) {
                 console.error('Error loading mapset data:', error);
-                // Show user-friendly error message
                 showToast('Error loading map data', 'error');
             }
         }
 
-        function displayMapset(geojson) {
-            // Use consistent primary color from NiceAdmin
+        function displayFeatures(geojson) {
             const primaryColor = '#0d6efd';
+            const colors = ['#0d6efd', '#198754', '#dc3545', '#ffc107', '#20c997', '#6f42c1'];
 
-            if (geojson.type === 'Point') {
-                // Create custom marker with primary color
-                const icon = L.divIcon({
-                    className: 'custom-marker',
-                    html: `<div style="
-                        background-color: ${primaryColor}; 
-                        width: 30px; 
-                        height: 30px; 
-                        border-radius: 50%; 
-                        border: 3px solid white; 
-                        box-shadow: 0 3px 8px rgba(13, 110, 253, 0.3);
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        "></div>`,
-                    iconSize: [30, 30],
-                    iconAnchor: [15, 15]
-                });
+            // Clear existing layers
+            featureLayers.forEach(layer => map.removeLayer(layer));
+            featureLayers = [];
 
-                mapsetLayer = L.marker([geojson.coordinates[1], geojson.coordinates[0]], {
-                    icon: icon
-                }).addTo(map);
+            if (geojson.features && geojson.features.length > 0) {
+                geojson.features.forEach((feature, index) => {
+                    const color = colors[index % colors.length];
+                    let layer;
 
-                // Center map on point with appropriate zoom
-                map.setView([geojson.coordinates[1], geojson.coordinates[0]], 12);
-            } else {
-                // Create feature with primary color styling
-                const feature = {
-                    type: 'Feature',
-                    geometry: geojson,
-                    properties: {}
-                };
+                    if (feature.geometry.type === 'Point') {
+                        // Create custom marker for points
+                        const icon = L.divIcon({
+                            className: 'custom-marker',
+                            html: `<div style="
+                                background-color: ${color}; 
+                                width: 30px; 
+                                height: 30px; 
+                                border-radius: 50%; 
+                                border: 3px solid white; 
+                                box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-weight: bold;
+                                color: white;
+                                font-size: 12px;
+                                ">${index + 1}</div>`,
+                            iconSize: [30, 30],
+                            iconAnchor: [15, 15]
+                        });
 
-                const style = {
-                    color: primaryColor,
-                    weight: 3,
-                    fillOpacity: 0.2,
-                    fillColor: primaryColor,
-                    opacity: 0.8
-                };
+                        layer = L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], {
+                            icon: icon
+                        });
+                    } else {
+                        // Style for polygons and lines
+                        const style = {
+                            color: color,
+                            weight: 3,
+                            fillOpacity: 0.2,
+                            fillColor: color,
+                            opacity: 0.8
+                        };
 
-                mapsetLayer = L.geoJSON(feature, {
-                    style: style,
-                    onEachFeature: function(feature, layer) {
-                        // Add hover effects
-                        layer.on({
-                            mouseover: function(e) {
-                                e.target.setStyle({
-                                    weight: 4,
-                                    fillOpacity: 0.3
+                        layer = L.geoJSON(feature, {
+                            style: style,
+                            onEachFeature: function(feature, layer) {
+                                layer.on({
+                                    mouseover: function(e) {
+                                        e.target.setStyle({
+                                            weight: 4,
+                                            fillOpacity: 0.3
+                                        });
+                                    },
+                                    mouseout: function(e) {
+                                        e.target.setStyle(style);
+                                    }
                                 });
-                            },
-                            mouseout: function(e) {
-                                e.target.setStyle(style);
                             }
                         });
                     }
-                }).addTo(map);
 
-                // Fit map to bounds with padding
-                map.fitBounds(mapsetLayer.getBounds(), {
+                    // Create popup content
+                    const properties = feature.properties || {};
+                    let popupContent = `
+                        <div class="text-center p-2">
+                            <h6 class="mb-2 text-primary">Feature #${index + 1}</h6>
+                            <span class="badge bg-primary rounded-pill mb-2">${feature.geometry.type}</span>
+                    `;
+
+                    // Add attributes to popup
+                    const attributeKeys = Object.keys(properties).filter(key =>
+                        !['feature_id', 'mapset_id', 'created_at'].includes(key)
+                    );
+
+                    if (attributeKeys.length > 0) {
+                        popupContent += '<div class="text-start mt-2">';
+                        attributeKeys.slice(0, 3).forEach(key => {
+                            const value = properties[key];
+                            if (value !== null && value !== undefined && value !== '') {
+                                popupContent +=
+                                    `<small class="d-block"><strong>${key}:</strong> ${value}</small>`;
+                            }
+                        });
+                        if (attributeKeys.length > 3) {
+                            popupContent +=
+                                `<small class="text-muted"><em>... dan ${attributeKeys.length - 3} atribut lainnya</em></small>`;
+                        }
+                        popupContent += '</div>';
+                    }
+
+                    popupContent += '</div>';
+
+                    layer.bindPopup(popupContent, {
+                        maxWidth: 250,
+                        className: 'custom-popup'
+                    });
+
+                    layer.addTo(map);
+                    featureLayers.push(layer);
+                });
+
+                // Fit map to show all features
+                const group = new L.featureGroup(featureLayers);
+                map.fitBounds(group.getBounds(), {
                     padding: [20, 20]
                 });
             }
-
-            // Add enhanced popup
-            const popupContent = `
-                <div class="text-center p-2">
-                    <h6 class="mb-2 text-primary">{{ $mapset->nama }}</h6>
-                    <span class="badge bg-primary rounded-pill mb-2">{{ $mapset->topic }}</span>
-                    @if ($mapset->deskripsi)
-                        <p class="text-muted small mb-0">{{ Str::limit($mapset->deskripsi, 100) }}</p>
-                    @endif
-                </div>
-            `;
-
-            mapsetLayer.bindPopup(popupContent, {
-                maxWidth: 250,
-                className: 'custom-popup'
-            }).openPopup();
         }
 
         function centerMap() {
-            if (mapsetLayer) {
-                if (mapsetLayer.getLatLng) {
-                    // Point geometry
-                    map.setView(mapsetLayer.getLatLng(), 12);
-                } else {
-                    // Polygon/LineString geometry
-                    map.setView(mapsetLayer.getBounds().getCenter(), 12);
-                }
+            if (featureLayers.length > 0) {
+                const group = new L.featureGroup(featureLayers);
+                map.setView(group.getBounds().getCenter(), map.getZoom());
                 showToast('Peta telah dipusatkan', 'success');
             }
         }
 
         function fitBounds() {
-            if (mapsetLayer) {
-                if (mapsetLayer.getBounds) {
-                    map.fitBounds(mapsetLayer.getBounds(), {
-                        padding: [20, 20]
-                    });
-                } else {
-                    // Point geometry
-                    map.setView(mapsetLayer.getLatLng(), 12);
-                }
+            if (featureLayers.length > 0) {
+                const group = new L.featureGroup(featureLayers);
+                map.fitBounds(group.getBounds(), {
+                    padding: [20, 20]
+                });
                 showToast('Peta disesuaikan dengan data', 'success');
             }
         }
 
-        function copyUrl() {
-            const urlInput = document.getElementById('shareUrl');
+        function focusFeature(index) {
+            if (featureLayers[index]) {
+                const layer = featureLayers[index];
+
+                // Focus on the feature
+                if (layer.getLatLng) {
+                    // Point feature
+                    map.setView(layer.getLatLng(), Math.max(map.getZoom(), 12));
+                } else if (layer.getBounds) {
+                    // Polygon/Line feature
+                    map.fitBounds(layer.getBounds(), {
+                        padding: [50, 50]
+                    });
+                }
+
+                // Open popup
+                layer.openPopup();
+
+                // Highlight the feature temporarily
+                setTimeout(() => {
+                    if (layer.setStyle) {
+                        const originalStyle = layer.options;
+                        layer.setStyle({
+                            color: '#ff0000',
+                            weight: 5
+                        });
+                        setTimeout(() => {
+                            layer.setStyle(originalStyle);
+                        }, 2000);
+                    }
+                }, 500);
+
+                showToast(`Fokus pada Feature #${index + 1}`, 'success');
+            }
+        }
+
+        function toggleFeatureList() {
+            const card = document.getElementById('featuresCard');
             const button = event.target.closest('button');
 
-            // Modern clipboard API
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(urlInput.value).then(function() {
-                    showCopySuccess(button);
-                }).catch(function() {
-                    fallbackCopy(urlInput, button);
+            if (card.style.display === 'none') {
+                card.style.display = 'block';
+                button.innerHTML = '<i class="bi bi-eye-slash me-1"></i>Sembunyikan';
+                card.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
                 });
+                showToast('Daftar features ditampilkan', 'info');
             } else {
-                fallbackCopy(urlInput, button);
+                card.style.display = 'none';
+                button.innerHTML = '<i class="bi bi-list me-1"></i>List Features';
+                showToast('Daftar features disembunyikan', 'info');
             }
-        }
-
-        function fallbackCopy(input, button) {
-            input.select();
-            input.setSelectionRange(0, 99999);
-
-            try {
-                document.execCommand('copy');
-                showCopySuccess(button);
-            } catch (err) {
-                showToast('Gagal menyalin URL', 'error');
-            }
-        }
-
-        function showCopySuccess(button) {
-            const originalHtml = button.innerHTML;
-            const originalClasses = button.className;
-
-            button.innerHTML = '<i class="bi bi-check"></i>';
-            button.className = 'btn btn-success';
-
-            setTimeout(() => {
-                button.innerHTML = originalHtml;
-                button.className = originalClasses;
-            }, 2000);
-
-            showToast('URL berhasil disalin!', 'success');
         }
 
         function showToast(message, type = 'info') {
             // Simple toast notification
             const toast = document.createElement('div');
             toast.className = `alert alert-${type === 'error' ? 'danger' : type} position-fixed`;
-            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 250px;';
+            toast.style.cssText =
+                'top: 20px; right: 20px; z-index: 9999; min-width: 250px; animation: slideInRight 0.3s ease;';
             toast.innerHTML = `
                 <div class="d-flex align-items-center">
                     <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
                     ${message}
+                    <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
                 </div>
             `;
 
@@ -790,9 +951,40 @@
 
             setTimeout(() => {
                 if (toast.parentNode) {
-                    toast.parentNode.removeChild(toast);
+                    toast.style.animation = 'slideOutRight 0.3s ease';
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
+                    }, 300);
                 }
             }, 3000);
         }
+
+        // Add CSS animations for toast
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 @endpush

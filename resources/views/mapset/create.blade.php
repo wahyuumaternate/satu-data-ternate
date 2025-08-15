@@ -294,11 +294,6 @@
                                         <div id="coordinate-inputs">
                                             <div class="coord-input-row">
                                                 <div class="coord-field">
-                                                    <label class="form-label">Nama Lokasi</label>
-                                                    <input type="text" class="form-control coord-name"
-                                                        name="coordinates[0][name]" placeholder="Nama lokasi (opsional)">
-                                                </div>
-                                                <div class="coord-field">
                                                     <label class="form-label">Latitude <span
                                                             class="text-danger">*</span></label>
                                                     <input type="number" class="form-control coord-lat"
@@ -972,10 +967,17 @@
             }
         }
 
-        function handleFileSelect(file, type) {
+        // Fungsi yang diperbaiki
+        function handleFileSelect(input, type) {
+            // Pastikan input adalah element, bukan file object
+            const file = input.files ? input.files[0] : input;
+
             if (file) {
                 const filename = file.name;
                 const size = formatFileSize(file.size);
+
+                console.log('File type:', type); // Debug
+                console.log('File extension:', file.name.split('.').pop().toLowerCase()); // Debug
 
                 // Validate file type
                 const allowedTypes = {
@@ -987,6 +989,11 @@
                 };
 
                 const fileExtension = file.name.split('.').pop().toLowerCase();
+
+                // Debug log untuk membantu troubleshoot
+                console.log('Expected types for', type, ':', allowedTypes[type]);
+                console.log('Actual extension:', fileExtension);
+
                 if (allowedTypes[type] && !allowedTypes[type].includes(fileExtension)) {
                     Swal.fire({
                         icon: 'error',
@@ -1013,10 +1020,32 @@
                 document.getElementById(`${type}-info`).classList.add('show');
 
                 // Update upload area
-                const input = document.getElementById(`${type}_file`);
-                if (input && input.closest('.upload-area')) {
+                if (input.closest) {
                     input.closest('.upload-area').classList.add('uploaded');
                 }
+            }
+        }
+
+        // Pastikan cara pemanggilan yang benar:
+
+        // Untuk event listener file input
+        document.getElementById('shp_file').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target, 'shp'); // Kirim element, bukan file
+            }
+        });
+
+        // Untuk drag & drop
+        function handleDrop(e, inputId) {
+            e.preventDefault();
+            e.target.closest('.upload-area').classList.remove('dragover');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const input = document.getElementById(inputId);
+                input.files = files;
+                const fileType = inputId.replace('_file', '');
+                handleFileSelect(input, fileType); // Kirim element, bukan file
             }
         }
 
