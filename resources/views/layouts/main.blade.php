@@ -5,13 +5,13 @@
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
-    <title>@yield('title', 'Dashboard') - Satu Data Ternate</title>
+    <title>@yield('title', 'Dashboard') - SITDATA</title>
     <meta content="@yield('description')" name="description">
     <meta content="@yield('keywords')" name="keywords">
-
+    {{-- - Sistem Informasi Terpadu Data Ternate --}}
     <!-- Favicons -->
-    <link href="{{ asset('assets/img/favicon.png') }}" rel="icon">
-    <link href="{{ asset('assets/img/apple-touch-icon.png') }}" rel="apple-touch-icon">
+
+    <link href="{{ asset('assets/img/logo_kota.png') }}" rel="icon">
 
     <!-- Google Fonts -->
     <link href="https://fonts.gstatic.com" rel="preconnect">
