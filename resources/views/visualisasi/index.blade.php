@@ -263,11 +263,10 @@
 
 @push('scripts')
     <script>
-        // Auto submit form when filter changes (optional)
+        // Auto submit form when filter changes
         document.querySelectorAll('#topic, #tipe, #data_source, #status, #visibility').forEach(function(select) {
             select.addEventListener('change', function() {
-                // Uncomment the line below if you want auto-submit on filter change
-                // this.form.submit();
+                this.form.submit();
             });
         });
     </script>
