@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         // Tabel visualisasi (chart, graph, dashboard)
@@ -49,13 +52,12 @@ return new class extends Migration
             // Data source
             $table->enum('data_source', ['file','manual'])->default('manual');
             $table->string('source_file')->nullable(); // path file data
-            $table->text('source_url')->nullable(); // API endpoint
-            $table->text('source_query')->nullable(); // SQL query jika dari database
+           
             
             // Konfigurasi chart
-            $table->jsonb('chart_config')->nullable(); // konfigurasi chart (labels, colors, etc)
-            $table->jsonb('data_config')->nullable(); // struktur data dan mapping
-            $table->jsonb('style_config')->nullable(); // styling tambahan
+            $table->json('chart_config')->nullable(); // konfigurasi chart (labels, colors, etc)
+            $table->json('data_config')->nullable(); // struktur data dan mapping
+            $table->json('style_config')->nullable(); // styling tambahan
             
             // Status
             $table->boolean('is_active')->default(true);
@@ -70,6 +72,9 @@ return new class extends Migration
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('visualisasi');

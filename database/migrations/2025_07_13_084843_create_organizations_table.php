@@ -22,7 +22,6 @@ return new class extends Migration
 
             // Indexes
             $table->index('name');
-            $table->index('type');
         });
     }
 

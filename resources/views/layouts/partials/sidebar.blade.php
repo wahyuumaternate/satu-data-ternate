@@ -236,7 +236,8 @@
 
         <!-- Visualisasi -->
         <li class="nav-item">
-            <a href="#!" class="nav-link collapsed {{ request()->routeIs('visualisasi.*') ? 'active' : '' }}">
+            <a href="{{ route('visualisasi.index') }}"
+                class="nav-link collapsed {{ request()->routeIs('visualisasi.*') ? 'active' : '' }}">
                 <i class="bi bi-graph-up"></i>
                 <span>Visualisasi</span>
             </a>
