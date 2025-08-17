@@ -103,43 +103,117 @@
             </ul>
         </li>
 
-        <!-- Infografis -->
-        <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('infografis.*') ? '' : 'collapsed' }}"
-                data-bs-target="#infografis-nav" data-bs-toggle="collapse" href="#">
-                <i class="bi bi-bar-chart-line"></i>
-                <span>Infografis</span>
+        {{-- <li class="nav-item">
+            <a class="nav-link {{ request()->routeIs('admin.dataset-approval.*') ? '' : 'collapsed' }}"
+                data-bs-target="#dataset-approval-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-shield-check"></i>
+                <span>Dataset Approval</span>
                 <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-            <ul id="infografis-nav" class="nav-content collapse {{ request()->routeIs('infografis.*') ? 'show' : '' }}"
+            <ul id="dataset-approval-nav"
+                class="nav-content collapse {{ request()->routeIs('admin.dataset-approval.*') ? 'show' : '' }}"
                 data-bs-parent="#sidebar-nav">
+
+                <!-- Dashboard -->
                 <li>
-                    <a href="#!" class="{{ request()->routeIs('infografis.index') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Kelola Infografis</span>
+                    <a href="{{ route('admin.dataset-approval.dashboard') }}"
+                        class="{{ request()->routeIs('admin.dataset-approval.dashboard') ? 'active' : '' }}">
+                        <i class="bi bi-graph-up"></i>
+                        <span>Dashboard</span>
                     </a>
                 </li>
+
+                <!-- Pending Review -->
                 <li>
-                    <a href="#!" class="{{ request()->routeIs('infografis.category') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Kategori Infografis</span>
+                    <a href="{{ route('admin.dataset-approval.index') }}"
+                        class="{{ request()->routeIs('admin.dataset-approval.index') && (request()->get('status') === 'pending' || !request()->has('status')) ? 'active' : '' }}">
+                        <i class="bi bi-clock"></i>
+                        <span>Pending Review</span>
+                        @php
+                            $pendingCount = \App\Models\Dataset::where('approval_status', 'pending')->count();
+                        @endphp
+                        @if ($pendingCount > 0)
+                            <span class="badge bg-warning text-dark ms-auto">{{ $pendingCount }}</span>
+                        @endif
                     </a>
                 </li>
+
+                <!-- Needs Revision -->
                 <li>
-                    <a href="#!" class="{{ request()->routeIs('infografis.formula') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Formula Perhitungan</span>
+                    <a href="{{ route('admin.dataset-approval.index') }}?status=revision"
+                        class="{{ request()->routeIs('admin.dataset-approval.index') && request()->get('status') === 'revision' ? 'active' : '' }}">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        <span>Needs Revision</span>
+                        @php
+                            $revisionCount = \App\Models\Dataset::where('approval_status', 'revision')->count();
+                        @endphp
+                        @if ($revisionCount > 0)
+                            <span class="badge bg-info text-white ms-auto">{{ $revisionCount }}</span>
+                        @endif
                     </a>
                 </li>
+
+                <!-- Approved -->
                 <li>
-                    <a href="#!" class="{{ request()->routeIs('infografis.target') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Target & Capaian</span>
+                    <a href="{{ route('admin.dataset-approval.index') }}?status=approved"
+                        class="{{ request()->routeIs('admin.dataset-approval.index') && request()->get('status') === 'approved' ? 'active' : '' }}">
+                        <i class="bi bi-check-circle"></i>
+                        <span>Approved</span>
+                        @php
+                            $approvedCount = \App\Models\Dataset::where('approval_status', 'approved')->count();
+                        @endphp
+                        <small class="text-muted ms-auto">({{ $approvedCount }})</small>
                     </a>
                 </li>
+
+                <!-- Rejected -->
                 <li>
-                    <a href="#!" class="{{ request()->routeIs('infografis.analysis') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Analisis Tren</span>
+                    <a href="{{ route('admin.dataset-approval.index') }}?status=rejected"
+                        class="{{ request()->routeIs('admin.dataset-approval.index') && request()->get('status') === 'rejected' ? 'active' : '' }}">
+                        <i class="bi bi-x-circle"></i>
+                        <span>Rejected</span>
+                        @php
+                            $rejectedCount = \App\Models\Dataset::where('approval_status', 'rejected')->count();
+                        @endphp
+                        @if ($rejectedCount > 0)
+                            <small class="text-muted ms-auto">({{ $rejectedCount }})</small>
+                        @endif
+                    </a>
+                </li>
+
+                <!-- Separator -->
+                <li>
+                    <hr class="dropdown-divider my-2">
+                </li>
+
+                <!-- Quick Actions -->
+                <li>
+                    <a href="{{ route('admin.dataset-approval.index') }}?status=revision"
+                        class="{{ request()->get('status') === 'revision' ? 'active' : '' }}">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span>Needs Attention</span>
+                        @php
+                            $needsAttentionCount = \App\Models\Dataset::whereIn('approval_status', [
+                                'rejected',
+                                'revision',
+                            ])->count();
+                        @endphp
+                        @if ($needsAttentionCount > 0)
+                            <span class="badge bg-danger text-white ms-auto">{{ $needsAttentionCount }}</span>
+                        @endif
+                    </a>
+                </li>
+
+                <!-- Export/Reports -->
+                <li>
+                    <a href="#" onclick="$('#exportModal').modal('show'); return false;">
+                        <i class="bi bi-download"></i>
+                        <span>Export Report</span>
                     </a>
                 </li>
             </ul>
-        </li>
+        </li> --}}
+
 
         <!-- Mapset -->
         <li class="nav-item">
@@ -150,50 +224,29 @@
             </a>
         </li>
 
+
+        <!-- Infografis -->
+        <li class="nav-item">
+            <a href="#!" class="nav-link collapsed {{ request()->routeIs('infografis.*') ? 'active' : '' }}">
+                <i class="bi bi-bar-chart-line"></i>
+                <span>Infografis</span>
+            </a>
+        </li>
+
+
         <!-- Visualisasi -->
         <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('visualisasi.*') ? '' : 'collapsed' }}"
-                data-bs-target="#visualisasi-nav" data-bs-toggle="collapse" href="#">
+            <a href="#!" class="nav-link collapsed {{ request()->routeIs('visualisasi.*') ? 'active' : '' }}">
                 <i class="bi bi-graph-up"></i>
                 <span>Visualisasi</span>
-                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
-            <ul id="visualisasi-nav"
-                class="nav-content collapse {{ request()->routeIs('visualisasi.*') ? 'show' : '' }}"
-                data-bs-parent="#sidebar-nav">
-                <li>
-                    <a href="#!" class="{{ request()->routeIs('visualisasi.dashboard') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Dashboard Utama</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#!" class="{{ request()->routeIs('visualisasi.chart') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Grafik & Chart</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#!" class="{{ request()->routeIs('visualisasi.map') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Peta Interaktif</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#!" class="{{ request()->routeIs('visualisasi.report') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Laporan Visual</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#!" class="{{ request()->routeIs('visualisasi.export') ? 'active' : '' }}">
-                        <i class="bi bi-circle"></i><span>Export Grafik</span>
-                    </a>
-                </li>
-            </ul>
         </li>
 
         <!-- Organisasi -->
         <li class="nav-item">
             <a class="nav-link {{ request()->routeIs('organisasi.*') ? '' : 'collapsed' }}" href="">
                 <i class="bi bi-building"></i>
-                <span>Profil Organisasi</span>
+                <span>Organisasi</span>
             </a>
         </li>
 

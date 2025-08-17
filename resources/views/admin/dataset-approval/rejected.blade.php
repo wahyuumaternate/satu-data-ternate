@@ -17,8 +17,8 @@
         }
 
         /* .rejected-indicator {
-                border-left: 5px solid #2563eb;
-            } */
+                                border-left: 5px solid #2563eb;
+                            } */
 
         .approval-header {
             background: #f8faff;
@@ -336,28 +336,17 @@
                 <div class="filter-card">
                     <form method="GET" action="{{ route('admin.dataset-approval.rejected') }}">
                         <div class="row g-3">
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label class="form-label fw-600" style="color: #000000;">Search Keywords</label>
                                 <input type="text" name="search" class="form-control"
                                     placeholder="Search by title or description..." value="{{ request('search') }}">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label fw-600" style="color: #000000;">Rejection Date</label>
                                 <input type="date" name="rejected_date" class="form-control"
                                     value="{{ request('rejected_date') }}">
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-600" style="color: #000000;">Rejected By</label>
-                                <select name="rejected_by" class="form-select">
-                                    <option value="">All Administrators</option>
-                                    @foreach (\App\Models\User::where('role', 'admin')->get() as $admin)
-                                        <option value="{{ $admin->id }}"
-                                            {{ request('rejected_by') == $admin->id ? 'selected' : '' }}>
-                                            {{ $admin->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
+
                             <div class="col-md-2">
                                 <label class="form-label">&nbsp;</label>
                                 <div class="d-flex gap-2">

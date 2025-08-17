@@ -204,11 +204,6 @@ class DatasetApprovalController extends Controller
             $query->whereDate('approved_at', $request->rejected_date);
         }
 
-        // Filter by rejected by (admin)
-        if ($request->has('rejected_by') && $request->rejected_by !== '') {
-            $query->where('approved_by', $request->rejected_by);
-        }
-
         $rejectedDatasets = $query->paginate(15);
 
         return view('admin.dataset-approval.rejected', compact('rejectedDatasets'));

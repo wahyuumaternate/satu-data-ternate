@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('datasets', function (Blueprint $table) {
             $table->id();
              // Tambah kolom approval
-            $table->enum('approval_status', ['pending', 'approved', 'rejected'])->default('pending')->after('publish_status');
+            $table->enum('approval_status', ['pending', 'approved', 'rejected','revision'])->default('pending')->after('publish_status');
             $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null')->after('approval_status');
             $table->timestamp('approved_at')->nullable()->after('approved_by');
             $table->text('approval_notes')->nullable()->after('approved_at');

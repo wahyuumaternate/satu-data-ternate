@@ -452,141 +452,141 @@ class DatasetController extends Controller
 
         return view('dataset.edit', compact('dataset'));
     }
-public function update(Request $request, $id)
-{
-    $dataset = Dataset::findOrFail($id);
-    
-    // // Check if user has permission to edit this dataset
-    // if ($dataset->user_id !== Auth::user()->id && !Auth::user()->hasRole('admin')) {
-    //     abort(403, 'Unauthorized action.');
-    // }
+    public function update(Request $request, $id)
+    {
+        $dataset = Dataset::findOrFail($id);
+        
+        // // Check if user has permission to edit this dataset
+        // if ($dataset->user_id !== Auth::user()->id && !Auth::user()->hasRole('admin')) {
+        //     abort(403, 'Unauthorized action.');
+        // }
 
-    $request->validate([
-        'file' => 'nullable|mimes:xlsx,xls,csv|max:10240', // 10MB max, optional for edit
-        'title' => 'required|string|max:255|unique:datasets,title,' . $dataset->id,
-        'description' => 'required|string',
-        'tags' => 'required|string',
-        'topic' => 'required|string',
-        'classification' => 'required|in:publik,internal,terbatas,rahasia',
-        'status' => 'required|in:sementara,tetap',
-        'license' => 'nullable|string',
-        'sector' => 'nullable|string',
-        'responsible_person' => 'nullable|string',
-        'contact' => 'nullable|string',
-        'data_source' => 'nullable|string',
-        'data_period' => 'nullable|string',
-        'update_frequency' => 'nullable|string',
-        'geographic_coverage' => 'nullable|string',
-    ], [
-        'title.unique' => 'Judul dataset sudah digunakan, silakan pilih judul lain.',
-    ]);
-
-    try {
-        DB::beginTransaction();
-        
-        $hasNewFile = $request->hasFile('file');
-        $shouldReprocessData = $request->has('action') && $request->action === 'update_and_reprocess';
-        
-        // Handle file replacement if new file is uploaded
-        if ($hasNewFile) {
-            $file = $request->file('file');
-            $originalFilename = $file->getClientOriginalName();
-            $filename = time() . '_' . $originalFilename;
-            $fileSize = $file->getSize();
-            $fileType = $file->getClientOriginalExtension();
-            
-            // Delete old file
-            if ($dataset->file_path && Storage::disk('public')->exists($dataset->file_path)) {
-                Storage::disk('public')->delete($dataset->file_path);
-            }
-            
-            // Store new file
-            $filePath = $file->storeAs('datasets', $filename, 'public');
-            
-            // Update file-related fields
-            $dataset->filename = $filename;
-            $dataset->original_filename = $originalFilename;
-            $dataset->file_path = $filePath;
-            $dataset->file_size = $fileSize;
-            $dataset->file_type = $fileType;
-        }
-        
-        // Update dataset information
-        $dataset->update([
-            'title' => $request->title,
-            'description' => $request->description,
-            'tags' => $this->processTags($request->tags),
-            'topic' => $request->topic,
-            'classification' => $request->classification,
-            'status' => $request->status,
-            'license' => $request->license ?? '',
-            'sector' => $request->sector ?? '',
-            'responsible_person' => $request->responsible_person ?? '',
-            'contact' => $request->contact ?? '',
-            'data_source' => $request->data_source ?? '',
-            'data_period' => $request->data_period ?? '',
-            'update_frequency' => $request->update_frequency ?? '',
-            'geographic_coverage' => $request->geographic_coverage ?? '',
-            'updated_at' => now(),
+        $request->validate([
+            'file' => 'nullable|mimes:xlsx,xls,csv|max:10240', // 10MB max, optional for edit
+            'title' => 'required|string|max:255|unique:datasets,title,' . $dataset->id,
+            'description' => 'required|string',
+            'tags' => 'required|string',
+            'topic' => 'required|string',
+            'classification' => 'required|in:publik,internal,terbatas,rahasia',
+            'status' => 'required|in:sementara,tetap',
+            'license' => 'nullable|string',
+            'sector' => 'nullable|string',
+            'responsible_person' => 'nullable|string',
+            'contact' => 'nullable|string',
+            'data_source' => 'nullable|string',
+            'data_period' => 'nullable|string',
+            'update_frequency' => 'nullable|string',
+            'geographic_coverage' => 'nullable|string',
+        ], [
+            'title.unique' => 'Judul dataset sudah digunakan, silakan pilih judul lain.',
         ]);
 
-        Log::info('Dataset updated with ID: ' . $dataset->id);
-        
-        // Re-import data if new file uploaded or reprocess requested
-        if ($hasNewFile || $shouldReprocessData) {
-            // Reset data fields before reimporting
-            $dataset->update([
-                'headers' => [],
-                'data' => [],
-                'total_rows' => 0,
-                'total_columns' => 0
-            ]);
+        try {
+            DB::beginTransaction();
             
-            // Import Excel data using updated DynamicImport
+            $hasNewFile = $request->hasFile('file');
+            $shouldReprocessData = $request->has('action') && $request->action === 'update_and_reprocess';
+            
+            // Handle file replacement if new file is uploaded
             if ($hasNewFile) {
-                Excel::import(new DynamicImport($dataset->id), $file);
-                $successMessage = 'Dataset dan file berhasil diupdate: ' . $dataset->original_filename;
-            } else {
-                // Reprocess existing file
-                $existingFilePath = storage_path('app/public/' . $dataset->file_path);
-                if (file_exists($existingFilePath)) {
-                    Excel::import(new DynamicImport($dataset->id), $existingFilePath);
-                    $successMessage = 'Dataset berhasil diupdate dan data berhasil diproses ulang.';
-                } else {
-                    throw new \Exception('File dataset tidak ditemukan untuk diproses ulang.');
+                $file = $request->file('file');
+                $originalFilename = $file->getClientOriginalName();
+                $filename = time() . '_' . $originalFilename;
+                $fileSize = $file->getSize();
+                $fileType = $file->getClientOriginalExtension();
+                
+                // Delete old file
+                if ($dataset->file_path && Storage::disk('public')->exists($dataset->file_path)) {
+                    Storage::disk('public')->delete($dataset->file_path);
                 }
+                
+                // Store new file
+                $filePath = $file->storeAs('datasets', $filename, 'public');
+                
+                // Update file-related fields
+                $dataset->filename = $filename;
+                $dataset->original_filename = $originalFilename;
+                $dataset->file_path = $filePath;
+                $dataset->file_size = $fileSize;
+                $dataset->file_type = $fileType;
             }
-        } else {
-            $successMessage = 'Informasi dataset berhasil diupdate.';
-        }
-        
-        DB::commit();
-        
-        // Determine redirect route
-        $slug = Str::slug($request->title);
-        if ($dataset->slug !== $slug) {
-            $dataset->update(['slug' => $slug]);
-        }
-        
-        return redirect()->route('dataset.show', $dataset->slug ?? $dataset->id)
-            ->with('success', $successMessage);
             
-    } catch (\Exception $e) {
-        DB::rollback();
-        
-        // Delete uploaded file if exists and there was an error
-        if (isset($filePath) && Storage::disk('public')->exists($filePath)) {
-            Storage::disk('public')->delete($filePath);
+            // Update dataset information
+            $dataset->update([
+                'title' => $request->title,
+                'description' => $request->description,
+                'tags' => $this->processTags($request->tags),
+                'topic' => $request->topic,
+                'classification' => $request->classification,
+                'status' => $request->status,
+                'license' => $request->license ?? '',
+                'sector' => $request->sector ?? '',
+                'responsible_person' => $request->responsible_person ?? '',
+                'contact' => $request->contact ?? '',
+                'data_source' => $request->data_source ?? '',
+                'data_period' => $request->data_period ?? '',
+                'update_frequency' => $request->update_frequency ?? '',
+                'geographic_coverage' => $request->geographic_coverage ?? '',
+                'updated_at' => now(),
+            ]);
+
+            Log::info('Dataset updated with ID: ' . $dataset->id);
+            
+            // Re-import data if new file uploaded or reprocess requested
+            if ($hasNewFile || $shouldReprocessData) {
+                // Reset data fields before reimporting
+                $dataset->update([
+                    'headers' => [],
+                    'data' => [],
+                    'total_rows' => 0,
+                    'total_columns' => 0
+                ]);
+                
+                // Import Excel data using updated DynamicImport
+                if ($hasNewFile) {
+                    Excel::import(new DynamicImport($dataset->id), $file);
+                    $successMessage = 'Dataset dan file berhasil diupdate: ' . $dataset->original_filename;
+                } else {
+                    // Reprocess existing file
+                    $existingFilePath = storage_path('app/public/' . $dataset->file_path);
+                    if (file_exists($existingFilePath)) {
+                        Excel::import(new DynamicImport($dataset->id), $existingFilePath);
+                        $successMessage = 'Dataset berhasil diupdate dan data berhasil diproses ulang.';
+                    } else {
+                        throw new \Exception('File dataset tidak ditemukan untuk diproses ulang.');
+                    }
+                }
+            } else {
+                $successMessage = 'Informasi dataset berhasil diupdate.';
+            }
+            
+            DB::commit();
+            
+            // Determine redirect route
+            $slug = Str::slug($request->title);
+            if ($dataset->slug !== $slug) {
+                $dataset->update(['slug' => $slug]);
+            }
+            
+            return redirect()->route('dataset.show', $dataset->slug ?? $dataset->id)
+                ->with('success', $successMessage);
+                
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            // Delete uploaded file if exists and there was an error
+            if (isset($filePath) && Storage::disk('public')->exists($filePath)) {
+                Storage::disk('public')->delete($filePath);
+            }
+            
+            Log::error('Dataset update failed: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat mengupdate dataset: ' . $e->getMessage())
+                ->withInput();
         }
-        
-        Log::error('Dataset update failed: ' . $e->getMessage());
-        Log::error('Stack trace: ' . $e->getTraceAsString());
-        
-        return redirect()->back()
-            ->with('error', 'Terjadi kesalahan saat mengupdate dataset: ' . $e->getMessage())
-            ->withInput();
     }
-}
 
     /**
      * Apply filters and search to dataset
@@ -831,158 +831,158 @@ public function update(Request $request, $id)
         return redirect()->back()->with('success', "Berhasil menghapus {$deletedCount} dataset.");
     }
 
-    
-// public function history(Request $request)
-// {
-//     // Ambil semua dataset milik user yang approval_status bukan 'approved'
-//     $dataArray = Dataset::where('user_id', Auth::id())
-//         ->where('approval_status', '!=', 'approved') // filter tambahan
-//         ->with(['user'])
-//         ->orderBy('updated_at', 'desc')
-//         ->get()
-//         ->toArray();
-
-//     // Apply filter
-//     $filteredData = $this->applyFilters($dataArray, request());
-
-//     // Ubah array hasil filter menjadi Collection of Dataset model lagi
-//     $filteredCollection = collect($filteredData)->map(function ($item) {
-//         return (new Dataset)->forceFill($item);
-//     });
-
-//     // Pagination manual
-//     $perPage = 15;
-//     $page = request()->get('page', 1);
-//     $datasets = new \Illuminate\Pagination\LengthAwarePaginator(
-//         $filteredCollection->forPage($page, $perPage),
-//         $filteredCollection->count(),
-//         $perPage,
-//         $page,
-//         [
-//             'path' => request()->url(),
-//             'query' => request()->query()
-//         ]
-//     );
-
-//     return view('dataset.history', compact('datasets'));
-// }
-
-
-public function history(Request $request)
-{
-    // Get base query with necessary relationships
-    $query = Dataset::where('user_id', Auth::id())
-        ->where('approval_status', '!=', 'approved')
-        ->with(['user']);
-
-    // Apply filters directly to the query instead of after fetching all data
-    $query = $this->applyFiltersToQuery($query, $request);
-
-    // Get paginated results
-    $datasets = $query->orderBy('updated_at', 'desc')
-        ->paginate(15)
-        ->appends($request->query());
-
-    return view('dataset.history', compact('datasets'));
-}
-
-/**
- * Apply filters directly to the database query for better performance
- */
-private function applyFiltersToQuery($query, Request $request)
-{
-    // Example filter implementations
-    if ($request->has('approval_status') && $request->approval_status !== '') {
-        $query->where('approval_status', $request->approval_status);
-    }
-
-    if ($request->has('search') && $request->search !== '') {
-        $searchTerm = $request->search;
-        $query->where(function ($q) use ($searchTerm) {
-            $q->where('title', 'LIKE', "%{$searchTerm}%")
-              ->orWhere('description', 'LIKE', "%{$searchTerm}%")
-              ->orWhere('tags', 'LIKE', "%{$searchTerm}%");
-        });
-    }
-
-    // Add date range filter example
-    if ($request->has('date_from') && $request->date_from !== '') {
-        $query->whereDate('created_at', '>=', $request->date_from);
-    }
-
-    if ($request->has('date_to') && $request->date_to !== '') {
-        $query->whereDate('created_at', '<=', $request->date_to);
-    }
-
-    return $query;
-}
-
-/**
- * Alternative: If you need to keep the existing applyFilters method for array processing
- */
-public function historyWithArrayFiltering(Request $request)
-{
-    try {
-        // Get data with optimized query
-        $dataArray = Dataset::where('user_id', Auth::id())
-            ->where('approval_status', '!=', 'approved')
-            ->with(['user'])
-            ->orderBy('updated_at', 'desc')
-            ->get()
-            ->toArray();
-
-        // Apply existing filter method
-        $filteredData = $this->applyFilters($dataArray, $request);
-
-        // More efficient way to convert back to models
-        $filteredCollection = Dataset::hydrate($filteredData);
-
-        // Manual pagination with better error handling
-        $perPage = (int) $request->get('per_page', 15);
-        $page = (int) $request->get('page', 1);
         
-        $datasets = new \Illuminate\Pagination\LengthAwarePaginator(
-            $filteredCollection->forPage($page, $perPage)->values(),
-            $filteredCollection->count(),
-            $perPage,
-            $page,
-            [
-                'path' => $request->url(),
-                'query' => $request->query(),
-                'pageName' => 'page'
-            ]
-        );
+    // public function history(Request $request)
+    // {
+    //     // Ambil semua dataset milik user yang approval_status bukan 'approved'
+    //     $dataArray = Dataset::where('user_id', Auth::id())
+    //         ->where('approval_status', '!=', 'approved') // filter tambahan
+    //         ->with(['user'])
+    //         ->orderBy('updated_at', 'desc')
+    //         ->get()
+    //         ->toArray();
+
+    //     // Apply filter
+    //     $filteredData = $this->applyFilters($dataArray, request());
+
+    //     // Ubah array hasil filter menjadi Collection of Dataset model lagi
+    //     $filteredCollection = collect($filteredData)->map(function ($item) {
+    //         return (new Dataset)->forceFill($item);
+    //     });
+
+    //     // Pagination manual
+    //     $perPage = 15;
+    //     $page = request()->get('page', 1);
+    //     $datasets = new \Illuminate\Pagination\LengthAwarePaginator(
+    //         $filteredCollection->forPage($page, $perPage),
+    //         $filteredCollection->count(),
+    //         $perPage,
+    //         $page,
+    //         [
+    //             'path' => request()->url(),
+    //             'query' => request()->query()
+    //         ]
+    //     );
+
+    //     return view('dataset.history', compact('datasets'));
+    // }
+
+
+    public function history(Request $request)
+    {
+        // Get base query with necessary relationships
+        $query = Dataset::where('user_id', Auth::id())
+            ->where('approval_status', '!=', 'approved')
+            ->with(['user']);
+
+        // Apply filters directly to the query instead of after fetching all data
+        $query = $this->applyFiltersToQuery($query, $request);
+
+        // Get paginated results
+        $datasets = $query->orderBy('updated_at', 'desc')
+            ->paginate(15)
+            ->appends($request->query());
 
         return view('dataset.history', compact('datasets'));
-    } catch (\Exception $e) {
-        // Log error and return with error message
-        return back()->with('error', 'Unable to load dataset history.');
     }
-}
 
-/**
- * Optimized version using Laravel's built-in filtering
- */
-public function historyOptimized(Request $request)
-{
-    $datasets = Dataset::where('user_id', Auth::id())
-        ->where('approval_status', '!=', 'approved')
-        ->with(['user'])
-        ->when($request->approval_status, function ($query, $status) {
-            return $query->where('approval_status', $status);
-        })
-        ->when($request->search, function ($query, $search) {
-            return $query->where(function ($q) use ($search) {
-                $q->where('title', 'LIKE', "%{$search}%")
-                  ->orWhere('description', 'LIKE', "%{$search}%")
-                  ->orWhere('tags', 'LIKE', "%{$search}%");
+    /**
+     * Apply filters directly to the database query for better performance
+     */
+    private function applyFiltersToQuery($query, Request $request)
+    {
+        // Example filter implementations
+        if ($request->has('approval_status') && $request->approval_status !== '') {
+            $query->where('approval_status', $request->approval_status);
+        }
+
+        if ($request->has('search') && $request->search !== '') {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('title', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('description', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('tags', 'LIKE', "%{$searchTerm}%");
             });
-        })
-        ->orderBy('updated_at', 'desc')
-        ->paginate(15)
-        ->appends($request->query());
+        }
 
-    return view('dataset.history', compact('datasets'));
-}
+        // Add date range filter example
+        if ($request->has('date_from') && $request->date_from !== '') {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->has('date_to') && $request->date_to !== '') {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Alternative: If you need to keep the existing applyFilters method for array processing
+     */
+    public function historyWithArrayFiltering(Request $request)
+    {
+        try {
+            // Get data with optimized query
+            $dataArray = Dataset::where('user_id', Auth::id())
+                ->where('approval_status', '!=', 'approved')
+                ->with(['user'])
+                ->orderBy('updated_at', 'desc')
+                ->get()
+                ->toArray();
+
+            // Apply existing filter method
+            $filteredData = $this->applyFilters($dataArray, $request);
+
+            // More efficient way to convert back to models
+            $filteredCollection = Dataset::hydrate($filteredData);
+
+            // Manual pagination with better error handling
+            $perPage = (int) $request->get('per_page', 15);
+            $page = (int) $request->get('page', 1);
+            
+            $datasets = new \Illuminate\Pagination\LengthAwarePaginator(
+                $filteredCollection->forPage($page, $perPage)->values(),
+                $filteredCollection->count(),
+                $perPage,
+                $page,
+                [
+                    'path' => $request->url(),
+                    'query' => $request->query(),
+                    'pageName' => 'page'
+                ]
+            );
+
+            return view('dataset.history', compact('datasets'));
+        } catch (\Exception $e) {
+            // Log error and return with error message
+            return back()->with('error', 'Unable to load dataset history.');
+        }
+    }
+
+    /**
+     * Optimized version using Laravel's built-in filtering
+     */
+    public function historyOptimized(Request $request)
+    {
+        $datasets = Dataset::where('user_id', Auth::id())
+            ->where('approval_status', '!=', 'approved')
+            ->with(['user'])
+            ->when($request->approval_status, function ($query, $status) {
+                return $query->where('approval_status', $status);
+            })
+            ->when($request->search, function ($query, $search) {
+                return $query->where(function ($q) use ($search) {
+                    $q->where('title', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%")
+                    ->orWhere('tags', 'LIKE', "%{$search}%");
+                });
+            })
+            ->orderBy('updated_at', 'desc')
+            ->paginate(15)
+            ->appends($request->query());
+
+        return view('dataset.history', compact('datasets'));
+    }
 
 }

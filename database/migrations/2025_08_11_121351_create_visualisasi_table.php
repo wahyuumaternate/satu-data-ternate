@@ -17,7 +17,6 @@ return new class extends Migration
             // Info dasar
             $table->string('nama', 255);
             $table->text('deskripsi')->nullable();
-            $table->string('gambar')->nullable(); // thumbnail
             
             // Kategori/topik
             $table->enum('topic', [
@@ -48,7 +47,7 @@ return new class extends Migration
             ]);
             
             // Data source
-            $table->enum('data_source', ['file', 'database', 'api', 'manual'])->default('manual');
+            $table->enum('data_source', ['file','manual'])->default('manual');
             $table->string('source_file')->nullable(); // path file data
             $table->text('source_url')->nullable(); // API endpoint
             $table->text('source_query')->nullable(); // SQL query jika dari database

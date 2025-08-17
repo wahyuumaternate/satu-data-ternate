@@ -8,7 +8,7 @@
     <title>@yield('title', 'Dashboard') - SITDATA</title>
     <meta content="@yield('description')" name="description">
     <meta content="@yield('keywords')" name="keywords">
-    {{-- - Sistem Informasi Terpadu Data Ternate --}}
+    {{-- SITDATA - Sistem Informasi Terpadu Data Ternate --}}
     <!-- Favicons -->
 
     <link href="{{ asset('assets/img/logo_kota.png') }}" rel="icon">

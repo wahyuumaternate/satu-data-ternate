@@ -2,32 +2,27 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
+     * Kolom yang bisa diisi (mass assignment).
      */
     protected $fillable = [
         'name',
         'email',
-        'role',
+        'role_id',
+        'organization_id',
         'password',
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
+     * Kolom yang disembunyikan saat serialisasi.
      */
     protected $hidden = [
         'password',
@@ -35,9 +30,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * Casting kolom.
      */
     protected function casts(): array
     {
@@ -47,8 +40,27 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Relasi ke Mapset (jika ada).
+     */
     public function mapsets()
     {
         return $this->hasMany(Mapset::class);
+    }
+
+    /**
+     * Relasi ke Role.
+     */
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    /**
+     * Relasi ke Organization.
+     */
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
     }
 }

@@ -5,6 +5,7 @@ use App\Http\Controllers\DatasetController;
 use App\Http\Controllers\DatasetRequestController;
 use App\Http\Controllers\MapsetController;
 use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -95,4 +96,97 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     });
 });
 
+// // Admin Dataset Approval Routes (with role middleware) , 'role:admin,reviewer'
+// Route::middleware(['auth'])->prefix('admin/dataset-approval')->name('admin.dataset-approval.')->group(function () {
+    
+//     // Main approval dashboard
+//     Route::get('/dashboard', [DatasetApprovalController::class, 'dashboard'])->name('dashboard');
+    
+//     // 🎯 FIXED: Main index route handles all statuses via query parameter
+//     Route::get('/', [DatasetApprovalController::class, 'index'])->name('index');
+    
+//     // Legacy routes (redirect to main index with status parameter)
+//     Route::get('/approved', function () {
+//         return redirect()->route('admin.dataset-approval.index', ['status' => 'approved']);
+//     })->name('approved');
+    
+//     Route::get('/rejected', function () {
+//         return redirect()->route('admin.dataset-approval.index', ['status' => 'rejected']);
+//     })->name('rejected');
+    
+//     Route::get('/revision', function () {
+//         return redirect()->route('admin.dataset-approval.index', ['status' => 'revision']);
+//     })->name('revision');
+    
+//     // Status view (alternative route)
+//     Route::get('/status', function (Request $request) {
+//         return redirect()->route('admin.dataset-approval.index', $request->query());
+//     })->name('status');
+    
+//     // Dataset detail view for approval - IMPORTANT: Put this AFTER other routes to avoid conflicts
+//     Route::get('/review/{dataset}', [DatasetApprovalController::class, 'show'])->name('show');
+    
+//     // Approval actions
+//     Route::post('/{dataset}/approve', [DatasetApprovalController::class, 'approve'])->name('approve');
+//     Route::post('/{dataset}/reject', [DatasetApprovalController::class, 'reject'])->name('reject');
+//     Route::post('/{dataset}/request-revision', [DatasetApprovalController::class, 'requestRevision'])->name('request-revision');
+//     Route::post('/{dataset}/resubmit', [DatasetApprovalController::class, 'resubmit'])->name('resubmit');
+    
+//     // 🆕 NEW: Quick action endpoint (AJAX) - using numeric ID to avoid conflicts
+//     Route::post('/quick-action/{id}', [DatasetApprovalController::class, 'quickAction'])->name('quick-action')->where('id', '[0-9]+');
+    
+//     // Bulk actions
+//     Route::post('/bulk-action', [DatasetApprovalController::class, 'bulkApprovalAction'])->name('bulk-action');
+    
+//     // Statistics and reporting
+//     Route::get('/dashboard/stats', [DatasetApprovalController::class, 'dashboardStats'])->name('dashboard-stats');
+//     Route::get('/export-report', [DatasetApprovalController::class, 'exportApprovalReport'])->name('export-report');
+// });
+
+// // User routes for dataset management with revision support
+// Route::middleware(['auth'])->group(function () {
+    
+//     // User can resubmit their own rejected/revision datasets
+//     Route::post('/datasets/{id}/resubmit', [DatasetController::class, 'resubmit'])->name('dataset.resubmit')->where('id', '[0-9]+');
+    
+//     // User history with revision status
+//     Route::get('/my-datasets/history', [DatasetController::class, 'history'])->name('dataset.history');
+    
+//     // Datasets needing user attention (rejected/revision)
+//     Route::get('/my-datasets/needs-attention', [DatasetController::class, 'needsAttention'])->name('dataset.needs-attention');
+// });
+
+/* 
+🎯 FIXED USAGE EXAMPLES:
+
+1. View pending datasets (default):
+   GET /admin/dataset-approval/
+
+2. View pending datasets (explicit):
+   GET /admin/dataset-approval/?status=pending
+
+3. View revision datasets:
+   GET /admin/dataset-approval/?status=revision
+
+4. View approved datasets with filters:
+   GET /admin/dataset-approval/?status=approved&topic=Ekonomi&search=budget
+
+5. Review specific dataset:
+   GET /admin/dataset-approval/review/{dataset}
+
+6. Quick approve via AJAX:
+   POST /admin/dataset-approval/quick-action/{id}
+   Body: { action: 'approve', notes: 'Looks good!' }
+
+7. Bulk actions:
+   POST /admin/dataset-approval/bulk-action
+   Body: { 
+     dataset_ids: [1,2,3], 
+     action: 'approve', 
+     approval_notes: 'Batch approval' 
+   }
+
+8. Dashboard:
+   GET /admin/dataset-approval/dashboard
+*/
 require __DIR__.'/auth.php';
