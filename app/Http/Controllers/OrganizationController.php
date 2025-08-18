@@ -69,10 +69,9 @@ class OrganizationController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'nullable|string|max:50|unique:organizations,code',
             'description' => 'nullable|string',
             'website' => 'nullable|url|max:255',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // 2MB max
+            'logo' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048', // 2MB max
         ]);
 
         // Handle file upload
@@ -82,12 +81,12 @@ class OrganizationController extends Controller
             $validated['logo'] = $file->storeAs('organizations', $filename, 'public');
         }
 
-        // Generate code if not provided
-        if (empty($validated['code'])) {
-            $organization = new Organization();
-            $organization->name = $validated['name']; // This will trigger the mutator
-            $validated['code'] = $organization->code;
-        }
+        // // Generate code if not provided
+        // if (empty($validated['code'])) {
+        //     $organization = new Organization();
+        //     $organization->name = $validated['name']; // This will trigger the mutator
+        //     $validated['code'] = $organization->code;
+        // }
 
         $organization = Organization::create($validated);
 
@@ -127,7 +126,7 @@ class OrganizationController extends Controller
             ],
             'description' => 'nullable|string',
             'website' => 'nullable|url|max:255',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'logo' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         // Handle file upload

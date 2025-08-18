@@ -17,7 +17,7 @@ return new class extends Migration
          */
         Schema::create('mapsets', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->restrictOnDelete();
             $table->uuid('uuid')->unique();
             $table->string('nama', 255);
             $table->text('deskripsi')->nullable();

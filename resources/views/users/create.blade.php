@@ -62,7 +62,7 @@
                                     <span class="input-group-text"><i class="bi bi-lock"></i></span>
                                     <input type="password" class="form-control @error('password') is-invalid @enderror"
                                         id="password" name="password" required placeholder="Minimal 8 karakter">
-                                    <button type="button" class="btn btn-outline-secondary"
+                                    <button type="button" class="btn btn-outline-primary"
                                         onclick="togglePassword('password')">
                                         <i class="bi bi-eye" id="password-toggle"></i>
                                     </button>
@@ -82,7 +82,7 @@
                                         class="form-control @error('password_confirmation') is-invalid @enderror"
                                         id="password_confirmation" name="password_confirmation" required
                                         placeholder="Ulangi password">
-                                    <button type="button" class="btn btn-outline-secondary"
+                                    <button type="button" class="btn btn-outline-primary"
                                         onclick="togglePassword('password_confirmation')">
                                         <i class="bi bi-eye" id="password_confirmation-toggle"></i>
                                     </button>
@@ -112,10 +112,14 @@
 
                             <!-- Organization -->
                             <div class="col-md-6">
-                                <label for="organization_id" class="form-label">Organisasi</label>
+                                <label for="organization_id" class="form-label">
+                                    Organisasi
+                                    <span class="text-danger" id="org-required" style="display: none;">*</span>
+                                    <span class="text-muted" id="org-optional">(Opsional)</span>
+                                </label>
                                 <select class="form-select @error('organization_id') is-invalid @enderror"
                                     id="organization_id" name="organization_id">
-                                    <option value="">Pilih Organisasi (Opsional)</option>
+                                    <option value="">Pilih Organisasi</option>
                                     @foreach ($organizations as $org)
                                         <option value="{{ $org->id }}"
                                             {{ old('organization_id') == $org->id ? 'selected' : '' }}>
@@ -123,6 +127,10 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                <div class="form-text" id="org-help-text">
+                                    <i class="bi bi-info-circle text-primary"></i>
+                                    <span id="org-help-message">Organisasi bersifat opsional untuk role ini</span>
+                                </div>
                                 @error('organization_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -138,7 +146,7 @@
                                         class="btn btn-outline-primary">
                                         <i class="bi bi-plus-circle"></i> Simpan & Tambah Baru
                                     </button>
-                                    <a href="{{ route('users.index') }}" class="btn btn-secondary">
+                                    <a href="{{ route('users.index') }}" class="btn btn-outline-secondary">
                                         <i class="bi bi-arrow-left"></i> Kembali
                                     </a>
                                 </div>
@@ -166,10 +174,10 @@
                             <div class="mb-3">
                                 <span id="previewRole" class="badge bg-primary">Role</span>
                                 <br>
-                                <span id="previewOrganization" class="badge bg-info mt-1"
+                                <span id="previewOrganization" class="badge bg-primary mt-1"
                                     style="display: none;">Organisasi</span>
                             </div>
-                            <div class="alert alert-light border-start border-4 border-success">
+                            <div class="alert alert-light border-start border-4 border-primary">
                                 <small class="text-muted">
                                     <i class="bi bi-info-circle"></i>
                                     User akan menerima email untuk verifikasi akun
@@ -187,18 +195,34 @@
                         </h5>
                         <ul class="list-unstyled">
                             <li class="password-req" data-req="length">
-                                <i class="bi bi-x-circle text-danger"></i>
+                                <i class="bi bi-x-circle text-secondary"></i>
                                 <span>Minimal 8 karakter</span>
                             </li>
                             <li class="password-req" data-req="match">
-                                <i class="bi bi-x-circle text-danger"></i>
+                                <i class="bi bi-x-circle text-secondary"></i>
                                 <span>Password harus sama</span>
                             </li>
                             <li class="password-req" data-req="filled">
-                                <i class="bi bi-x-circle text-danger"></i>
+                                <i class="bi bi-x-circle text-secondary"></i>
                                 <span>Password tidak boleh kosong</span>
                             </li>
                         </ul>
+                    </div>
+                </div>
+
+                <!-- Role Organization Info -->
+                <div class="card" id="roleOrgInfo" style="display: none;">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">
+                            <i class="bi bi-exclamation-triangle"></i> Perhatian
+                        </h5>
+                        <div class="alert alert-primary border-0">
+                            <h6><i class="bi bi-building"></i> Organisasi Wajib</h6>
+                            <p class="mb-0 small">
+                                Role yang dipilih mengharuskan user untuk tergabung dalam organisasi.
+                                Silakan pilih organisasi yang sesuai.
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -208,12 +232,12 @@
                         <h5 class="card-title">
                             <i class="bi bi-question-circle"></i> Bantuan
                         </h5>
-                        <div class="alert alert-info border-0">
+                        <div class="alert alert-primary border-0">
                             <h6><i class="bi bi-lightbulb"></i> Tips Menambah User:</h6>
                             <ul class="mb-0 small">
                                 <li>Gunakan email yang valid dan aktif</li>
                                 <li>Pilih role sesuai dengan tanggung jawab user</li>
-                                <li>Organisasi bersifat opsional</li>
+                                <li>Organisasi wajib untuk role selain Super Admin</li>
                                 <li>Password minimal 8 karakter</li>
                                 <li>User akan menerima email verifikasi</li>
                             </ul>
@@ -221,39 +245,7 @@
                     </div>
                 </div>
 
-                <!-- Recent Users -->
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="bi bi-clock-history"></i> User Terbaru
-                        </h5>
-                        <div class="activity">
-                            @php
-                                $recentUsers = \App\Models\User::with(['role', 'organization'])
-                                    ->latest()
-                                    ->limit(3)
-                                    ->get();
-                            @endphp
-                            @forelse($recentUsers as $user)
-                                <div class="activity-item d-flex">
-                                    <div class="activite-label">{{ $user->created_at->diffForHumans() }}</div>
-                                    <i class='bi bi-circle-fill activity-badge text-success align-self-start'></i>
-                                    <div class="activity-content">
-                                        <strong>{{ $user->name }}</strong>
-                                        @if ($user->role)
-                                            <br><small class="text-muted">{{ $user->role->name }}</small>
-                                        @endif
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="text-center text-muted">
-                                    <i class="bi bi-inbox display-6"></i>
-                                    <p class="small mt-2 mb-0">Belum ada user</p>
-                                </div>
-                            @endforelse
-                        </div>
-                    </div>
-                </div>
+
             </div>
         </div>
     </section>
@@ -281,7 +273,10 @@
         // Update preview on input changes
         document.getElementById('name').addEventListener('input', updatePreview);
         document.getElementById('email').addEventListener('input', updatePreview);
-        document.getElementById('role_id').addEventListener('change', updatePreview);
+        document.getElementById('role_id').addEventListener('change', function() {
+            updatePreview();
+            handleRoleChange();
+        });
         document.getElementById('organization_id').addEventListener('change', updatePreview);
 
         function updatePreview() {
@@ -318,6 +313,46 @@
             }
         }
 
+        // Handle role change to show/hide organization requirement
+        function handleRoleChange() {
+            const roleSelect = document.getElementById('role_id');
+            const orgSelect = document.getElementById('organization_id');
+            const orgRequired = document.getElementById('org-required');
+            const orgOptional = document.getElementById('org-optional');
+            const orgHelpMessage = document.getElementById('org-help-message');
+            const roleOrgInfo = document.getElementById('roleOrgInfo');
+
+            if (roleSelect.value && roleSelect.value != '1') {
+                // Role selain Super Admin (ID = 1) - organisasi wajib
+                orgRequired.style.display = 'inline';
+                orgOptional.style.display = 'none';
+                orgSelect.required = true;
+                orgHelpMessage.textContent = 'Organisasi wajib dipilih untuk role ini';
+                roleOrgInfo.style.display = 'block';
+
+                // Add required styling
+                orgSelect.classList.add('border-primary');
+            } else if (roleSelect.value == '1') {
+                // Super Admin - organisasi opsional
+                orgRequired.style.display = 'none';
+                orgOptional.style.display = 'inline';
+                orgSelect.required = false;
+                orgHelpMessage.textContent = 'Organisasi bersifat opsional untuk role ini';
+                roleOrgInfo.style.display = 'none';
+
+                // Remove required styling
+                orgSelect.classList.remove('border-primary');
+            } else {
+                // Belum pilih role
+                orgRequired.style.display = 'none';
+                orgOptional.style.display = 'inline';
+                orgSelect.required = false;
+                orgHelpMessage.textContent = 'Pilih role terlebih dahulu';
+                roleOrgInfo.style.display = 'none';
+                orgSelect.classList.remove('border-primary');
+            }
+        }
+
         // Password validation
         document.getElementById('password').addEventListener('input', validatePassword);
         document.getElementById('password_confirmation').addEventListener('input', validatePassword);
@@ -329,25 +364,25 @@
             // Check length
             const lengthReq = document.querySelector('[data-req="length"]');
             if (password.length >= 8) {
-                lengthReq.querySelector('i').className = 'bi bi-check-circle text-success';
+                lengthReq.querySelector('i').className = 'bi bi-check-circle text-primary';
             } else {
-                lengthReq.querySelector('i').className = 'bi bi-x-circle text-danger';
+                lengthReq.querySelector('i').className = 'bi bi-x-circle text-secondary';
             }
 
             // Check if filled
             const filledReq = document.querySelector('[data-req="filled"]');
             if (password.length > 0) {
-                filledReq.querySelector('i').className = 'bi bi-check-circle text-success';
+                filledReq.querySelector('i').className = 'bi bi-check-circle text-primary';
             } else {
-                filledReq.querySelector('i').className = 'bi bi-x-circle text-danger';
+                filledReq.querySelector('i').className = 'bi bi-x-circle text-secondary';
             }
 
             // Check match
             const matchReq = document.querySelector('[data-req="match"]');
             if (password && confirmation && password === confirmation) {
-                matchReq.querySelector('i').className = 'bi bi-check-circle text-success';
+                matchReq.querySelector('i').className = 'bi bi-check-circle text-primary';
             } else {
-                matchReq.querySelector('i').className = 'bi bi-x-circle text-danger';
+                matchReq.querySelector('i').className = 'bi bi-x-circle text-secondary';
             }
         }
 
@@ -358,10 +393,18 @@
             const password = document.getElementById('password').value;
             const confirmation = document.getElementById('password_confirmation').value;
             const role = document.getElementById('role_id').value;
+            const organization = document.getElementById('organization_id').value;
 
             if (!name || !email || !password || !confirmation || !role) {
                 e.preventDefault();
                 alert('Harap isi semua field yang wajib diisi');
+                return;
+            }
+
+            // Check if organization is required for the selected role
+            if (role && role != '1' && !organization) {
+                e.preventDefault();
+                alert('Organisasi wajib dipilih untuk role ini');
                 return;
             }
 
@@ -391,8 +434,9 @@
             });
         }
 
-        // Initialize preview
+        // Initialize
         updatePreview();
+        handleRoleChange();
     </script>
 @endpush
 
@@ -402,7 +446,7 @@
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0d6efd 0%, #6c8fff 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -411,6 +455,7 @@
             font-size: 24px;
             margin: 0 auto;
             transition: transform 0.3s ease;
+            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
         }
 
         .user-avatar-large:hover {
@@ -430,7 +475,7 @@
         }
 
         .activite-label {
-            color: #899bbd;
+            color: #6c757d;
             font-size: 11px;
             font-weight: 600;
             margin-bottom: 0.25rem;
@@ -451,7 +496,7 @@
         #previewCard {
             background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
             border: none;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 25px rgba(13, 110, 253, 0.1);
         }
 
         .form-control:focus,
@@ -462,20 +507,59 @@
 
         .btn {
             transition: all 0.3s ease;
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 0.6rem 1.2rem;
         }
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0d6efd 0%, #6c8fff 100%);
+            border: none;
+            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(13, 110, 253, 0.4);
+        }
+
+        .btn-outline-primary {
+            border: 2px solid #0d6efd;
+            background: transparent;
+            color: #0d6efd;
+        }
+
+        .btn-outline-primary:hover {
+            background: linear-gradient(135deg, #0d6efd 0%, #6c8fff 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(13, 110, 253, 0.3);
+        }
+
+        .btn-outline-secondary {
+            border: 2px solid #6c757d;
+            background: transparent;
+            color: #6c757d;
+        }
+
+        .btn-outline-secondary:hover {
+            background: #6c757d;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.3);
         }
 
         .input-group-text {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
             border-color: #e9ecef;
+            color: #0d6efd;
         }
 
         .card-title {
-            color: #012970;
+            color: #2c384e;
             font-weight: 600;
         }
 
@@ -491,6 +575,78 @@
 
         .alert {
             background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
+            border: 1px solid rgba(13, 110, 253, 0.2);
+        }
+
+        .alert-primary {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
+            border-color: rgba(13, 110, 253, 0.2);
+            color: #0d6efd;
+        }
+
+        .alert-light {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-color: rgba(13, 110, 253, 0.1);
+            color: #495057;
+        }
+
+        .card {
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 2px 20px rgba(13, 110, 253, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.5rem 0.8rem;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .border-primary {
+            border-color: #0d6efd !important;
+            border-width: 2px !important;
+        }
+
+        /* Form text styling */
+        .form-text {
+            margin-top: 0.25rem;
+            font-size: 0.875em;
+            color: #6c757d;
+        }
+
+        .form-text i {
+            margin-right: 0.25rem;
+        }
+
+        /* Organization required indicator */
+        #org-help-text {
+            transition: all 0.3s ease;
+        }
+
+        /* Animation for role org info */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #roleOrgInfo {
+            animation: slideDown 0.3s ease;
         }
 
         /* Animation for preview card */
@@ -510,6 +666,46 @@
             animation: slideInRight 0.6s ease;
         }
 
+        /* Breadcrumb styling */
+        .breadcrumb-item a {
+            color: #0d6efd;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .breadcrumb-item a:hover {
+            color: #6c8fff;
+        }
+
+        .breadcrumb-item.active {
+            color: #6c757d;
+        }
+
+        /* Page title styling */
+        .pagetitle h1 {
+            color: #2c384e;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #2c384e 0%, #0d6efd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Text colors */
+        .text-primary {
+            color: #0d6efd !important;
+        }
+
+        .text-secondary {
+            color: #6c757d !important;
+        }
+
+        .text-muted {
+            color: #6c757d !important;
+        }
+
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .user-avatar-large {
@@ -517,6 +713,23 @@
                 height: 60px;
                 font-size: 18px;
             }
+
+            .btn {
+                margin-bottom: 0.5rem;
+                width: 100%;
+            }
+
+            .d-flex.gap-2 {
+                flex-direction: column;
+                gap: 0.5rem !important;
+            }
+        }
+
+        /* Focus states */
+        .form-control:focus,
+        .form-select:focus,
+        .btn:focus {
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
         }
     </style>
 @endpush

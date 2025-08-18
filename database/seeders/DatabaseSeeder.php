@@ -19,10 +19,10 @@ class DatabaseSeeder extends Seeder
 
     {
         $roles = [
-            ['name' => 'admin', 'label' => 'Administrator'],
+            ['name' => 'super-admin', 'label' => 'Super Admin'],
             ['name' => 'opd', 'label' => 'Organisasi Perangkat Daerah'],
             ['name' => 'penanggung-jawab', 'label' => 'Penanggung Jawab Data'],
-            ['name' => 'pengelola', 'label' => 'Pengelola Data'],
+            ['name' => 'riviewer', 'label' => 'Riviewer Data'],
         ];
 
         foreach ($roles as $role) {

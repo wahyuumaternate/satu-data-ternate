@@ -728,7 +728,7 @@
 
         async function loadMapsetData() {
             try {
-                const response = await fetch('{{ route('mapset.data', $mapset->uuid) }}');
+                const response = await fetch('{{ route('api.mapset.data', $mapset->uuid) }}');
                 const data = await response.json();
                 mapsetData = data;
 

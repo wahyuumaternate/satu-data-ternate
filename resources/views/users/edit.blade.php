@@ -201,10 +201,7 @@
                         </div>
 
                         <div class="list-group list-group-flush">
-                            <div class="list-group-item d-flex justify-content-between">
-                                <span>User ID:</span>
-                                <span><code>{{ $user->id }}</code></span>
-                            </div>
+
                             <div class="list-group-item d-flex justify-content-between">
                                 <span>Role Saat Ini:</span>
                                 <span>
@@ -265,27 +262,6 @@
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="bi bi-lightning"></i> Aksi Cepat
-                        </h5>
-                        <div class="d-grid gap-2">
-                            <a href="{{ route('users.show', $user) }}" class="btn btn-outline-primary">
-                                <i class="bi bi-eye"></i> Lihat Profile
-                            </a>
-                            @if (!$user->email_verified_at)
-                                <button class="btn btn-outline-success" onclick="verifyEmail()">
-                                    <i class="bi bi-envelope-check"></i> Verifikasi Email
-                                </button>
-                            @endif
-                            <a href="{{ route('users.index') }}" class="btn btn-outline-secondary">
-                                <i class="bi bi-list"></i> Daftar User
-                            </a>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Password Requirements (shown when password field is focused) -->
                 <div class="card" id="passwordRequirements" style="display: none;">

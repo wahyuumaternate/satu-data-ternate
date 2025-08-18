@@ -73,7 +73,7 @@ return new class extends Migration
             $table->timestamp('published_at')->nullable();
             
             // User and Organization
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // User yang upload
+            $table->foreignId('user_id')->constrained('users')->restrictOnDelete(); // User yang upload
             $table->string('organization')->nullable(); // Organisasi
             
             // Additional Fields

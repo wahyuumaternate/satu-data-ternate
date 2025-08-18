@@ -271,7 +271,7 @@
             </a>
         </li>
 
-        <!-- Security -->
+        {{-- <!-- Security -->
         <li class="nav-item">
             <a class="nav-link collapsed" href="#!">
                 <i class="bi bi-shield-check"></i>
@@ -285,7 +285,7 @@
                 <i class="bi bi-clock-history"></i>
                 <span>Log Aktivitas</span>
             </a>
-        </li>
+        </li> --}}
 
     </ul>
 

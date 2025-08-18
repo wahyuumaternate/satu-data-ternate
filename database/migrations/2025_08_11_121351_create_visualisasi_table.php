@@ -14,7 +14,7 @@ return new class extends Migration
         // Tabel visualisasi (chart, graph, dashboard)
         Schema::create('visualisasi', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->restrictOnDelete();
             $table->string('uuid')->unique();
             
             // Info dasar
