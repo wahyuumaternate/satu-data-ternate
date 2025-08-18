@@ -227,7 +227,8 @@
 
         <!-- Infografis -->
         <li class="nav-item">
-            <a href="#!" class="nav-link collapsed {{ request()->routeIs('infografis.*') ? 'active' : '' }}">
+            <a href="{{ route('infografis.index') }}"
+                class="nav-link collapsed {{ request()->routeIs('infografis.*') ? 'active' : '' }}">
                 <i class="bi bi-bar-chart-line"></i>
                 <span>Infografis</span>
             </a>
@@ -245,7 +246,8 @@
 
         <!-- Organisasi -->
         <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('organisasi.*') ? '' : 'collapsed' }}" href="">
+            <a class="nav-link {{ request()->routeIs('organisasi.*') ? '' : 'collapsed' }}"
+                href="{{ route('organizations.index') }}">
                 <i class="bi bi-building"></i>
                 <span>Organisasi</span>
             </a>
@@ -253,7 +255,14 @@
 
         <!-- Separator -->
         <li class="nav-heading">Sistem</li>
-
+        <!-- User Management -->
+        <li class="nav-item">
+            <a class="nav-link {{ request()->routeIs('users.*') ? '' : 'collapsed' }}"
+                href="{{ route('users.index') }}">
+                <i class="bi bi-people"></i>
+                <span>User Management</span>
+            </a>
+        </li>
         <!-- Settings -->
         <li class="nav-item">
             <a class="nav-link collapsed" href="#!">

@@ -7,6 +7,8 @@ use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
+
 
 class DatabaseSeeder extends Seeder
 {
@@ -26,11 +28,13 @@ class DatabaseSeeder extends Seeder
         foreach ($roles as $role) {
             Role::firstOrCreate(['name' => $role['name']], $role);
         }
+
          User::create([
             'name' => 'Admin',
-            'email' => 'admin@gmail.com',
+            'email' => 'retmujago@gmail.com',
             'role_id' =>1,
             'password' => Hash::make('admin123'), // ganti sesuai kebutuhan
+            'email_verified_at' => Carbon::now(), // langsung dianggap sudah verifikasi
         ]);
     }
 }

@@ -2,8 +2,11 @@
 
 use App\Http\Controllers\DatasetApprovalController;
 use App\Http\Controllers\DatasetController;
+use App\Http\Controllers\InfografisController;
 use App\Http\Controllers\MapsetController;
+use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisualisasiController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,7 +26,7 @@ Route::get('/', function () {
 | Authenticated User Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     
     /*
     |--------------------------------------------------------------------------
@@ -87,6 +90,41 @@ Route::middleware('auth')->group(function () {
     
     /*
     |--------------------------------------------------------------------------
+    | Infografis Management
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('infografis')->name('infografis.')->group(function () {
+        // Template download
+        Route::get('/download-template', [InfografisController::class, 'downloadTemplate'])->name('download-template');
+        
+        // Main CRUD operations
+        Route::get('/', [InfografisController::class, 'index'])->name('index');
+        Route::get('/create', [InfografisController::class, 'create'])->name('create');
+        Route::post('/', [InfografisController::class, 'store'])->name('store');
+        Route::get('/{infografis}', [InfografisController::class, 'show'])->name('show');
+        Route::get('/{infografis}/edit', [InfografisController::class, 'edit'])->name('edit');
+        Route::put('/{infografis}', [InfografisController::class, 'update'])->name('update');
+        Route::patch('/{infografis}', [InfografisController::class, 'update'])->name('update');
+        Route::delete('/{infografis}', [InfografisController::class, 'destroy'])->name('destroy');
+        
+        // Download operations
+        Route::get('/{infografis}/download', [InfografisController::class, 'download'])->name('download');
+        
+        // Export operations
+        Route::get('/{infografis}/export-metadata', [InfografisController::class, 'exportMetadata'])->name('export-metadata');
+        Route::get('/{infografis}/export-info', [InfografisController::class, 'exportInfo'])->name('export-info');
+        
+        // API routes for AJAX
+        Route::prefix('api')->name('api.')->group(function () {
+            Route::get('/suggestions', [InfografisController::class, 'suggestions'])->name('suggestions');
+            Route::get('/topic/{topic}', [InfografisController::class, 'byTopic'])->name('by-topic');
+            Route::get('/search', [InfografisController::class, 'search'])->name('search');
+            Route::post('/{infografis}/toggle-status', [InfografisController::class, 'toggleStatus'])->name('toggle-status');
+        });
+    });
+
+    /*
+    |--------------------------------------------------------------------------
     | Mapset Management
     |--------------------------------------------------------------------------
     */
@@ -127,34 +165,83 @@ Route::middleware('auth')->group(function () {
         Route::post('/mapset/debug/shapefile', [MapsetController::class, 'debugShapefile'])->name('mapset.debug.shapefile');
         Route::post('/mapset/debug/kmz', [MapsetController::class, 'debugKmz'])->name('mapset.debug.kmz');
     });
-});
-
-/*
-|--------------------------------------------------------------------------
-| Admin Routes
-|--------------------------------------------------------------------------
-*/
-Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
     
     /*
     |--------------------------------------------------------------------------
-    | Dataset Approval Management
+    | Organization Management
     |--------------------------------------------------------------------------
     */
-    Route::prefix('dataset-approval')->name('dataset-approval.')->group(function () {
-        // Main approval views
-        Route::get('/', [DatasetApprovalController::class, 'index'])->name('index');
-        Route::get('/approved', [DatasetApprovalController::class, 'approved'])->name('approved');
-        Route::get('/rejected', [DatasetApprovalController::class, 'rejected'])->name('rejected');
-        Route::get('/{dataset}', [DatasetApprovalController::class, 'show'])->name('show');
+    Route::prefix('organizations')->name('organizations.')->group(function () {
+        // Main CRUD operations
+        Route::get('/', [OrganizationController::class, 'index'])->name('index');
+        Route::get('/create', [OrganizationController::class, 'create'])->name('create');
+        Route::post('/', [OrganizationController::class, 'store'])->name('store');
+        Route::get('/{organization}', [OrganizationController::class, 'show'])->name('show');
+        Route::get('/{organization}/edit', [OrganizationController::class, 'edit'])->name('edit');
+        Route::put('/{organization}', [OrganizationController::class, 'update'])->name('update');
+        Route::patch('/{organization}', [OrganizationController::class, 'update'])->name('update');
+        Route::delete('/{organization}', [OrganizationController::class, 'destroy'])->name('destroy');
         
-        // Approval actions
-        Route::post('/{dataset}/approve', [DatasetApprovalController::class, 'approve'])->name('approve');
-        Route::post('/{dataset}/reject', [DatasetApprovalController::class, 'reject'])->name('reject');
-        Route::post('/{dataset}/resubmit', [DatasetApprovalController::class, 'resubmit'])->name('resubmit');
+        // API routes for AJAX
+        Route::prefix('api')->name('api.')->group(function () {
+            Route::get('/suggestions', [OrganizationController::class, 'suggestions'])->name('suggestions');
+            Route::get('/search', [OrganizationController::class, 'search'])->name('search');
+            Route::post('/{organization}/toggle-status', [OrganizationController::class, 'toggleStatus'])->name('toggle-status');
+        });
+    });
+    
+    
+    /*
+    |--------------------------------------------------------------------------
+    | User Management
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('users')->name('users.')->group(function () {
+        // Main CRUD operations
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::get('/create', [UserController::class, 'create'])->name('create');
+        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::get('/{user}', [UserController::class, 'show'])->name('show');
+        Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
+        Route::put('/{user}', [UserController::class, 'update'])->name('update');
+        Route::patch('/{user}', [UserController::class, 'update'])->name('update');
+        Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
         
-        // Bulk operations
-        Route::post('/bulk-approve', [DatasetApprovalController::class, 'bulkApprove'])->name('bulk-approve');
+        // API routes for AJAX
+        Route::prefix('api')->name('api.')->group(function () {
+            Route::get('/suggestions', [UserController::class, 'suggestions'])->name('suggestions');
+            Route::get('/search', [UserController::class, 'search'])->name('search');
+            Route::get('/stats', [UserController::class, 'getStats'])->name('stats');
+            Route::post('/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('toggle-status');
+        });
+    });
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+        
+        /*
+        |--------------------------------------------------------------------------
+        | Dataset Approval Management
+        |--------------------------------------------------------------------------
+        */
+        Route::prefix('dataset-approval')->name('dataset-approval.')->group(function () {
+            // Main approval views
+            Route::get('/', [DatasetApprovalController::class, 'index'])->name('index');
+            Route::get('/approved', [DatasetApprovalController::class, 'approved'])->name('approved');
+            Route::get('/rejected', [DatasetApprovalController::class, 'rejected'])->name('rejected');
+            Route::get('/{dataset}', [DatasetApprovalController::class, 'show'])->name('show');
+            
+            // Approval actions
+            Route::post('/{dataset}/approve', [DatasetApprovalController::class, 'approve'])->name('approve');
+            Route::post('/{dataset}/reject', [DatasetApprovalController::class, 'reject'])->name('reject');
+            Route::post('/{dataset}/resubmit', [DatasetApprovalController::class, 'resubmit'])->name('resubmit');
+            
+            // Bulk operations
+            Route::post('/bulk-approve', [DatasetApprovalController::class, 'bulkApprove'])->name('bulk-approve');
+        });
     });
 });
 

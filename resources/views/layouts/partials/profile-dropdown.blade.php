@@ -5,13 +5,13 @@
 
         <!-- Implementasi -->
         <img src="{{ Auth::user()->avatar ?? asset('assets/img/fotoprofil.jpeg') }}" alt="Profile" class="perfect-circle">
-        <span class="d-none d-md-block dropdown-toggle ps-2">{{ Auth::user()->name ?? 'K. Anderson' }}</span>
+        <span class="d-none d-md-block dropdown-toggle ps-2">{{ Auth::user()->name ?? '' }}</span>
     </a><!-- End Profile Image Icon -->
 
     <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
         <li class="dropdown-header">
-            <h6>{{ Auth::user()->name ?? 'Kevin Anderson' }}</h6>
-            <span>{{ Auth::user()->role ?? 'Web Designer' }}</span>
+            <h6>{{ Auth::user()->name ?? '' }}</h6>
+            <span>{{ Auth::user()->role->name ?? '' }}</span>
         </li>
         <li>
             <hr class="dropdown-divider">

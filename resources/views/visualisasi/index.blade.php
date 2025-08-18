@@ -21,15 +21,22 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="card-title">Daftar Visualisasi</h5>
-                            <a href="{{ route('visualisasi.create') }}" class="btn btn-primary">
-                                <i class="bi bi-plus-circle"></i> Tambah Visualisasi
-                            </a>
+                            <div class="d-flex gap-2">
+                                <a href="{{ route('visualisasi.create') }}" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle"></i> Tambah Visualisasi
+                                </a>
+                                <a href="{{ route('visualisasi.download-template') }}" class="btn btn-success">
+                                    <i class="bi bi-download"></i> Download Tamplate
+                                </a>
+                            </div>
                         </div>
 
                         <!-- Filter Section -->
-                        <div class="row mb-3">
+                        <div class="row mb-4">
                             <div class="col-12">
-                                <form method="GET" action="{{ route('visualisasi.index') }}" class="row g-3">
+                                <form method="GET" action="{{ route('visualisasi.index') }}"
+                                    class="row g-3 align-items-end">
+
                                     <!-- Search -->
                                     <div class="col-md-3">
                                         <label for="search" class="form-label">Cari</label>
@@ -37,11 +44,11 @@
                                             value="{{ request('search') }}" placeholder="Cari nama atau deskripsi...">
                                     </div>
 
-                                    <!-- Topic Filter -->
+                                    <!-- Topic -->
                                     <div class="col-md-2">
-                                        <label for="topic" class="form-label">Topic</label>
+                                        <label for="topic" class="form-label">Topik</label>
                                         <select class="form-select" id="topic" name="topic">
-                                            <option value="">Semua Topic</option>
+                                            <option value="">Semua</option>
                                             @foreach ($topics as $topic)
                                                 <option value="{{ $topic }}"
                                                     {{ request('topic') == $topic ? 'selected' : '' }}>
@@ -51,11 +58,11 @@
                                         </select>
                                     </div>
 
-                                    <!-- Type Filter -->
+                                    <!-- Tipe -->
                                     <div class="col-md-2">
                                         <label for="tipe" class="form-label">Tipe</label>
                                         <select class="form-select" id="tipe" name="tipe">
-                                            <option value="">Semua Tipe</option>
+                                            <option value="">Semua</option>
                                             @foreach ($tipes as $key => $value)
                                                 <option value="{{ $key }}"
                                                     {{ request('tipe') == $key ? 'selected' : '' }}>
@@ -65,23 +72,11 @@
                                         </select>
                                     </div>
 
-                                    <!-- Data Source Filter -->
-                                    <div class="col-md-2">
-                                        <label for="data_source" class="form-label">Sumber Data</label>
-                                        <select class="form-select" id="data_source" name="data_source">
-                                            <option value="">Semua Sumber</option>
-                                            <option value="file"
-                                                {{ request('data_source') == 'file' ? 'selected' : '' }}>File</option>
-                                            <option value="manual"
-                                                {{ request('data_source') == 'manual' ? 'selected' : '' }}>Manual</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- Status Filter -->
+                                    <!-- Status -->
                                     <div class="col-md-2">
                                         <label for="status" class="form-label">Status</label>
                                         <select class="form-select" id="status" name="status">
-                                            <option value="">Semua Status</option>
+                                            <option value="">Semua</option>
                                             <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>
                                                 Aktif</option>
                                             <option value="inactive"
@@ -90,30 +85,20 @@
                                         </select>
                                     </div>
 
-                                    <!-- Visibility Filter -->
-                                    <div class="col-md-1">
-                                        <label for="visibility" class="form-label">Visibilitas</label>
-                                        <select class="form-select" id="visibility" name="visibility">
-                                            <option value="">Semua</option>
-                                            <option value="public"
-                                                {{ request('visibility') == 'public' ? 'selected' : '' }}>Public</option>
-                                            <option value="private"
-                                                {{ request('visibility') == 'private' ? 'selected' : '' }}>Private</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- Filter Buttons -->
-                                    <div class="col-12">
-                                        <button type="submit" class="btn btn-primary">
+                                    <!-- Tombol Action (Filter + Reset) -->
+                                    <div class="col-md-3 d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary flex-fill">
                                             <i class="bi bi-search"></i> Filter
                                         </button>
-                                        <a href="{{ route('visualisasi.index') }}" class="btn btn-secondary">
+                                        <a href="{{ route('visualisasi.index') }}" class="btn btn-secondary flex-fill">
                                             <i class="bi bi-x-circle"></i> Reset
                                         </a>
                                     </div>
                                 </form>
                             </div>
                         </div>
+
+
 
                         <!-- Success Message -->
                         @if (session('success'))
