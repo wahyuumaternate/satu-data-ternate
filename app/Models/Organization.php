@@ -13,6 +13,7 @@ class Organization extends Model
     protected $fillable = [
         'name',
         'logo',
+        'slug',
         'code',
         'description',
         'website'
@@ -20,13 +21,17 @@ class Organization extends Model
 
     // Mutators
     public function setNameAttribute($value)
-    {
-        $this->attributes['name'] = $value;
-        // Only generate code if it's empty and this is a new record
-        if (empty($this->attributes['code']) && !$this->exists) {
-            $this->attributes['code'] = $this->generateUniqueCode();
-        }
+{
+    $this->attributes['name'] = $value;
+
+    // Generate slug otomatis dari name
+    $this->attributes['slug'] = Str::slug($value, '-');
+
+    // Generate code hanya kalau kosong dan ini record baru
+    if (empty($this->attributes['code']) && !$this->exists) {
+        $this->attributes['code'] = $this->generateUniqueCode();
     }
+}
 
     // Accessors
     public function getLogoUrlAttribute()

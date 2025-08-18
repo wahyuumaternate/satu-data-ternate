@@ -301,7 +301,7 @@ class DatasetController extends Controller
                 'update_frequency' => $request->update_frequency ?? '',
                 'geographic_coverage' => $request->geographic_coverage ?? '',
                 'user_id' => Auth::user()->id,
-                'organization' => Auth::user()->organization ?? '',
+                'organization_id' => Auth::user()->organization->name ?? '', 
                 'publish_status' => $publishStatus,
                 'headers' => [], // Will be filled by import
                 'data' => [], // Will be filled by import

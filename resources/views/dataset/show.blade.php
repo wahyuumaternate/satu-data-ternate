@@ -442,7 +442,7 @@
         });
 
         function exportData() {
-            const url = `{{ route('dataset.api', $dataset->id) }}`;
+            const url = `{{ route('api.dataset', $dataset->id) }}`;
 
             // Show loading notification
             showNotification('Preparing export...', 'info');

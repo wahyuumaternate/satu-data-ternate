@@ -283,6 +283,7 @@ class MapsetController extends Controller
         $mapset->deskripsi = $request->deskripsi;
         $mapset->topic = $request->topic;
         $mapset->gambar = $imagePath;
+        $mapset->slug = Str::slug($request->nama, '-'); // ✅ pakai $request->nama
         $mapset->is_visible = $request->has('is_visible');
         $mapset->save();
 
@@ -1004,6 +1005,7 @@ private function geojsonToWkt($geometry)
         $mapset->topic = $request->topic;
         $mapset->is_visible = $request->has('is_visible');
         $mapset->is_active = true;
+       $mapset->slug = Str::slug($request->nama, '-'); // ✅ pakai $request->nama
         $mapset->views = 0;
 
         // Handle gambar upload

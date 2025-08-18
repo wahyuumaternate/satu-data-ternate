@@ -410,7 +410,7 @@
                                                     </td>
                                                     <td>{{ $user->created_at->format('d M Y') }}</td>
                                                     <td>
-                                                        <div class="btn-group">
+                                                        <div class="btn-group  gap-2">
                                                             <a href="{{ route('users.show', $user) }}"
                                                                 class="btn btn-sm btn-outline-primary">
                                                                 <i class="bi bi-eye"></i>

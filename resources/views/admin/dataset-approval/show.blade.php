@@ -29,12 +29,12 @@
         }
 
         /* .approval-header.pending::before {
-                    background: #2563eb;
-                }
+                        background: #2563eb;
+                    }
 
-                .approval-header.approved::before {
-                    background: #2563eb;
-                } */
+                    .approval-header.approved::before {
+                        background: #2563eb;
+                    } */
 
         .approval-header.rejected::before {
             background: #1e293b;
@@ -102,12 +102,12 @@
         }
 
         /* .pending-indicator {
-                                                border-left: 5px solid #2563eb;
-                                            }
+                                                    border-left: 5px solid #2563eb;
+                                                }
 
-                                            .approved-indicator {
-                                                border-left: 5px solid #2563eb;
-                                            } */
+                                                .approved-indicator {
+                                                    border-left: 5px solid #2563eb;
+                                                } */
 
         .rejected-indicator {
             border-left: 5px solid #1e293b;
@@ -453,7 +453,7 @@
                                         <tr>
                                             <td>Role:</td>
                                             <td><span class="badge-custom"
-                                                    style="background: #64748b; color: #ffffff;">{{ $dataset->user->role ?? 'User' }}</span>
+                                                    style="background: #64748b; color: #ffffff;">{{ $dataset->user->role->name ?? 'User' }}</span>
                                             </td>
                                         </tr>
                                     </table>

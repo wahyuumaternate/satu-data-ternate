@@ -48,6 +48,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Main CRUD operations
         Route::get('/', [DatasetController::class, 'index'])->name('index');
         Route::get('/create', [DatasetController::class, 'create'])->name('create');
+        Route::get('/edit/{slug}', [DatasetController::class, 'edit'])->name('edit');
+        Route::put('/edit/{slug}', [DatasetController::class, 'update'])->name('update');
         Route::post('/import', [DatasetController::class, 'store'])->name('store');
         
         // Dataset utilities

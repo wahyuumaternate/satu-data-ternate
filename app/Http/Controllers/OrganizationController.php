@@ -126,7 +126,7 @@ class OrganizationController extends Controller
             ],
             'description' => 'nullable|string',
             'website' => 'nullable|url|max:255',
-            'logo' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         // Handle file upload

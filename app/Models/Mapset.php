@@ -15,6 +15,7 @@ class Mapset extends Model
     protected $fillable = [
         'user_id',
         'uuid',
+        'slug',
         'nama',
         'deskripsi',
         'gambar',
@@ -42,7 +43,7 @@ class Mapset extends Model
             }
         });
     }
-
+   
     // === RELATIONSHIPS ===
 
     /**
@@ -470,6 +471,7 @@ class Mapset extends Model
         ];
     }
 
+    
     // === STATIC METHODS ===
 
     /**
@@ -590,4 +592,6 @@ class Mapset extends Model
     {
         return $this->is_active ? 'Aktif' : 'Nonaktif';
     }
+
+    
 }

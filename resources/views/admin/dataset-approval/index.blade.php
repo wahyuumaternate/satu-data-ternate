@@ -142,8 +142,8 @@
         }
 
         /* .pending-indicator {
-                        border-left: 5px solid #f59e0b;
-                    } */
+                                border-left: 5px solid #f59e0b;
+                            } */
 
         .filter-card {
             background: #ffffff;
@@ -684,7 +684,7 @@
                                     <div class="user-info-section">
                                         <small class="text-muted d-block mb-1">Organization</small>
                                         <div style="color: #1e293b; font-weight: 500;">
-                                            {{ $dataset->organization ?? 'Not specified' }}</div>
+                                            {{ $dataset->user->organization->name ?? 'Not specified' }}</div>
                                         <small style="color: #64748b;">{{ $dataset->created_at->diffForHumans() }}</small>
                                     </div>
                                 </div>

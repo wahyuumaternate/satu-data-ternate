@@ -20,6 +20,7 @@ class Visualisasi extends Model
         'user_id',
         'uuid',
         'nama',
+        'slug',
         'deskripsi',
         'topic',
         'tipe',
@@ -53,7 +54,11 @@ class Visualisasi extends Model
             }
         });
     }
-
+ public function setTitleAttribute($value)
+    {
+        $this->attributes['nama'] = $value;
+        $this->attributes['slug'] = Str::slug($value, '-');
+    }
     // Relationship dengan User
     public function user(): BelongsTo
     {
