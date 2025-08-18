@@ -19,6 +19,7 @@ return new class extends Migration
             
             // Info dasar
             $table->string('nama', 255);
+            $table->string('slug', 255);
             $table->text('deskripsi')->nullable();
             
             // Kategori/topik

@@ -16,14 +16,14 @@ return new class extends Migration
             $table->foreignId('organization_id')
                 ->nullable()
                 ->constrained('organizations')
-                ->nullOnDelete(); // kalau organisasi dihapus, kolom ini otomatis null
+                ->restrictOnDelete(); 
 
             $table->string('name');
             $table->string('email')->unique();
               // Relasi ke role
             $table->foreignId('role_id')
                     ->constrained('roles')
-                    ->cascadeOnDelete();
+                    ->restrictOnDelete();
 
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');

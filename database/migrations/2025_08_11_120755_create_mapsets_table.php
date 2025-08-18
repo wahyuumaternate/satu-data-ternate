@@ -20,6 +20,7 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained('users')->restrictOnDelete();
             $table->uuid('uuid')->unique();
             $table->string('nama', 255);
+            $table->string('slug', 255);
             $table->text('deskripsi')->nullable();
             $table->string('gambar')->nullable();
             $table->enum('topic', [

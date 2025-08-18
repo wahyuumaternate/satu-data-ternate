@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('organizations', function (Blueprint $table) {
             $table->id();
             $table->string('name'); // Nama organisasi/OPD
+            $table->string('slug'); // Nama organisasi/OPD
             $table->string('logo'); // Nama organisasi/OPD
             $table->string('code')->unique()->nullable(); // Kode organisasi
             $table->text('description')->nullable(); // Deskripsi
