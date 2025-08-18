@@ -26,112 +26,26 @@
         }
 
         .reset-container {
-            background: white;
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
             border-radius: 16px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             overflow: hidden;
-            max-width: 800px;
+            max-width: 400px;
             width: 100%;
-            min-height: 500px;
+            min-height: 600px;
             display: flex;
             position: relative;
+            color: white;
         }
 
-        .left-section {
+        .main-section {
             flex: 1;
-            padding: 50px 40px;
-            background: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            position: relative;
-        }
-
-        .right-section {
-            flex: 1;
-            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
             position: relative;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             padding: 50px 40px;
-            color: white;
-            clip-path: polygon(20% 0%, 100% 0%, 100% 100%, 0% 100%);
-        }
-
-        /* .background-pattern {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background-image:
-                radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 25%),
-                radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.05) 0%, transparent 25%);
-            background-size: 60px 60px;
-        } */
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 40px;
-        }
-
-        .logo-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, #3b82f6, #1e40af);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-        }
-
-        .logo-text {
-            color: #3b82f6;
-            font-weight: 500;
-            font-size: 13px;
-            line-height: 1.2;
-        }
-
-        .welcome-text {
-            font-size: 28px;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 12px;
-            letter-spacing: -0.5px;
-        }
-
-        .subtitle {
-            color: #64748b;
-            font-size: 15px;
-            line-height: 1.5;
-            margin-bottom: 25px;
-        }
-
-        .back-to-login {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: #3b82f6;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            padding: 8px 16px;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            background: #f8fafc;
-            width: fit-content;
-        }
-
-        .back-to-login:hover {
-            background: #3b82f6;
-            color: white;
-            border-color: #3b82f6;
-            transform: translateY(-1px);
         }
 
         .reset-form {
@@ -234,18 +148,24 @@
         }
 
         .back-to-login-link {
-            color: rgba(255, 255, 255, 0.9);
-            text-decoration: none;
-            font-size: 13px;
-            text-align: center;
-            display: block;
-            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 24px;
+            padding: 10px 20px;
             font-weight: 500;
+            font-size: 14px;
+            width: 100%;
+            color: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
+            text-align: center;
         }
 
         .back-to-login-link:hover {
+            background: rgba(255, 255, 255, 0.3);
             color: white;
-            text-decoration: underline;
+            transform: translateY(-2px);
         }
 
         .copyright {
@@ -260,42 +180,36 @@
         }
 
         .error-message {
-            color: #ef4444;
+            color: #fecaca;
             font-size: 12px;
             margin-top: 4px;
             margin-left: 20px;
+            background: rgba(239, 68, 68, 0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            border-left: 3px solid #ef4444;
         }
 
         .success-message {
-            background: rgba(16, 185, 129, 0.647);
-            color: #059669;
+            background: rgba(16, 185, 129, 0.95);
+            color: white;
             padding: 16px;
             border-radius: 12px;
             font-size: 13px;
             margin-bottom: 20px;
-            border-left: 4px solid #10b981;
+            border-left: 4px solid #059669;
             line-height: 1.4;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
         }
 
         @media (max-width: 768px) {
             .reset-container {
-                flex-direction: column;
                 max-width: 380px;
                 min-height: auto;
             }
 
-            .right-section {
-                clip-path: none;
-                order: -1;
+            .main-section {
                 padding: 40px 30px 30px;
-            }
-
-            .left-section {
-                padding: 30px;
-            }
-
-            .welcome-text {
-                font-size: 24px;
             }
 
             .reset-form {
@@ -321,47 +235,43 @@
         .reset-icon {
             width: 60px;
             height: 60px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.2);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 24px;
             margin-bottom: 10px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            margin-top: 20px;
+            line-height: 1.4;
         }
     </style>
 </head>
 
 <body>
     <div class="reset-container">
-        <!-- Left Section -->
-        <div class="left-section">
-            <div class="logo">
-                <div class="logo-icon">
-                    <i class="bi bi-shield-check"></i>
-                </div>
-                <div>
-                    <div class="logo-text">SATU DATA TERNATE</div>
-                </div>
-            </div>
+        <!-- Main Section -->
+        <div class="main-section">
 
-            <div>
-                <h1 class="welcome-text">FORGOT PASSWORD?</h1>
-                <p class="subtitle">
-                    No problem. Just let us know your email address and we will email you a password reset link that
-                    will allow you to choose a new one.
-                </p>
-
-                <a href="{{ route('login') }}" class="back-to-login">
-                    <i class="bi bi-arrow-left"></i>
-                    Back to Login
-                </a>
-            </div>
-        </div>
-
-        <!-- Right Section -->
-        <div class="right-section">
-            <div class="background-pattern"></div>
 
             <form class="reset-form" method="POST" action="{{ route('password.email') }}">
                 @csrf
@@ -373,18 +283,20 @@
                 </div>
 
                 <h2 class="reset-title">RESET PASSWORD</h2>
-                <p class="reset-subtitle">Enter your email address to receive reset instructions</p>
+                <p class="reset-subtitle">{{ __('Masukkan alamat email Anda untuk menerima tautan reset password') }}
+                </p>
 
                 <!-- Session Status -->
                 @if (session('status'))
-                    <div class="info-text">
+                    <div class="success-message">
+                        <i class="bi bi-check-circle me-2"></i>
                         {{ session('status') }}
                     </div>
                 @endif
 
                 <div class="info-text">
                     <i class="bi bi-info-circle me-2"></i>
-                    We'll send you a secure link to reset your password safely.
+                    {{ __('Kami akan mengirimkan tautan aman untuk mereset password Anda.') }}
                 </div>
 
                 <!-- Email Address -->
@@ -392,18 +304,29 @@
                     <div class="input-wrapper">
                         <i class="bi bi-envelope input-icon"></i>
                         <input type="email" class="form-control" name="email" value="{{ old('email') }}"
-                            placeholder="Enter your email address" required autofocus>
+                            placeholder="{{ __('Masukkan alamat email Anda') }}" required autofocus>
                     </div>
                     @error('email')
-                        <div class="error-message">{{ $message }}</div>
+                        <div class="error-message">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            {{ $message }}
+                        </div>
                     @enderror
                 </div>
 
                 <button type="submit" class="btn btn-reset">
-                    <i class="bi bi-send me-2"></i>Email Password Reset Link
+                    <i class="bi bi-send me-2"></i>{{ __('KIRIM TAUTAN RESET PASSWORD') }}
                 </button>
 
+                <a href="{{ route('login') }}" class="back-to-login-link">
+                    <i class="bi bi-arrow-left me-2"></i>{{ __('Kembali ke Login') }}
+                </a>
 
+                <div class="help-text">
+                    {{ __('Butuh bantuan?') }}<br>
+                    <strong>support@ternatekota.go.id</strong><br>
+                    <strong>(0921) 123-4567</strong>
+                </div>
             </form>
 
             <div class="copyright">
@@ -420,7 +343,7 @@
             const form = this;
 
             // Add loading state
-            btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Sending Reset Link...';
+            btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>{{ __('Mengirim Tautan...') }}';
             btn.disabled = true;
             form.classList.add('loading');
 
@@ -443,27 +366,41 @@
             setTimeout(() => {
                 error.style.opacity = '0';
                 error.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    error.style.display = 'none';
+                }, 300);
             }, 5000);
         });
 
-        // Auto-hide success messages after 10 seconds (longer for reset confirmation)
+        // Auto-hide success messages after 10 seconds
         document.querySelectorAll('.success-message').forEach(success => {
             setTimeout(() => {
                 success.style.opacity = '0';
                 success.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    success.style.display = 'none';
+                }, 300);
             }, 10000);
         });
 
-        // Add floating animation to reset icon
-        const resetIcon = document.querySelector('.reset-icon');
-        if (resetIcon) {
-            setInterval(() => {
-                resetIcon.style.transform = 'translateY(-5px)';
-                setTimeout(() => {
-                    resetIcon.style.transform = 'translateY(0)';
-                }, 1000);
-            }, 2000);
-        }
+        // Button hover effects
+        document.querySelectorAll('.btn-reset, .back-to-login-link').forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+            });
+
+            btn.addEventListener('mouseleave', function() {
+                if (!this.disabled) {
+                    this.style.transform = 'translateY(0)';
+                }
+            });
+        });
+
+        // Animate reset icon on page load
+        window.addEventListener('load', function() {
+            const resetIcon = document.querySelector('.reset-icon');
+            resetIcon.style.animation = 'float 3s ease-in-out infinite';
+        });
     </script>
 </body>
 

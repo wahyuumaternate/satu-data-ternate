@@ -314,7 +314,7 @@
             <div>
                 <h1 class="welcome-text">SATU DATA TERNATE</h1>
                 <p class="subtitle">Platform untuk pengelolaan dan berbagi pakai data antar Perangkat Daerah di
-                    lingkungan Pemerintah Provinsi Jawa Barat.</p>
+                    lingkungan Pemerintah Kota Ternate.</p>
             </div>
         </div>
 
