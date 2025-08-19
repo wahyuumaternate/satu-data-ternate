@@ -1,11 +1,16 @@
 <?php
 
+// ============================================================================
+// UPDATE LOGIN REQUEST - app/Http/Requests/Auth/LoginRequest.php
+// ============================================================================
+
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -29,7 +34,32 @@ class LoginRequest extends FormRequest
         return [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
+            'captcha_verified' => ['required', 'accepted'], // Add CAPTCHA validation
         ];
+    }
+
+    /**
+     * Get custom validation messages
+     */
+    public function messages(): array
+    {
+        return [
+            'email.required' => 'Email wajib diisi',
+            'email.email' => 'Format email tidak valid',
+            'password.required' => 'Password wajib diisi',
+            'captcha_verified.accepted' => 'Harap selesaikan verifikasi CAPTCHA terlebih dahulu'
+        ];
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        // Convert string "1" to boolean true for validation
+        if ($this->captcha_verified === '1') {
+            $this->merge(['captcha_verified' => true]);
+        }
     }
 
     /**
@@ -50,6 +80,9 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+        
+        // Clear CAPTCHA session after successful login
+        Session::forget('captcha_puzzle');
     }
 
     /**

@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'opd' => \App\Http\Middleware\OpdMiddleware::class,
             'penanggung-jawab' => \App\Http\Middleware\PenanggungJawabMiddleware::class,
             'reviewer' => \App\Http\Middleware\ReviewerMiddleware::class,
+            
         ]);
     })
     ->withProviders([

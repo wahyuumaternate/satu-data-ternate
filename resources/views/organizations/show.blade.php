@@ -21,21 +21,22 @@
                 <div class="card">
                     <div class="card-body profile-card pt-4 d-flex flex-column align-items-center">
                         <img src="{{ $organization->logo_url }}" alt="{{ $organization->name }}"
-                            class="rounded-circle organization-logo">
-                        <h2>{{ $organization->name }}</h2>
-                        <h3 class="text-muted">{{ $organization->code }}</h3>
+                            class="rounded-circle organization-logo mb-3">
+                        <h2 class="text-dark">{{ $organization->name }}</h2>
+                        <h3 class="text-muted mb-3">{{ $organization->code }}</h3>
 
                         @if ($organization->description)
-                            <p class="text-center text-muted mt-3">{{ $organization->description }}</p>
+                            <p class="text-center text-muted">{{ Str::limit($organization->description, 100) }}</p>
                         @endif
 
-                        <div class="social-links mt-3">
-                            @if ($organization->website)
-                                <a href="{{ $organization->formatted_website }}" target="_blank" class="btn btn-primary">
+                        @if ($organization->website)
+                            <div class="social-links mt-2">
+                                <a href="{{ $organization->formatted_website }}" target="_blank"
+                                    class="btn btn-primary btn-lg text-white">
                                     <i class="bi bi-globe"></i> Kunjungi Website
                                 </a>
-                            @endif
-                        </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
 
@@ -43,48 +44,26 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">
-                            <i class="bi bi-graph-up"></i> Statistik
+                            <i class="bi bi-graph-up text-primary"></i> Statistik
                         </h5>
 
-                        <div class="row g-3">
+                        <div class="row g-3 text-center">
                             <div class="col-6">
-                                <div class="text-center">
-                                    <div class="display-6 text-primary">{{ $organization->users_count ?? 0 }}</div>
-                                    <small class="text-muted">Total User</small>
+                                <div class="stat-item">
+                                    <div class="stat-number text-primary">{{ $organization->users_count ?? 0 }}</div>
+                                    <div class="stat-label">Total User</div>
                                 </div>
                             </div>
                             <div class="col-6">
-                                <div class="text-center">
-                                    <div class="display-6 text-success">{{ $organization->created_at->diffInDays(now()) }}
+                                <div class="stat-item">
+                                    <div class="stat-number text-primary">
+                                        <small class="text-sm">
+                                            {{ $organization->created_at->diffForHumans(now(), true) }}
+                                        </small>
                                     </div>
-                                    <small class="text-muted">Hari Aktif</small>
+                                    <div class="stat-label">Lama Aktif</div>
                                 </div>
-                            </div>
-                        </div>
 
-                        <hr>
-
-                        <div class="row text-center">
-                            <div class="col-12">
-                                <h6 class="text-muted mb-2">Status Kelengkapan</h6>
-                                @php
-                                    $completeness = 0;
-                                    $fields = ['name', 'description', 'website', 'logo'];
-                                    $filled = 0;
-
-                                    foreach ($fields as $field) {
-                                        if (!empty($organization->$field)) {
-                                            $filled++;
-                                        }
-                                    }
-
-                                    $completeness = round(($filled / count($fields)) * 100);
-                                @endphp
-
-                                <div class="progress mb-2" style="height: 10px;">
-                                    <div class="progress-bar" role="progressbar" style="width: {{ $completeness }}%"></div>
-                                </div>
-                                <small class="text-muted">{{ $completeness }}% lengkap</small>
                             </div>
                         </div>
                     </div>
@@ -104,9 +83,9 @@
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="profile-edit-tab" data-bs-toggle="tab"
-                                    data-bs-target="#profile-edit" type="button" role="tab">
-                                    <i class="bi bi-pencil"></i> Detail
+                                <button class="nav-link" id="profile-detail-tab" data-bs-toggle="tab"
+                                    data-bs-target="#profile-detail" type="button" role="tab">
+                                    <i class="bi bi-file-text"></i> Detail
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
@@ -117,17 +96,17 @@
                             </li>
                         </ul>
 
-                        <div class="tab-content pt-3">
+                        <div class="tab-content pt-4">
                             <!-- Overview Tab -->
                             <div class="tab-pane fade show active profile-overview" id="profile-overview" role="tabpanel">
-                                <h5 class="card-title">Tentang Organisasi</h5>
+                                <h5 class="card-title text-primary">Tentang Organisasi</h5>
 
                                 @if ($organization->description)
-                                    <div class="alert alert-light border-start border-4 border-primary">
+                                    <div class="info-box mb-4">
                                         <p class="mb-0">{{ $organization->description }}</p>
                                     </div>
                                 @else
-                                    <div class="alert alert-light">
+                                    <div class="info-box info-box-empty mb-4">
                                         <p class="text-muted mb-0">
                                             <i class="bi bi-info-circle"></i>
                                             Belum ada deskripsi untuk organisasi ini.
@@ -135,126 +114,119 @@
                                     </div>
                                 @endif
 
-                                <h5 class="card-title">Detail Organisasi</h5>
+                                <h5 class="card-title text-primary">Informasi Organisasi</h5>
 
-                                <div class="row">
-                                    <div class="col-lg-3 col-md-4 label">Nama Lengkap</div>
-                                    <div class="col-lg-9 col-md-8">{{ $organization->name }}</div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-lg-3 col-md-4 label">Kode Organisasi</div>
-                                    <div class="col-lg-9 col-md-8">
-                                        <code class="bg-light p-1 rounded">{{ $organization->code }}</code>
+                                <div class="info-grid">
+                                    <div class="info-row">
+                                        <div class="info-label">Nama Lengkap</div>
+                                        <div class="info-value">{{ $organization->name }}</div>
                                     </div>
-                                </div>
 
-                                @if ($organization->website)
-                                    <div class="row">
-                                        <div class="col-lg-3 col-md-4 label">Website</div>
-                                        <div class="col-lg-9 col-md-8">
-                                            <a href="{{ $organization->formatted_website }}" target="_blank"
-                                                class="text-decoration-none">
-                                                {{ $organization->website }} <i class="bi bi-box-arrow-up-right"></i>
-                                            </a>
+                                    <div class="info-row">
+                                        <div class="info-label">Kode Organisasi</div>
+                                        <div class="info-value">
+                                            <span class="code-badge">{{ $organization->code }}</span>
                                         </div>
                                     </div>
-                                @endif
 
-                                <div class="row">
-                                    <div class="col-lg-3 col-md-4 label">Dibuat</div>
-                                    <div class="col-lg-9 col-md-8">
-                                        {{ $organization->created_at->format('d F Y, H:i') }}
-                                        <small
-                                            class="text-muted">({{ $organization->created_at->diffForHumans() }})</small>
+                                    @if ($organization->website)
+                                        <div class="info-row">
+                                            <div class="info-label">Website</div>
+                                            <div class="info-value">
+                                                <a href="{{ $organization->formatted_website }}" target="_blank"
+                                                    class="link-primary text-decoration-none">
+                                                    {{ $organization->website }} <i class="bi bi-box-arrow-up-right"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    <div class="info-row">
+                                        <div class="info-label">Dibuat</div>
+                                        <div class="info-value">
+                                            {{ $organization->created_at->format('d F Y, H:i') }}
+                                            <small
+                                                class="text-muted d-block">{{ $organization->created_at->diffForHumans() }}</small>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div class="row">
-                                    <div class="col-lg-3 col-md-4 label">Terakhir Diupdate</div>
-                                    <div class="col-lg-9 col-md-8">
-                                        {{ $organization->updated_at->format('d F Y, H:i') }}
-                                        <small
-                                            class="text-muted">({{ $organization->updated_at->diffForHumans() }})</small>
+                                    <div class="info-row">
+                                        <div class="info-label">Terakhir Diupdate</div>
+                                        <div class="info-value">
+                                            {{ $organization->updated_at->format('d F Y, H:i') }}
+                                            <small
+                                                class="text-muted d-block">{{ $organization->updated_at->diffForHumans() }}</small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Detail Tab -->
-                            <div class="tab-pane fade profile-edit pt-3" id="profile-edit" role="tabpanel">
-                                <h5 class="card-title">Informasi Lengkap</h5>
+                            <div class="tab-pane fade profile-detail pt-3" id="profile-detail" role="tabpanel">
+                                <h5 class="card-title text-primary">Informasi Lengkap</h5>
 
                                 <div class="row mb-4">
-                                    <div class="col-md-6">
-                                        <div class="card border-0 bg-light">
-                                            <div class="card-body">
-                                                <h6 class="card-title text-primary">
-                                                    <i class="bi bi-building"></i> Identitas
-                                                </h6>
-                                                <table class="table table-borderless mb-0">
-                                                    <tr>
-                                                        <td class="fw-bold">ID:</td>
-                                                        <td>{{ $organization->id }}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="fw-bold">Kode:</td>
-                                                        <td><code>{{ $organization->code }}</code></td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="fw-bold">Nama:</td>
-                                                        <td>{{ $organization->name }}</td>
-                                                    </tr>
-                                                </table>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="detail-card">
+                                            <div class="detail-card-header">
+                                                <i class="bi bi-building text-primary"></i>
+                                                <span>Identitas</span>
+                                            </div>
+                                            <div class="detail-card-body">
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Kode:</span>
+                                                    <span class="code-badge">{{ $organization->code }}</span>
+                                                </div>
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Nama:</span>
+                                                    <span class="detail-value">{{ $organization->name }}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="col-md-6">
-                                        <div class="card border-0 bg-light">
-                                            <div class="card-body">
-                                                <h6 class="card-title text-success">
-                                                    <i class="bi bi-globe"></i> Kontak & Web
-                                                </h6>
-                                                <table class="table table-borderless mb-0">
-                                                    <tr>
-                                                        <td class="fw-bold">Website:</td>
-                                                        <td>
-                                                            @if ($organization->website)
-                                                                <a href="{{ $organization->formatted_website }}"
-                                                                    target="_blank" class="text-decoration-none">
-                                                                    {{ $organization->website }}
-                                                                </a>
-                                                            @else
-                                                                <span class="text-muted">Tidak ada</span>
-                                                            @endif
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td class="fw-bold">Logo:</td>
-                                                        <td>
-                                                            @if ($organization->logo)
-                                                                <span class="text-success">
-                                                                    <i class="bi bi-check-circle"></i> Ada
-                                                                </span>
-                                                            @else
-                                                                <span class="text-muted">
-                                                                    <i class="bi bi-x-circle"></i> Tidak ada
-                                                                </span>
-                                                            @endif
-                                                        </td>
-                                                    </tr>
-                                                </table>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="detail-card">
+                                            <div class="detail-card-header">
+                                                <i class="bi bi-globe text-primary"></i>
+                                                <span>Kontak & Web</span>
+                                            </div>
+                                            <div class="detail-card-body">
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Website:</span>
+                                                    @if ($organization->website)
+                                                        <a href="{{ $organization->formatted_website }}" target="_blank"
+                                                            class="link-primary text-decoration-none">
+                                                            {{ $organization->website }}
+                                                        </a>
+                                                    @else
+                                                        <span class="text-muted">Tidak ada</span>
+                                                    @endif
+                                                </div>
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Logo:</span>
+                                                    @if ($organization->logo)
+                                                        <span class="status-badge status-success">
+                                                            <i class="bi bi-check-circle"></i> Ada
+                                                        </span>
+                                                    @else
+                                                        <span class="status-badge status-muted">
+                                                            <i class="bi bi-x-circle"></i> Tidak ada
+                                                        </span>
+                                                    @endif
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Deskripsi -->
-                                <div class="card border-0 bg-light">
-                                    <div class="card-body">
-                                        <h6 class="card-title text-info">
-                                            <i class="bi bi-card-text"></i> Deskripsi
-                                        </h6>
+                                <div class="detail-card mb-4">
+                                    <div class="detail-card-header">
+                                        <i class="bi bi-card-text text-primary"></i>
+                                        <span>Deskripsi</span>
+                                    </div>
+                                    <div class="detail-card-body">
                                         @if ($organization->description)
                                             <p class="mb-0">{{ $organization->description }}</p>
                                         @else
@@ -267,14 +239,15 @@
                                 </div>
 
                                 <!-- Timeline -->
-                                <div class="card border-0 bg-light mt-3">
-                                    <div class="card-body">
-                                        <h6 class="card-title text-warning">
-                                            <i class="bi bi-clock-history"></i> Timeline
-                                        </h6>
+                                <div class="detail-card">
+                                    <div class="detail-card-header">
+                                        <i class="bi bi-clock-history text-primary"></i>
+                                        <span>Timeline</span>
+                                    </div>
+                                    <div class="detail-card-body">
                                         <div class="timeline">
                                             <div class="timeline-item">
-                                                <div class="timeline-marker bg-success"></div>
+                                                <div class="timeline-marker"></div>
                                                 <div class="timeline-content">
                                                     <h6 class="mb-1">Organisasi Dibuat</h6>
                                                     <p class="text-muted mb-0">
@@ -282,7 +255,7 @@
                                                 </div>
                                             </div>
                                             <div class="timeline-item">
-                                                <div class="timeline-marker bg-primary"></div>
+                                                <div class="timeline-marker"></div>
                                                 <div class="timeline-content">
                                                     <h6 class="mb-1">Terakhir Diperbarui</h6>
                                                     <p class="text-muted mb-0">
@@ -296,31 +269,35 @@
 
                             <!-- Settings Tab -->
                             <div class="tab-pane fade pt-3" id="profile-settings" role="tabpanel">
-                                <h5 class="card-title">Pengaturan Organisasi</h5>
+                                <h5 class="card-title text-primary">Pengaturan Organisasi</h5>
 
                                 <!-- Quick Actions -->
                                 <div class="row mb-4">
-                                    <div class="col-md-6">
-                                        <div class="card border-primary">
-                                            <div class="card-body text-center">
-                                                <i class="bi bi-pencil-square display-4 text-primary"></i>
-                                                <h6 class="mt-3">Edit Organisasi</h6>
-                                                <p class="text-muted small">Ubah informasi organisasi</p>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="action-card">
+                                            <div class="action-icon">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </div>
+                                            <div class="action-content">
+                                                <h6>Edit Organisasi</h6>
+                                                <p class="text-muted">Ubah informasi organisasi</p>
                                                 <a href="{{ route('organizations.edit', $organization) }}"
-                                                    class="btn btn-primary">
+                                                    class="btn btn-primary btn-sm">
                                                     <i class="bi bi-pencil"></i> Edit
                                                 </a>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="col-md-6">
-                                        <div class="card border-success">
-                                            <div class="card-body text-center">
-                                                <i class="bi bi-people display-4 text-success"></i>
-                                                <h6 class="mt-3">Kelola User</h6>
-                                                <p class="text-muted small">Atur user dalam organisasi</p>
-                                                <button class="btn btn-success" disabled>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="action-card">
+                                            <div class="action-icon">
+                                                <i class="bi bi-people"></i>
+                                            </div>
+                                            <div class="action-content">
+                                                <h6>Kelola User</h6>
+                                                <p class="text-muted">Atur user dalam organisasi</p>
+                                                <button class="btn btn-outline-primary btn-sm" disabled>
                                                     <i class="bi bi-people"></i> Kelola User
                                                 </button>
                                             </div>
@@ -328,36 +305,16 @@
                                     </div>
                                 </div>
 
-                                <!-- Export Options -->
-                                <div class="card border-0 bg-light">
-                                    <div class="card-body">
-                                        <h6 class="card-title">
-                                            <i class="bi bi-download"></i> Export Data
-                                        </h6>
-                                        <p class="text-muted small">Download informasi organisasi dalam berbagai format</p>
-                                        <div class="btn-group">
-                                            <button class="btn btn-outline-primary" onclick="exportData('json')">
-                                                <i class="bi bi-file-earmark-code"></i> JSON
-                                            </button>
-                                            <button class="btn btn-outline-success" onclick="exportData('pdf')">
-                                                <i class="bi bi-file-earmark-pdf"></i> PDF
-                                            </button>
-                                            <button class="btn btn-outline-info" onclick="printInfo()">
-                                                <i class="bi bi-printer"></i> Print
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <!-- Danger Zone -->
-                                <div class="card border-danger mt-4">
-                                    <div class="card-body">
-                                        <h6 class="card-title text-danger">
-                                            <i class="bi bi-exclamation-triangle"></i> Zona Bahaya
-                                        </h6>
+                                <div class="danger-zone">
+                                    <div class="danger-zone-header">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        <span>Zona Bahaya</span>
+                                    </div>
+                                    <div class="danger-zone-body">
                                         <p class="text-muted">Tindakan di bawah ini bersifat permanen dan tidak dapat
                                             dibatalkan.</p>
-                                        <button type="button" class="btn btn-outline-danger"
+                                        <button type="button" class="btn btn-outline-danger btn-sm"
                                             onclick="deleteOrganization()">
                                             <i class="bi bi-trash"></i> Hapus Organisasi
                                         </button>
@@ -386,9 +343,9 @@
                         <i class="bi bi-trash3 display-4 text-danger"></i>
                     </div>
                     <p class="text-center">Apakah Anda yakin ingin menghapus organisasi:</p>
-                    <div class="alert alert-warning text-center">
+                    <div class="alert alert-light border text-center">
                         <strong>{{ $organization->name }}</strong><br>
-                        <small>{{ $organization->code }}</small>
+                        <small class="text-muted">{{ $organization->code }}</small>
                     </div>
                     <p class="text-danger text-center small">
                         <i class="bi bi-exclamation-triangle"></i>
@@ -424,7 +381,6 @@
         // Export functions
         function exportData(format) {
             const data = {
-                id: {{ $organization->id }},
                 name: "{{ $organization->name }}",
                 code: "{{ $organization->code }}",
                 description: "{{ $organization->description }}",
@@ -442,7 +398,6 @@
                 downloadAnchorNode.click();
                 downloadAnchorNode.remove();
             } else if (format === 'pdf') {
-                // You can implement PDF generation here
                 alert('Fitur export PDF akan segera tersedia');
             }
         }
@@ -518,44 +473,67 @@
 
 @push('styles')
     <style>
+        /* Organization Logo */
         .organization-logo {
             width: 120px;
             height: 120px;
             object-fit: cover;
-            border: 4px solid #fff;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: 3px solid #fff;
+            box-shadow: 0 4px 20px rgba(65, 84, 241, 0.15);
         }
 
+        /* Profile Card */
         .profile-card h2 {
-            font-size: 24px;
-            margin: 15px 0 5px 0;
-            color: #2c384e;
-        }
-
-        .profile-card h3 {
-            font-size: 18px;
-            color: #899bbd;
+            font-size: 1.5rem;
+            font-weight: 600;
             margin: 0;
         }
 
-        .profile-overview .row {
-            margin-bottom: 20px;
+        .profile-card h3 {
+            font-size: 1rem;
+            font-weight: 500;
+            margin: 0;
         }
 
-        .profile-overview .label {
-            color: #2c384e;
-            font-weight: 600;
-            margin-bottom: 10px;
+        /* Stats */
+        .stat-item {
+            padding: 1rem 0;
         }
 
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+
+        /* Progress Bar */
+        .progress {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #4154f1 0%, #677ce4 100%);
+            border-radius: 10px;
+        }
+
+        /* Tabs */
         .nav-tabs-bordered {
-            border-bottom: 2px solid #ebeef4;
+            border-bottom: 2px solid #f1f3f4;
         }
 
         .nav-tabs-bordered .nav-link {
-            margin-bottom: -2px;
             border: none;
-            color: #2c384e;
+            color: #6c757d;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            margin-bottom: -2px;
         }
 
         .nav-tabs-bordered .nav-link:hover {
@@ -564,20 +542,138 @@
         }
 
         .nav-tabs-bordered .nav-link.active {
-            background-color: #fff;
             color: #4154f1;
             border-bottom: 2px solid #4154f1;
+            background: none;
         }
 
+        /* Info Boxes */
+        .info-box {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .info-box-empty {
+            border-style: dashed;
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+            min-width: 140px;
+            flex-shrink: 0;
+        }
+
+        .info-value {
+            flex: 1;
+            color: #212529;
+        }
+
+        /* Code Badge */
+        .code-badge {
+            background: #e7f1ff;
+            color: #4154f1;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* Detail Cards */
+        .detail-card {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .detail-card-header {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: 600;
+            color: #495057;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .detail-card-body {
+            padding: 1.5rem;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 500;
+            color: #6c757d;
+        }
+
+        .detail-value {
+            font-weight: 500;
+            color: #212529;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .status-muted {
+            background: #f8f9fa;
+            color: #6c757d;
+        }
+
+        /* Timeline */
         .timeline {
             position: relative;
-            padding-left: 30px;
+            padding-left: 2rem;
         }
 
         .timeline::before {
             content: '';
             position: absolute;
-            left: 15px;
+            left: 0.5rem;
             top: 0;
             bottom: 0;
             width: 2px;
@@ -586,35 +682,115 @@
 
         .timeline-item {
             position: relative;
-            margin-bottom: 25px;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-item:last-child {
+            margin-bottom: 0;
         }
 
         .timeline-marker {
             position: absolute;
-            left: -23px;
-            top: 0;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
+            left: -1.75rem;
+            top: 0.25rem;
+            width: 12px;
+            height: 12px;
+            background: #4154f1;
             border: 3px solid #fff;
+            border-radius: 50%;
             box-shadow: 0 0 0 2px #e9ecef;
         }
 
         .timeline-content h6 {
-            margin-bottom: 5px;
-            color: #2c384e;
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+            color: #495057;
         }
 
+        /* Action Cards */
+        .action-card {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .action-icon {
+            width: 60px;
+            height: 60px;
+            background: #f8f9fa;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .action-icon i {
+            font-size: 1.5rem;
+            color: #4154f1;
+        }
+
+        .action-content h6 {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .action-content p {
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            flex: 1;
+        }
+
+        /* Danger Zone */
+        .danger-zone {
+            background: #fff;
+            border: 1px solid #f5c2c7;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .danger-zone-header {
+            background: #f8d7da;
+            color: #842029;
+            padding: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .danger-zone-body {
+            padding: 1.5rem;
+        }
+
+        /* Card Hover Effects */
         .card {
             transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
         }
 
         .card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 25px rgba(65, 84, 241, 0.1);
         }
 
+        .detail-card:hover,
+        .action-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 15px rgba(65, 84, 241, 0.1);
+        }
+
+        /* Button Styles */
         .btn {
+            border-radius: 6px;
+            font-weight: 500;
             transition: all 0.3s ease;
         }
 
@@ -622,20 +798,46 @@
             transform: translateY(-1px);
         }
 
-        .progress {
-            background-color: #e9ecef;
+        .btn-primary {
+            background: #4154f1;
+            border-color: #4154f1;
         }
 
-        .progress-bar {
-            background: linear-gradient(90deg, #4154f1 0%, #677ce4 100%);
+        .btn-primary:hover {
+            background: #3346e0;
+            border-color: #3346e0;
         }
 
-        .display-6 {
-            font-size: 2rem;
-            font-weight: 600;
+        .btn-outline-primary {
+            color: #4154f1;
+            border-color: #4154f1;
         }
 
-        /* Responsive adjustments */
+        .btn-outline-primary:hover {
+            background: #4154f1;
+            border-color: #4154f1;
+        }
+
+        /* Badge Styles */
+        .badge {
+            font-weight: 500;
+            padding: 0.5rem 0.75rem;
+        }
+
+        .bg-primary {
+            background-color: #4154f1 !important;
+        }
+
+        /* Link Styles */
+        .link-primary {
+            color: #4154f1;
+        }
+
+        .link-primary:hover {
+            color: #3346e0;
+        }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
             .organization-logo {
                 width: 100px;
@@ -643,22 +845,91 @@
             }
 
             .profile-card h2 {
-                font-size: 20px;
+                font-size: 1.25rem;
             }
 
             .profile-card h3 {
-                font-size: 16px;
+                font-size: 0.875rem;
+            }
+
+            .stat-number {
+                font-size: 1.5rem;
+            }
+
+            .info-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .info-label {
+                min-width: auto;
+            }
+
+            .detail-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.25rem;
             }
 
             .timeline {
-                padding-left: 20px;
+                padding-left: 1.5rem;
             }
 
             .timeline-marker {
-                left: -18px;
-                width: 12px;
-                height: 12px;
+                left: -1.25rem;
+                width: 10px;
+                height: 10px;
             }
+
+            .nav-tabs-bordered .nav-link {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+            }
+        }
+
+        /* Custom Utilities */
+        .text-primary {
+            color: #4154f1 !important;
+        }
+
+        .border-primary {
+            border-color: #4154f1 !important;
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tab-pane {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        /* Clean Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4154f1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3346e0;
         }
     </style>
 @endpush

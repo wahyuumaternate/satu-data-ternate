@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CaptchaPuzzleController;
 use App\Http\Controllers\DatasetApprovalController;
 use App\Http\Controllers\DatasetController;
 use App\Http\Controllers\InfografisController;
@@ -9,12 +10,21 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VisualisasiController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
 */
+
+
+
+Route::prefix('captcha-puzzle')->name('captcha.puzzle.')->group(function () {
+    Route::get('/generate', [CaptchaPuzzleController::class, 'generate'])->name('generate');
+    Route::post('/verify', [CaptchaPuzzleController::class, 'verify'])->name('verify');
+    Route::post('/cleanup', [CaptchaPuzzleController::class, 'cleanup'])->name('cleanup');
+});
 
 // Dashboard Route
 Route::get('/', function () {

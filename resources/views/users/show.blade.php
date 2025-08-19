@@ -29,12 +29,17 @@
                         <!-- Status Badges -->
                         <div class="social-links mt-3 mb-3">
                             @if ($user->roles->count() > 0)
-                                <span class="badge bg-primary me-2">
-                                    {{ ucfirst(str_replace('-', ' ', $user->roles->first()->name)) }}</span>
+                                <span class="badge bg-primary m-2">
+                                    {{ ucfirst(str_replace('-', ' ', $user->roles->first()->name)) }}
+                                </span>
                             @endif
+
                             @if ($user->organization)
-                                <span class="badge bg-primary me-2">{{ $user->organization->name }}</span>
+                                <span class="badge bg-primary m-2">
+                                    {{ $user->organization->name }}
+                                </span>
                             @endif
+
                             @if ($user->email_verified_at)
                                 <span class="badge bg-primary">
                                     <i class="bi bi-patch-check-fill"></i> Verified
@@ -45,6 +50,7 @@
                                 </span>
                             @endif
                         </div>
+
 
                         <!-- Quick Actions -->
                         <div class="social-links">
