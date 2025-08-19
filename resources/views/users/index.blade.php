@@ -208,11 +208,12 @@
                                                 <select name="role" class="form-select">
                                                     <option value="">Semua Role</option>
                                                     @foreach ($roles as $role)
-                                                        <option value="{{ $role->id }}"
-                                                            {{ request('role') == $role->id ? 'selected' : '' }}>
-                                                            {{ $role->name }}
+                                                        <option value="{{ $role->name }}"
+                                                            {{ old('role') == $role->name ? 'selected' : '' }}>
+                                                            {{ ucfirst(str_replace('-', ' ', $role->name)) }}
                                                         </option>
                                                     @endforeach
+                                                </select>
                                                 </select>
                                             </div>
                                             <div class="col-md-2">
@@ -387,8 +388,10 @@
                                                         @endif
                                                     </td>
                                                     <td>
-                                                        @if ($user->role)
-                                                            <span class="badge bg-primary">{{ $user->role->name }}</span>
+                                                        @if ($user->roles->count() > 0)
+                                                            <span class="badge bg-primary">
+                                                                {{ ucfirst(str_replace('-', ' ', $user->roles->first()->name)) }}
+                                                            </span>
                                                         @else
                                                             <span class="text-muted">-</span>
                                                         @endif

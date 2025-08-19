@@ -28,8 +28,9 @@
 
                         <!-- Status Badges -->
                         <div class="social-links mt-3 mb-3">
-                            @if ($user->role)
-                                <span class="badge bg-primary me-2">{{ $user->role->name }}</span>
+                            @if ($user->roles->count() > 0)
+                                <span class="badge bg-primary me-2">
+                                    {{ ucfirst(str_replace('-', ' ', $user->roles->first()->name)) }}</span>
                             @endif
                             @if ($user->organization)
                                 <span class="badge bg-primary me-2">{{ $user->organization->name }}</span>
@@ -176,8 +177,9 @@
                                 <div class="row">
                                     <div class="col-lg-3 col-md-4 label">Role</div>
                                     <div class="col-lg-9 col-md-8">
-                                        @if ($user->role)
-                                            <span class="badge bg-primary">{{ $user->role->name }}</span>
+                                        @if ($user->roles->count() > 0)
+                                            <span class="badge bg-primary me-2">
+                                                {{ ucfirst(str_replace('-', ' ', $user->roles->first()->name)) }}</span>
                                         @else
                                             <span class="text-muted">Belum ada role</span>
                                         @endif

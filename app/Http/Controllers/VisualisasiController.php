@@ -92,58 +92,70 @@ class VisualisasiController extends Controller
      * Store a newly created visualisasi in storage.
      */
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'nama' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
-            'topic' => 'required|in:' . implode(',', Visualisasi::getTopics()),
-            'tipe' => 'required|in:' . implode(',', array_keys(Visualisasi::getTipes())),
-            'data_source' => 'required|in:file,manual',
-            'source_file' => 'nullable|file|mimes:xlsx,xls,csv|max:5120', // 5MB max
-            'manual_data' => 'nullable|string', // JSON string for manual data
-            'is_active' => 'boolean',
-            'is_public' => 'boolean'
-        ]);
+{
+    $validated = $request->validate([
+        'nama' => 'required|string|max:255',
+        'deskripsi' => 'nullable|string',
+        'topic' => 'required|in:' . implode(',', Visualisasi::getTopics()),
+        'tipe' => 'required|in:' . implode(',', array_keys(Visualisasi::getTipes())),
+        'data_source' => 'required|in:file,manual',
+        'source_file' => 'nullable|file|mimes:xlsx,xls,csv|max:5120', // 5MB max
+        'manual_data' => 'nullable|string', // JSON string for manual data
+        'is_active' => 'boolean',
+        'is_public' => 'boolean'
+    ]);
 
-   
-        // Handle file upload
-        if ($request->hasFile('source_file') && $request->data_source === 'file') {
-            $file = $request->file('source_file');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('visualisasi_data', $filename, 'public');
-            $validated['source_file'] = $path;
-        }
-
-        // Handle manual data
-        if ($request->data_source === 'manual' && $request->filled('manual_data')) {
-            $manualData = json_decode($request->manual_data, true);
-            
-            // Store manual data in data_config
-            $validated['data_config'] = [
-                'type' => 'manual',
-                'x_label' => $manualData['x_label'] ?? 'Kategori',
-                'y_label' => $manualData['y_label'] ?? 'Nilai',
-                'data' => [
-                    'labels' => $manualData['labels'] ?? [],
-                    'values' => $manualData['values'] ?? []
-                ]
-            ];
-        }
-
-        // Remove manual_data from validated array as it's not a database column
-        unset($validated['manual_data']);
-        $validated['user_id'] = Auth::user()->id;
-        $visualisasi = Visualisasi::create($validated);
-
-        // Check if user wants to continue adding
-        if ($request->has('continue')) {
-            return redirect()->route('visualisasi.create')
-                ->with('success', 'Visualisasi berhasil dibuat. Silakan tambah visualisasi lain.');
-        }
-
-        return redirect()->route('visualisasi.index')
-            ->with('success', 'Visualisasi berhasil dibuat.');
+    // Generate slug from nama
+    $baseSlug = Str::slug($validated['nama']);
+    $slug = $baseSlug;
+    $counter = 1;
+    
+    // Check for duplicate slugs and append number if needed
+    while (Visualisasi::where('slug', $slug)->exists()) {
+        $slug = $baseSlug . '-' . $counter;
+        $counter++;
     }
+    
+    $validated['slug'] = $slug;
+
+    // Handle file upload
+    if ($request->hasFile('source_file') && $request->data_source === 'file') {
+        $file = $request->file('source_file');
+        $filename = time() . '_' . $file->getClientOriginalName();
+        $path = $file->storeAs('visualisasi_data', $filename, 'public');
+        $validated['source_file'] = $path;
+    }
+
+    // Handle manual data
+    if ($request->data_source === 'manual' && $request->filled('manual_data')) {
+        $manualData = json_decode($request->manual_data, true);
+        
+        // Store manual data in data_config
+        $validated['data_config'] = [
+            'type' => 'manual',
+            'x_label' => $manualData['x_label'] ?? 'Kategori',
+            'y_label' => $manualData['y_label'] ?? 'Nilai',
+            'data' => [
+                'labels' => $manualData['labels'] ?? [],
+                'values' => $manualData['values'] ?? []
+            ]
+        ];
+    }
+
+    // Remove manual_data from validated array as it's not a database column
+    unset($validated['manual_data']);
+    $validated['user_id'] = Auth::user()->id;
+    $visualisasi = Visualisasi::create($validated);
+
+    // Check if user wants to continue adding
+    if ($request->has('continue')) {
+        return redirect()->route('visualisasi.create')
+            ->with('success', 'Visualisasi berhasil dibuat. Silakan tambah visualisasi lain.');
+    }
+
+    return redirect()->route('visualisasi.index')
+        ->with('success', 'Visualisasi berhasil dibuat.');
+}
     /**
      * Display the specified visualisasi.
      */
@@ -186,69 +198,84 @@ class VisualisasiController extends Controller
     /**
      * Update the specified visualisasi in storage.
      */
-    public function update(Request $request, Visualisasi $visualisasi)
-    {
-        $validated = $request->validate([
-            'nama' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
-            'topic' => 'required|in:' . implode(',', Visualisasi::getTopics()),
-            'tipe' => 'required|in:' . implode(',', array_keys(Visualisasi::getTipes())),
-            'data_source' => 'required|in:file,manual',
-            'source_file' => 'nullable|file|mimes:xlsx,xls,csv|max:5120', // 5MB max
-            'manual_data' => 'nullable|string', // JSON string for manual data
-            'is_active' => 'boolean',
-            'is_public' => 'boolean'
-        ]);
+   public function update(Request $request, Visualisasi $visualisasi)
+{
+    $validated = $request->validate([
+        'nama' => 'required|string|max:255',
+        'deskripsi' => 'nullable|string',
+        'topic' => 'required|in:' . implode(',', Visualisasi::getTopics()),
+        'tipe' => 'required|in:' . implode(',', array_keys(Visualisasi::getTipes())),
+        'data_source' => 'required|in:file,manual',
+        'source_file' => 'nullable|file|mimes:xlsx,xls,csv|max:5120', // 5MB max
+        'manual_data' => 'nullable|string', // JSON string for manual data
+        'is_active' => 'boolean',
+        'is_public' => 'boolean'
+    ]);
 
-        // Handle file upload (only if new file is uploaded)
-        if ($request->hasFile('source_file') && $request->data_source === 'file') {
-            // Delete old file if exists
-            if ($visualisasi->source_file && $visualisasi->fileExists()) {
-                Storage::disk('public')->delete($visualisasi->source_file);
-            }
-
-            $file = $request->file('source_file');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('visualisasi_data', $filename, 'public');
-            $validated['source_file'] = $path;
-        } elseif ($request->data_source === 'manual') {
-            // If switching to manual, clear the file
-            if ($visualisasi->source_file && $visualisasi->fileExists()) {
-                Storage::disk('public')->delete($visualisasi->source_file);
-            }
-            $validated['source_file'] = null;
+    // Check if nama has changed and generate new slug if needed
+    if ($validated['nama'] !== $visualisasi->nama) {
+        $baseSlug = Str::slug($validated['nama']);
+        $slug = $baseSlug;
+        $counter = 1;
+        
+        // Check for duplicate slugs (excluding current record)
+        while (Visualisasi::where('slug', $slug)->where('id', '!=', $visualisasi->id)->exists()) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
         }
-
-        // Handle manual data
-        if ($request->data_source === 'manual' && $request->filled('manual_data')) {
-            $manualData = json_decode($request->manual_data, true);
-            
-            // Store manual data in data_config
-            $validated['data_config'] = [
-                'type' => 'manual',
-                'x_label' => $manualData['x_label'] ?? 'Kategori',
-                'y_label' => $manualData['y_label'] ?? 'Nilai',
-                'data' => [
-                    'labels' => $manualData['labels'] ?? [],
-                    'values' => $manualData['values'] ?? []
-                ]
-            ];
-        } elseif ($request->data_source === 'file') {
-            // Clear manual data if switching to file
-            $currentDataConfig = $visualisasi->data_config ?? [];
-            if (isset($currentDataConfig['type']) && $currentDataConfig['type'] === 'manual') {
-                $validated['data_config'] = null;
-            }
-        }
-
-        // Remove manual_data from validated array as it's not a database column
-        unset($validated['manual_data']);
-
-        $visualisasi->update($validated);
-
-        return redirect()->route('visualisasi.index')
-            ->with('success', 'Visualisasi berhasil diperbarui.');
+        
+        $validated['slug'] = $slug;
     }
+
+    // Handle file upload (only if new file is uploaded)
+    if ($request->hasFile('source_file') && $request->data_source === 'file') {
+        // Delete old file if exists
+        if ($visualisasi->source_file && $visualisasi->fileExists()) {
+            Storage::disk('public')->delete($visualisasi->source_file);
+        }
+
+        $file = $request->file('source_file');
+        $filename = time() . '_' . $file->getClientOriginalName();
+        $path = $file->storeAs('visualisasi_data', $filename, 'public');
+        $validated['source_file'] = $path;
+    } elseif ($request->data_source === 'manual') {
+        // If switching to manual, clear the file
+        if ($visualisasi->source_file && $visualisasi->fileExists()) {
+            Storage::disk('public')->delete($visualisasi->source_file);
+        }
+        $validated['source_file'] = null;
+    }
+
+    // Handle manual data
+    if ($request->data_source === 'manual' && $request->filled('manual_data')) {
+        $manualData = json_decode($request->manual_data, true);
+        
+        // Store manual data in data_config
+        $validated['data_config'] = [
+            'type' => 'manual',
+            'x_label' => $manualData['x_label'] ?? 'Kategori',
+            'y_label' => $manualData['y_label'] ?? 'Nilai',
+            'data' => [
+                'labels' => $manualData['labels'] ?? [],
+                'values' => $manualData['values'] ?? []
+            ]
+        ];
+    } elseif ($request->data_source === 'file') {
+        // Clear manual data if switching to file
+        $currentDataConfig = $visualisasi->data_config ?? [];
+        if (isset($currentDataConfig['type']) && $currentDataConfig['type'] === 'manual') {
+            $validated['data_config'] = null;
+        }
+    }
+
+    // Remove manual_data from validated array as it's not a database column
+    unset($validated['manual_data']);
+
+    $visualisasi->update($validated);
+
+    return redirect()->route('visualisasi.index')
+        ->with('success', 'Visualisasi berhasil diperbarui.');
+}
 
     /**
      * Remove the specified visualisasi from storage.

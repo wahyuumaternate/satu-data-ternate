@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Role;
 use App\Models\Organization;
+use Spatie\Permission\Models\Role;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -18,7 +18,7 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::with(['role', 'organization']);
+        $query = User::with(['roles', 'organization']);
 
         // Search
         if ($request->filled('search')) {
@@ -30,7 +30,9 @@ class UserController extends Controller
 
         // Filter by role
         if ($request->filled('role')) {
-            $query->where('role_id', $request->role);
+            $query->whereHas('roles', function($q) use ($request) {
+                $q->where('name', $request->role);
+            });
         }
 
         // Filter by organization
@@ -50,12 +52,14 @@ class UserController extends Controller
                 $query->orderBy('email', $direction);
                 break;
             case 'role':
-                $query->join('roles', 'users.role_id', '=', 'roles.id')
+                $query->join('model_has_roles', 'users.id', '=', 'model_has_roles.model_id')
+                      ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
+                      ->where('model_has_roles.model_type', User::class)
                       ->orderBy('roles.name', $direction)
                       ->select('users.*');
                 break;
             case 'organization':
-                $query->join('organizations', 'users.organization_id', '=', 'organizations.id')
+                $query->leftJoin('organizations', 'users.organization_id', '=', 'organizations.id')
                       ->orderBy('organizations.name', $direction)
                       ->select('users.*');
                 break;
@@ -67,7 +71,7 @@ class UserController extends Controller
                 break;
         }
 
-        $users = $query->paginate(15);
+        $users = $query->paginate(15)->withQueryString();
 
         // Data for filters
         $roles = Role::orderBy('name')->get();
@@ -98,20 +102,34 @@ class UserController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    
-public function store(Request $request)
+   public function store(Request $request)
 {
+    // Basic validation
     $validated = $request->validate([
         'name' => 'required|string|max:255',
         'email' => 'required|string|email|max:255|unique:users,email',
         'password' => 'required|string|min:8|confirmed',
-        'role_id' => 'required|exists:roles,id',
+        'role' => 'required|string|exists:roles,name',
         'organization_id' => 'nullable|exists:organizations,id',
     ]);
 
+    // Custom validation: Organisasi wajib untuk role selain super-admin
+    if ($validated['role'] !== 'super-admin' && empty($validated['organization_id'])) {
+        return back()
+            ->withInput()
+            ->withErrors(['organization_id' => 'Organisasi wajib dipilih untuk role ' . ucfirst(str_replace('-', ' ', $validated['role']))]);
+    }
+
     $validated['password'] = Hash::make($validated['password']);
 
+    // Remove role dari validated data karena akan di-assign terpisah
+    $roleName = $validated['role'];
+    unset($validated['role']);
+
     $user = User::create($validated);
+
+    // Assign role menggunakan Spatie
+    $user->assignRole($roleName);
 
     // Kirim email verification
     event(new Registered($user));
@@ -127,12 +145,13 @@ public function store(Request $request)
         ->with('success', 'User berhasil ditambahkan dan email verifikasi telah dikirim.');
 }
 
+
     /**
      * Display the specified resource.
      */
     public function show(User $user)
     {
-        $user->load(['role', 'organization', 'mapsets']);
+        $user->load(['roles', 'organization']);
         
         return view('users.show', compact('user'));
     }
@@ -148,39 +167,51 @@ public function store(Request $request)
         return view('users.edit', compact('user', 'roles', 'organizations'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, User $user)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'string',
-                'email',
-                'max:255',
-                Rule::unique('users', 'email')->ignore($user->id)
-            ],
-            'password' => 'nullable|string|min:8|confirmed',
-            'role_id' => 'required|exists:roles,id',
-            'organization_id' => 'nullable|exists:organizations,id',
-        ]);
+   
+public function update(Request $request, User $user)
+{
+    // Basic validation
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => [
+            'required',
+            'string',
+            'email',
+            'max:255',
+            Rule::unique('users', 'email')->ignore($user->id)
+        ],
+        'password' => 'nullable|string|min:8|confirmed',
+        'role' => 'required|string|exists:roles,name',
+        'organization_id' => 'nullable|exists:organizations,id',
+    ]);
 
-        // Only update password if provided
-        if ($request->filled('password')) {
-            $validated['password'] = Hash::make($validated['password']);
-        } else {
-            unset($validated['password']);
-        }
-
-        $user->update($validated);
-
-        return redirect()
-            ->route('users.show', $user)
-            ->with('success', 'User berhasil diperbarui.');
+    // Custom validation: Organisasi wajib untuk role selain super-admin
+    if ($validated['role'] !== 'super-admin' && empty($validated['organization_id'])) {
+        return back()
+            ->withInput()
+            ->withErrors(['organization_id' => 'Organisasi wajib dipilih untuk role ' . ucfirst(str_replace('-', ' ', $validated['role']))]);
     }
 
+    // Only update password if provided
+    if ($request->filled('password')) {
+        $validated['password'] = Hash::make($validated['password']);
+    } else {
+        unset($validated['password']);
+    }
+
+    // Remove role dari validated data
+    $roleName = $validated['role'];
+    unset($validated['role']);
+
+    $user->update($validated);
+
+    // Sync role (remove old roles and assign new one)
+    $user->syncRoles([$roleName]);
+
+    return redirect()
+        ->route('users.show', $user)
+        ->with('success', 'User berhasil diperbarui.');
+}
     /**
      * Remove the specified resource from storage.
      */
@@ -193,6 +224,9 @@ public function store(Request $request)
                 ->with('error', 'Anda tidak dapat menghapus akun sendiri.');
         }
 
+        // Remove all roles before deleting user
+        $user->syncRoles([]);
+        
         $user->delete();
 
         return redirect()
@@ -215,10 +249,22 @@ public function store(Request $request)
                 $q->where('name', 'ilike', "%{$query}%")
                   ->orWhere('email', 'ilike', "%{$query}%");
             })
-            ->with(['role', 'organization'])
-            ->select('id', 'name', 'email', 'role_id', 'organization_id')
+            ->with(['roles', 'organization'])
+            ->select('id', 'name', 'email', 'organization_id')
             ->limit(10)
-            ->get();
+            ->get()
+            ->map(function($user) {
+                // Transform data untuk include role name
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'organization_id' => $user->organization_id,
+                    'role_name' => $user->getRoleNames()->first(), // Get first role name
+                    'roles' => $user->getRoleNames(), // Get all role names
+                    'organization' => $user->organization,
+                ];
+            });
 
         return response()->json($users);
     }
@@ -243,6 +289,11 @@ public function store(Request $request)
             $user->update([
                 'email_verified_at' => $user->email_verified_at ? null : now()
             ]);
+        } else {
+            // Assuming you have is_active field in users table
+            $user->update([
+                'is_active' => !$user->is_active
+            ]);
         }
 
         return response()->json([
@@ -262,14 +313,17 @@ public function store(Request $request)
             'this_month' => User::whereMonth('created_at', now()->month)->count(),
             'verified' => User::whereNotNull('email_verified_at')->count(),
             'by_role' => DB::table('users')
-                ->join('roles', 'users.role_id', '=', 'roles.id')
+                ->join('model_has_roles', 'users.id', '=', 'model_has_roles.model_id')
+                ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
+                ->where('model_has_roles.model_type', User::class)
                 ->select('roles.name', DB::raw('count(*) as count'))
                 ->groupBy('roles.id', 'roles.name')
                 ->orderBy('count', 'desc')
                 ->get(),
             'by_organization' => DB::table('users')
-                ->join('organizations', 'users.organization_id', '=', 'organizations.id')
+                ->leftJoin('organizations', 'users.organization_id', '=', 'organizations.id')
                 ->select('organizations.name', DB::raw('count(*) as count'))
+                ->whereNotNull('organizations.id')
                 ->groupBy('organizations.id', 'organizations.name')
                 ->orderBy('count', 'desc')
                 ->limit(5)
@@ -277,5 +331,76 @@ public function store(Request $request)
         ];
 
         return response()->json($stats);
+    }
+
+    /**
+     * Assign role to user
+     */
+    public function assignRole(Request $request, User $user)
+    {
+        $request->validate([
+            'role' => 'required|string|exists:roles,name'
+        ]);
+
+        $user->assignRole($request->role);
+
+        return redirect()->back()->with('success', 'Role berhasil ditambahkan.');
+    }
+
+    /**
+     * Remove role from user
+     */
+    public function removeRole(Request $request, User $user)
+    {
+        $request->validate([
+            'role' => 'required|string|exists:roles,name'
+        ]);
+
+        $user->removeRole($request->role);
+
+        return redirect()->back()->with('success', 'Role berhasil dihapus.');
+    }
+
+    /**
+     * Bulk operations
+     */
+    public function bulkAction(Request $request)
+    {
+        $request->validate([
+            'action' => 'required|in:delete,assign_role,remove_role,activate,deactivate',
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'exists:users,id',
+            'role' => 'required_if:action,assign_role,remove_role|exists:roles,name'
+        ]);
+
+        $users = User::whereIn('id', $request->user_ids)->get();
+
+        foreach ($users as $user) {
+            // Prevent action on current user for certain operations
+            if ($user->id === auth()->id() && in_array($request->action, ['delete', 'deactivate'])) {
+                continue;
+            }
+
+            switch ($request->action) {
+                case 'delete':
+                    $user->syncRoles([]);
+                    $user->delete();
+                    break;
+                case 'assign_role':
+                    $user->assignRole($request->role);
+                    break;
+                case 'remove_role':
+                    $user->removeRole($request->role);
+                    break;
+                case 'activate':
+                    $user->update(['is_active' => true]);
+                    break;
+                case 'deactivate':
+                    $user->update(['is_active' => false]);
+                    break;
+            }
+        }
+
+        return redirect()->back()->with('success', 'Bulk action berhasil dijalankan.');
     }
 }

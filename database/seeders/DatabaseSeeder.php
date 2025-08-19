@@ -19,22 +19,28 @@ class DatabaseSeeder extends Seeder
 
     {
         $roles = [
-            ['name' => 'super-admin', 'label' => 'Super Admin'],
-            ['name' => 'opd', 'label' => 'Organisasi Perangkat Daerah'],
-            ['name' => 'penanggung-jawab', 'label' => 'Penanggung Jawab Data'],
-            ['name' => 'riviewer', 'label' => 'Riviewer Data'],
+            ['name' => 'super-admin', 'guard_name' => 'web'],
+            ['name' => 'opd', 'guard_name' => 'web'],
+            ['name' => 'penanggung-jawab', 'guard_name' => 'web'],
+            ['name' => 'reviewer', 'guard_name' => 'web'],
         ];
 
         foreach ($roles as $role) {
             Role::firstOrCreate(['name' => $role['name']], $role);
         }
 
+       
+
          User::create([
             'name' => 'Admin',
             'email' => 'retmujago@gmail.com',
-            'role_id' =>1,
             'password' => Hash::make('admin123'), // ganti sesuai kebutuhan
             'email_verified_at' => Carbon::now(), // langsung dianggap sudah verifikasi
         ]);
+         // Assign role ke user pertama sebagai super-admin (optional)
+        $superAdmin = User::first();
+        if ($superAdmin) {
+            $superAdmin->assignRole('super-admin');
+        }
     }
 }
