@@ -795,10 +795,11 @@
 
                                 @if ($dataset->view_count > 0)
                                     <div class="dataset-meta-item">
-                                        <i class="bi bi-star dataset-meta-icon"></i>
-                                        {{ number_format($dataset->view_count, 1) }}
+                                        <i class="bi bi-eye dataset-meta-icon"></i>
+                                        {{ number_format($dataset->view_count) }} Views
                                     </div>
                                 @endif
+
                             </div>
                         </div>
 

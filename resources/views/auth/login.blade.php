@@ -5,10 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Login - Portal Access</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css"
-        rel="stylesheet">
+    <title>Login - Satu Data Kota Ternate</title>
+    <link href="{{ asset('assets/img/logo_kota.png') }}" rel="icon">
+
+    <link href="{{ asset('assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -62,22 +63,20 @@
         }
 
         .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 50px;
+            text-align: center;
+            margin-bottom: 20px;
+            /* sesuaikan jarak sesuai kebutuhan */
         }
 
-        .logo-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, #3b82f6, #1e40af);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
+
+
+        .logo img {
+            width: 80px;
+            /* sesuaikan ukuran yang diinginkan */
+            height: auto;
+            /* menjaga aspek rasio */
+            max-width: 100%;
+            /* responsive */
         }
 
         .logo-text {
@@ -525,13 +524,7 @@
         <!-- Left Section -->
         <div class="left-section">
             <div class="logo">
-                <div class="logo-icon">
-                    <i class="bi bi-shield-check"></i>
-                </div>
-                <div>
-                    <div class="logo-text">SATU DATA TERNATE</div>
-                    <div class="logo-text"></div>
-                </div>
+                <img src="{{ asset('assets/img/logo_kota.png') }}" alt="logo">
             </div>
 
             <div>
@@ -559,9 +552,9 @@
                 <!-- Email Address -->
                 <div class="form-group">
                     <div class="input-wrapper">
-                        <i class="bi bi-person input-icon"></i>
+                        <i class="bi bi-envelope input-icon"></i>
                         <input type="email" class="form-control" name="email" value="{{ old('email') }}"
-                            placeholder="Enter User Name/Email" required autofocus autocomplete="username">
+                            placeholder="Email" required autofocus autocomplete="username">
                     </div>
                     @error('email')
                         <div class="error-message">{{ $message }}</div>
@@ -604,7 +597,8 @@
             </form>
 
             <div class="copyright">
-                Copyright © 2024 DISKOMSANDI KOTA TERNATE. All rights reserved.
+                Copyright © {{ date('Y') }}
+                DISKOMSANDI KOTA TERNATE. All rights reserved.
             </div>
         </div>
     </div>
@@ -685,7 +679,7 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('assets/js/captcha-puzzle.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
