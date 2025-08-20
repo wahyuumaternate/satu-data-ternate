@@ -15,19 +15,83 @@ use Illuminate\Support\Str;
 
 class DatasetController extends Controller
 {
-    // Constructor tidak perlu middleware, akan dihandle di routes
+    private function checkViewPermission()
+    {
+        $user = Auth::user();
+        
+        if ($user->hasRole('reviewer')) {
+            abort(403, 'Reviewer tidak memiliki akses ke dataset management. Silakan gunakan menu approval.');
+        }
+    }
+
+    private function checkCreatePermission()
+    {
+        $user = Auth::user();
+        
+        if ($user->hasRole('reviewer')) {
+            abort(403, 'Reviewer tidak memiliki akses ke dataset management.');
+        }
+        
+        if ($user->hasRole('penanggung-jawab')) {
+            abort(403, 'Penanggung jawab hanya dapat melihat dan mendownload dataset.');
+        }
+        
+        if (!$user->hasRole(['super-admin', 'opd'])) {
+            abort(403, 'Hanya Super Admin dan OPD yang dapat membuat dataset.');
+        }
+    }
+
+    private function checkEditPermission()
+    {
+        $user = Auth::user();
+        
+        if ($user->hasRole('reviewer')) {
+            abort(403, 'Reviewer tidak memiliki akses ke dataset management.');
+        }
+        
+        if ($user->hasRole('penanggung-jawab')) {
+            abort(403, 'Penanggung jawab hanya dapat melihat dan mendownload dataset.');
+        }
+        
+        if (!$user->hasRole(['super-admin', 'opd'])) {
+            abort(403, 'Hanya Super Admin dan OPD yang dapat mengedit dataset.');
+        }
+    }
+
+    private function checkDatasetAccess($dataset)
+    {
+        $user = Auth::user();
+        
+        // Super admin bisa akses semua
+        if ($user->hasRole('super-admin')) {
+            return;
+        }
+        
+        // OPD hanya bisa akses data miliknya
+        if ($user->hasRole('opd')) {
+            if ($dataset->user_id !== $user->id) {
+                abort(403, 'Anda hanya dapat mengakses dataset milik Anda sendiri.');
+            }
+            return;
+        }
+        
+        // Penanggung jawab hanya bisa akses data yang approved
+        if ($user->hasRole('penanggung-jawab')) {
+            if ($dataset->approval_status !== 'approved') {
+                abort(403, 'Anda hanya dapat mengakses dataset yang sudah disetujui.');
+            }
+            return;
+        }
+    }
 
     public function index(Request $request)
     {
-         $this->checkViewPermission();
+        $this->checkViewPermission();
         
-         $user = Auth::user();
-        
+        $user = Auth::user();
         $query = Dataset::with(['user', 'approvedBy']);
         
         // Role-based filtering untuk data yang ditampilkan
-        $user = Auth::user();
-        
         if ($user->hasRole('super-admin')) {
             // Super admin bisa melihat semua data
             // Bisa toggle antara approved atau semua status
@@ -85,33 +149,14 @@ class DatasetController extends Controller
 
     public function create()
     {
-        $user = Auth::user();
-        
-        // Check permissions
-        if ($user->hasRole('reviewer')) {
-            abort(403, 'Reviewer tidak memiliki akses ke manajemen dataset.');
-        }
-        
-        if ($user->hasRole('penanggung-jawab')) {
-            abort(403, 'Penanggung jawab hanya dapat melihat dan mendownload dataset.');
-        }
-        
-        // Hanya super-admin dan OPD yang bisa create
-        if (!$user->hasRole(['super-admin', 'opd'])) {
-            abort(403, 'Anda tidak memiliki akses untuk membuat dataset baru.');
-        }
+        $this->checkCreatePermission();
 
         return view('dataset.create');
     }
 
     public function store(Request $request)
     {
-        $user = Auth::user();
-        
-        // Hanya super-admin dan OPD yang bisa store
-        if (!$user->hasRole(['super-admin', 'opd'])) {
-            abort(403, 'Anda tidak memiliki akses untuk membuat dataset.');
-        }
+        $this->checkCreatePermission();
 
         $request->validate([
             'file' => 'required|mimes:xlsx,xls,csv|max:10240',
@@ -136,6 +181,7 @@ class DatasetController extends Controller
         try {
             DB::beginTransaction();
             
+            $user = Auth::user();
             $file = $request->file('file');
             $originalFilename = $file->getClientOriginalName();
             $filename = time() . '_' . $originalFilename;
@@ -221,13 +267,10 @@ class DatasetController extends Controller
 
     public function show($slug, Request $request)
     {
-        $dataset = Dataset::where('slug', $slug)->firstOrFail();
-        $user = Auth::user();
+        $this->checkViewPermission();
         
-        // Check access permissions
-        if (!$this->canViewDataset($dataset, $user)) {
-            abort(403, 'Anda tidak memiliki akses untuk melihat dataset ini.');
-        }
+        $dataset = Dataset::where('slug', $slug)->firstOrFail();
+        $this->checkDatasetAccess($dataset);
         
         // Increment view count if field exists
         if (Schema::hasColumn('datasets', 'view_count')) {
@@ -250,6 +293,7 @@ class DatasetController extends Controller
             'last_page' => ceil($total / $perPage)
         ];
         
+        $user = Auth::user();
         if ($request->has('debug') && $user->hasRole('super-admin')) {
             return response()->json([
                 'headers' => $dataset->headers,
@@ -267,169 +311,161 @@ class DatasetController extends Controller
 
     public function edit($slug)
     {
-        $dataset = Dataset::where('slug', $slug)->firstOrFail();
-        $user = Auth::user();
+        $this->checkEditPermission();
         
-        // Check edit permissions
-        if (!$this->canEditDataset($dataset, $user)) {
-            abort(403, 'Anda tidak memiliki akses untuk mengedit dataset ini.');
-        }
+        $dataset = Dataset::where('slug', $slug)->firstOrFail();
+        $this->checkDatasetAccess($dataset);
 
         return view('dataset.edit', compact('dataset'));
     }
 
     public function update(Request $request, $id)
-{
-    $dataset = Dataset::findOrFail($id);
-    $user = Auth::user();
-    
-    // Check update permissions
-    if (!$this->canEditDataset($dataset, $user)) {
-        abort(403, 'Anda tidak memiliki akses untuk mengupdate dataset ini.');
-    }
+    {
+        $this->checkEditPermission();
+        
+        $dataset = Dataset::findOrFail($id);
+        $this->checkDatasetAccess($dataset);
 
-    $request->validate([
-        'file' => 'nullable|mimes:xlsx,xls,csv|max:10240',
-        'title' => 'required|string|max:255|unique:datasets,title,' . $dataset->id,
-        'description' => 'required|string',
-        'tags' => 'required|string',
-        'topic' => 'required|string',
-        'classification' => 'required|in:publik,internal,terbatas,rahasia',
-        'status' => 'required|in:sementara,tetap',
-        'license' => 'nullable|string',
-        'sector' => 'nullable|string',
-        'responsible_person' => 'nullable|string',
-        'contact' => 'nullable|string',
-        'data_source' => 'nullable|string',
-        'data_period' => 'nullable|string',
-        'update_frequency' => 'nullable|string',
-        'geographic_coverage' => 'nullable|string',
-    ], [
-        'title.unique' => 'Judul dataset sudah digunakan, silakan pilih judul lain.',
-    ]);
+        $request->validate([
+            'file' => 'nullable|mimes:xlsx,xls,csv|max:10240',
+            'title' => 'required|string|max:255|unique:datasets,title,' . $dataset->id,
+            'description' => 'required|string',
+            'tags' => 'required|string',
+            'topic' => 'required|string',
+            'classification' => 'required|in:publik,internal,terbatas,rahasia',
+            'status' => 'required|in:sementara,tetap',
+            'license' => 'nullable|string',
+            'sector' => 'nullable|string',
+            'responsible_person' => 'nullable|string',
+            'contact' => 'nullable|string',
+            'data_source' => 'nullable|string',
+            'data_period' => 'nullable|string',
+            'update_frequency' => 'nullable|string',
+            'geographic_coverage' => 'nullable|string',
+        ], [
+            'title.unique' => 'Judul dataset sudah digunakan, silakan pilih judul lain.',
+        ]);
 
-    try {
-        DB::beginTransaction();
-        
-        // Check if approval status should be reset to pending
-        $shouldResetApproval = false;
-        
-        // Reset approval to pending if current status is rejected
-        if ($dataset->approval_status === 'rejected') {
-            $shouldResetApproval = true;
-        }
-        
-        // Also reset approval if file is being updated
-        if ($request->hasFile('file')) {
-            $shouldResetApproval = true;
-        }
-        
-        // Handle file if updated
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            $originalFilename = $file->getClientOriginalName();
-            $filename = time() . '_' . $originalFilename;
-            $fileSize = $file->getSize();
-            $fileType = $file->getClientOriginalExtension();
+        try {
+            DB::beginTransaction();
             
-            if ($dataset->file_path && Storage::disk('public')->exists($dataset->file_path)) {
-                Storage::disk('public')->delete($dataset->file_path);
+            // Check if approval status should be reset to pending
+            $shouldResetApproval = false;
+            
+            // Reset approval to pending if current status is rejected
+            if ($dataset->approval_status === 'rejected') {
+                $shouldResetApproval = true;
             }
             
-            $filePath = $file->storeAs('datasets', $filename, 'public');
-            
-            $dataset->filename = $filename;
-            $dataset->original_filename = $originalFilename;
-            $dataset->file_path = $filePath;
-            $dataset->file_size = $fileSize;
-            $dataset->file_type = $fileType;
-        }
-
-        // Update slug if title changed
-        if ($dataset->title !== $request->title) {
-            $baseSlug = Str::slug($request->title);
-            $slug = $baseSlug;
-            $counter = 1;
-            
-            while (Dataset::where('slug', $slug)->where('id', '!=', $dataset->id)->exists()) {
-                $slug = $baseSlug . '-' . $counter;
-                $counter++;
+            // Also reset approval if file is being updated
+            if ($request->hasFile('file')) {
+                $shouldResetApproval = true;
             }
             
-            $dataset->slug = $slug;
-        }
-        
-        // Prepare update data
-        $updateData = [
-            'title' => $request->title,
-            'description' => $request->description,
-            'tags' => $this->processTags($request->tags),
-            'topic' => $request->topic,
-            'classification' => $request->classification,
-            'status' => $request->status,
-            'license' => $request->license ?? '',
-            'sector' => $request->sector ?? '',
-            'responsible_person' => $request->responsible_person ?? '',
-            'contact' => $request->contact ?? '',
-            'data_source' => $request->data_source ?? '',
-            'data_period' => $request->data_period ?? '',
-            'update_frequency' => $request->update_frequency ?? '',
-            'geographic_coverage' => $request->geographic_coverage ?? '',
-            'updated_at' => now(),
-        ];
-        
-        // Add approval status reset if needed
-        if ($shouldResetApproval) {
-            $updateData['approval_status'] = 'pending';
-        }
-        
-        $dataset->update($updateData);
+            // Handle file if updated
+            if ($request->hasFile('file')) {
+                $file = $request->file('file');
+                $originalFilename = $file->getClientOriginalName();
+                $filename = time() . '_' . $originalFilename;
+                $fileSize = $file->getSize();
+                $fileType = $file->getClientOriginalExtension();
+                
+                if ($dataset->file_path && Storage::disk('public')->exists($dataset->file_path)) {
+                    Storage::disk('public')->delete($dataset->file_path);
+                }
+                
+                $filePath = $file->storeAs('datasets', $filename, 'public');
+                
+                $dataset->filename = $filename;
+                $dataset->original_filename = $originalFilename;
+                $dataset->file_path = $filePath;
+                $dataset->file_size = $fileSize;
+                $dataset->file_type = $fileType;
+            }
 
-        // Re-import if file updated
-        if ($request->hasFile('file')) {
-            $dataset->update([
-                'headers' => [],
-                'data' => [],
-                'total_rows' => 0,
-                'total_columns' => 0,
-            ]);
+            // Update slug if title changed
+            if ($dataset->title !== $request->title) {
+                $baseSlug = Str::slug($request->title);
+                $slug = $baseSlug;
+                $counter = 1;
+                
+                while (Dataset::where('slug', $slug)->where('id', '!=', $dataset->id)->exists()) {
+                    $slug = $baseSlug . '-' . $counter;
+                    $counter++;
+                }
+                
+                $dataset->slug = $slug;
+            }
             
-            Excel::import(new DynamicImport($dataset->id), $file);
-            $successMessage = 'Dataset dan file berhasil diupdate: ' . $dataset->original_filename . 
-                ($shouldResetApproval ? ' Status approval direset ke pending untuk review ulang.' : '');
-        } else {
-            $successMessage = 'Informasi dataset berhasil diupdate.' .
-                ($shouldResetApproval ? ' Status approval direset ke pending untuk review ulang.' : '');
-        }
-        
-        DB::commit();
-        
-        return redirect()->route('dataset.show', $dataset->slug)
-            ->with('success', $successMessage);
+            // Prepare update data
+            $updateData = [
+                'title' => $request->title,
+                'description' => $request->description,
+                'tags' => $this->processTags($request->tags),
+                'topic' => $request->topic,
+                'classification' => $request->classification,
+                'status' => $request->status,
+                'license' => $request->license ?? '',
+                'sector' => $request->sector ?? '',
+                'responsible_person' => $request->responsible_person ?? '',
+                'contact' => $request->contact ?? '',
+                'data_source' => $request->data_source ?? '',
+                'data_period' => $request->data_period ?? '',
+                'update_frequency' => $request->update_frequency ?? '',
+                'geographic_coverage' => $request->geographic_coverage ?? '',
+                'updated_at' => now(),
+            ];
             
-    } catch (\Exception $e) {
-        DB::rollback();
-        
-        if (isset($filePath) && Storage::disk('public')->exists($filePath)) {
-            Storage::disk('public')->delete($filePath);
+            // Add approval status reset if needed
+            if ($shouldResetApproval) {
+                $updateData['approval_status'] = 'pending';
+            }
+            
+            $dataset->update($updateData);
+
+            // Re-import if file updated
+            if ($request->hasFile('file')) {
+                $dataset->update([
+                    'headers' => [],
+                    'data' => [],
+                    'total_rows' => 0,
+                    'total_columns' => 0,
+                ]);
+                
+                Excel::import(new DynamicImport($dataset->id), $file);
+                $successMessage = 'Dataset dan file berhasil diupdate: ' . $dataset->original_filename . 
+                    ($shouldResetApproval ? ' Status approval direset ke pending untuk review ulang.' : '');
+            } else {
+                $successMessage = 'Informasi dataset berhasil diupdate.' .
+                    ($shouldResetApproval ? ' Status approval direset ke pending untuk review ulang.' : '');
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('dataset.show', $dataset->slug)
+                ->with('success', $successMessage);
+                
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            if (isset($filePath) && Storage::disk('public')->exists($filePath)) {
+                Storage::disk('public')->delete($filePath);
+            }
+            
+            Log::error('Dataset update failed: ' . $e->getMessage());
+            
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat mengupdate dataset: ' . $e->getMessage())
+                ->withInput();
         }
-        
-        Log::error('Dataset update failed: ' . $e->getMessage());
-        
-        return redirect()->back()
-            ->with('error', 'Terjadi kesalahan saat mengupdate dataset: ' . $e->getMessage())
-            ->withInput();
     }
-}
+
     public function destroy($slug)
     {
-        $dataset = Dataset::where('slug', $slug)->firstOrFail();
-        $user = Auth::user();
+        $this->checkEditPermission();
         
-        // Check delete permissions
-        if (!$this->canDeleteDataset($dataset, $user)) {
-            abort(403, 'Anda tidak memiliki akses untuk menghapus dataset ini.');
-        }
+        $dataset = Dataset::where('slug', $slug)->firstOrFail();
+        $this->checkDatasetAccess($dataset);
 
         try {
             if (isset($dataset->file_path) && Storage::disk('public')->exists($dataset->file_path)) {
@@ -449,13 +485,10 @@ class DatasetController extends Controller
 
     public function download($slug)
     {
-        $dataset = Dataset::where('slug', $slug)->firstOrFail();
-        $user = Auth::user();
+        $this->checkViewPermission();
         
-        // Check download permissions - semua role yang bisa akses dataset bisa download
-        if (!$this->canViewDataset($dataset, $user)) {
-            abort(403, 'Anda tidak memiliki akses untuk mendownload dataset ini.');
-        }
+        $dataset = Dataset::where('slug', $slug)->firstOrFail();
+        $this->checkDatasetAccess($dataset);
 
         if (!isset($dataset->file_path) || !Storage::disk('public')->exists($dataset->file_path)) {
             return redirect()->back()->with('error', 'File tidak ditemukan.');
@@ -473,48 +506,66 @@ class DatasetController extends Controller
         );
     }
 
-    // Permission helper methods
-    private function canViewDataset($dataset, $user)
+    // API endpoint dengan permission check
+    public function api($id)
     {
-        if ($user->hasRole('super-admin')) {
-            return true; // Super admin bisa lihat semua
-        }
+        $this->checkViewPermission();
         
-        if ($user->hasRole('opd')) {
-            return $dataset->user_id === $user->id; // OPD hanya miliknya
-        }
+        $dataset = Dataset::findOrFail($id);
+        $this->checkDatasetAccess($dataset);
         
-        if ($user->hasRole('penanggung-jawab')) {
-            return $dataset->approval_status === 'approved'; // Penanggung jawab hanya yang approved
-        }
-        
-        return false;
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $dataset->id,
+                'title' => $dataset->title ?? $dataset->filename,
+                'description' => $dataset->description ?? '',
+                'filename' => $dataset->filename,
+                'headers' => $dataset->headers,
+                'data' => $dataset->data,
+                'total_rows' => $dataset->total_rows,
+                'total_columns' => $dataset->total_columns ?? count($dataset->headers),
+                'topic' => $dataset->topic ?? '',
+                'classification' => $dataset->classification ?? '',
+                'tags' => $dataset->tags ?? [],
+                'created_at' => $dataset->created_at,
+                'updated_at' => $dataset->updated_at
+            ]
+        ]);
     }
 
-    private function canEditDataset($dataset, $user)
+    // History method - hanya untuk OPD dan Super Admin
+    public function history(Request $request)
     {
-        if ($user->hasRole('super-admin')) {
-            return true; // Super admin bisa edit semua
+        $user = Auth::user();
+        
+        // Check permission - reviewer tidak bisa akses
+        if ($user->hasRole('reviewer')) {
+            abort(403, 'Reviewer tidak memiliki akses ke dataset management.');
         }
         
-        if ($user->hasRole('opd')) {
-            return $dataset->user_id === $user->id; // OPD hanya miliknya
+        // Hanya OPD dan Super Admin yang bisa lihat history
+        if (!$user->hasRole(['super-admin', 'opd'])) {
+            abort(403, 'Anda tidak memiliki akses untuk melihat riwayat dataset.');
         }
-        
-        return false; // Penanggung jawab dan reviewer tidak bisa edit
-    }
 
-    private function canDeleteDataset($dataset, $user)
-    {
-        if ($user->hasRole('super-admin')) {
-            return true; // Super admin bisa hapus semua
-        }
-        
+        $query = Dataset::with(['user']);
+
         if ($user->hasRole('opd')) {
-            return $dataset->user_id === $user->id; // OPD hanya miliknya
+            $query->where('user_id', $user->id);
         }
         
-        return false; // Penanggung jawab dan reviewer tidak bisa hapus
+        // Show non-approved datasets for history
+        $query->where('approval_status', '!=', 'approved');
+
+        // Apply filters
+        $query = $this->applyFiltersToQuery($query, $request);
+
+        $datasets = $query->orderBy('updated_at', 'desc')
+            ->paginate(15)
+            ->appends($request->query());
+
+        return view('dataset.history', compact('datasets'));
     }
 
     // Helper methods for stats and filters based on role
@@ -646,7 +697,33 @@ class DatasetController extends Controller
         }
     }
 
-    // Keep existing methods for file processing, API, etc.
+    private function applyFiltersToQuery($query, Request $request)
+    {
+        if ($request->has('approval_status') && $request->approval_status !== '') {
+            $query->where('approval_status', $request->approval_status);
+        }
+
+        if ($request->has('search') && $request->search !== '') {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('title', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('description', 'LIKE', "%{$searchTerm}%")
+                ->orWhere('tags', 'LIKE', "%{$searchTerm}%");
+            });
+        }
+
+        if ($request->has('date_from') && $request->date_from !== '') {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->has('date_to') && $request->date_to !== '') {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        return $query;
+    }
+
+    // Keep existing methods for file processing, etc.
     private function applyFilters(array $data, Request $request): array
     {
         $filteredData = $data;
@@ -689,161 +766,6 @@ class DatasetController extends Controller
         } catch (\Exception $e) {
             Log::error('Error processing tags: ' . $e->getMessage());
             return [];
-        }
-    }
-
-    // API endpoint dengan permission check
-    public function api($id)
-    {
-        $dataset = Dataset::findOrFail($id);
-        $user = Auth::user();
-        
-        if (!$this->canViewDataset($dataset, $user)) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-        
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'id' => $dataset->id,
-                'title' => $dataset->title ?? $dataset->filename,
-                'description' => $dataset->description ?? '',
-                'filename' => $dataset->filename,
-                'headers' => $dataset->headers,
-                'data' => $dataset->data,
-                'total_rows' => $dataset->total_rows,
-                'total_columns' => $dataset->total_columns ?? count($dataset->headers),
-                'topic' => $dataset->topic ?? '',
-                'classification' => $dataset->classification ?? '',
-                'tags' => $dataset->tags ?? [],
-                'created_at' => $dataset->created_at,
-                'updated_at' => $dataset->updated_at
-            ]
-        ]);
-    }
-
-    // History method - hanya untuk OPD dan Super Admin
-    public function history(Request $request)
-    {
-        $user = Auth::user();
-        
-        // Hanya OPD dan Super Admin yang bisa lihat history
-        if (!$user->hasRole(['super-admin', 'opd'])) {
-            abort(403, 'Anda tidak memiliki akses untuk melihat riwayat dataset.');
-        }
-
-        $query = Dataset::with(['user']);
-
-        if ($user->hasRole('opd')) {
-            $query->where('user_id', $user->id);
-        }
-        
-        // Show non-approved datasets for history
-        $query->where('approval_status', '!=', 'approved');
-
-        // Apply filters
-        $query = $this->applyFiltersToQuery($query, $request);
-
-        $datasets = $query->orderBy('updated_at', 'desc')
-            ->paginate(15)
-            ->appends($request->query());
-
-        return view('dataset.history', compact('datasets'));
-    }
-
-    private function applyFiltersToQuery($query, Request $request)
-    {
-        if ($request->has('approval_status') && $request->approval_status !== '') {
-            $query->where('approval_status', $request->approval_status);
-        }
-
-        if ($request->has('search') && $request->search !== '') {
-            $searchTerm = $request->search;
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('title', 'LIKE', "%{$searchTerm}%")
-                ->orWhere('description', 'LIKE', "%{$searchTerm}%")
-                ->orWhere('tags', 'LIKE', "%{$searchTerm}%");
-            });
-        }
-
-        if ($request->has('date_from') && $request->date_from !== '') {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->has('date_to') && $request->date_to !== '') {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        return $query;
-    }
-
-     // Permission check methods
-    private function checkViewPermission()
-    {
-        $user = Auth::user();
-        
-        if ($user->hasRole('reviewer')) {
-            abort(403, 'Reviewer tidak memiliki akses ke dataset management. Silakan gunakan menu approval.');
-        }
-    }
-
-    private function checkCreatePermission()
-    {
-        $user = Auth::user();
-        
-        if ($user->hasRole('reviewer')) {
-            abort(403, 'Reviewer tidak memiliki akses ke dataset management.');
-        }
-        
-        if ($user->hasRole('penanggung-jawab')) {
-            abort(403, 'Penanggung jawab hanya dapat melihat dan mendownload dataset.');
-        }
-        
-        if (!$user->hasRole(['super-admin', 'opd'])) {
-            abort(403, 'Hanya Super Admin dan OPD yang dapat membuat dataset.');
-        }
-    }
-
-    private function checkEditPermission()
-    {
-        $user = Auth::user();
-        
-        if ($user->hasRole('reviewer')) {
-            abort(403, 'Reviewer tidak memiliki akses ke dataset management.');
-        }
-        
-        if ($user->hasRole('penanggung-jawab')) {
-            abort(403, 'Penanggung jawab hanya dapat melihat dan mendownload dataset.');
-        }
-        
-        if (!$user->hasRole(['super-admin', 'opd'])) {
-            abort(403, 'Hanya Super Admin dan OPD yang dapat mengedit dataset.');
-        }
-    }
-
-    private function checkDatasetAccess($dataset)
-    {
-        $user = Auth::user();
-        
-        // Super admin bisa akses semua
-        if ($user->hasRole('super-admin')) {
-            return;
-        }
-        
-        // OPD hanya bisa akses data miliknya
-        if ($user->hasRole('opd')) {
-            if ($dataset->user_id !== $user->id) {
-                abort(403, 'Anda hanya dapat mengakses dataset milik Anda sendiri.');
-            }
-            return;
-        }
-        
-        // Penanggung jawab hanya bisa akses data yang approved
-        if ($user->hasRole('penanggung-jawab')) {
-            if ($dataset->approval_status !== 'approved') {
-                abort(403, 'Anda hanya dapat mengakses dataset yang sudah disetujui.');
-            }
-            return;
         }
     }
 }

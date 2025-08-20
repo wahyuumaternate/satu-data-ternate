@@ -367,9 +367,9 @@
                                         <option value="rejected"
                                             {{ request('approval_status') == 'rejected' ? 'selected' : '' }}>Ditolak
                                         </option>
-                                        <option value="revision"
+                                        {{-- <option value="revision"
                                             {{ request('approval_status') == 'revision' ? 'selected' : '' }}>Perlu Revisi
-                                        </option>
+                                        </option> --}}
                                         {{-- <option value="draft"
                                             {{ request('approval_status') == 'draft' ? 'selected' : '' }}>Draft</option> --}}
                                     </select>

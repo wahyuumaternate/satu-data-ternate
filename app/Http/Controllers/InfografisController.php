@@ -6,19 +6,111 @@ use App\Models\Infografis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class InfografisController extends Controller
 {
+    private function checkViewPermission()
+    {
+        $user = Auth::user();
+        
+        if ($user->hasRole('reviewer')) {
+            abort(403, 'Reviewer tidak memiliki akses ke infografis management.');
+        }
+    }
+
+    private function checkCreatePermission()
+    {
+        $user = Auth::user();
+        
+        if ($user->hasRole('reviewer')) {
+            abort(403, 'Reviewer tidak memiliki akses ke infografis management.');
+        }
+        
+        if ($user->hasRole('penanggung-jawab')) {
+            abort(403, 'Penanggung jawab hanya dapat melihat dan mendownload infografis.');
+        }
+        
+        if (!$user->hasRole(['super-admin', 'opd'])) {
+            abort(403, 'Hanya Super Admin dan OPD yang dapat membuat infografis.');
+        }
+    }
+
+    private function checkEditPermission()
+    {
+        $user = Auth::user();
+        
+        if ($user->hasRole('reviewer')) {
+            abort(403, 'Reviewer tidak memiliki akses ke infografis management.');
+        }
+        
+        if ($user->hasRole('penanggung-jawab')) {
+            abort(403, 'Penanggung jawab hanya dapat melihat dan mendownload infografis.');
+        }
+        
+        if (!$user->hasRole(['super-admin', 'opd'])) {
+            abort(403, 'Hanya Super Admin dan OPD yang dapat mengedit infografis.');
+        }
+    }
+
+    private function checkInfografisAccess($infografis)
+    {
+        $user = Auth::user();
+        
+        // Super admin bisa akses semua
+        if ($user->hasRole('super-admin')) {
+            return;
+        }
+        
+        // OPD hanya bisa akses data miliknya
+        if ($user->hasRole('opd')) {
+            if ($infografis->user_id !== $user->id) {
+                abort(403, 'Anda hanya dapat mengakses infografis milik Anda sendiri.');
+            }
+            return;
+        }
+        
+        // Penanggung jawab hanya bisa akses data yang aktif dan publik
+        if ($user->hasRole('penanggung-jawab')) {
+            if (!$infografis->is_active || !$infografis->is_public) {
+                abort(403, 'Anda hanya dapat mengakses infografis yang aktif dan publik.');
+            }
+            return;
+        }
+    }
+
+    private function checkDownloadPermission()
+    {
+        $user = Auth::user();
+        
+        if ($user->hasRole('reviewer')) {
+            abort(403, 'Reviewer tidak memiliki akses untuk download infografis.');
+        }
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $query = Infografis::with('user')
-            ->active()
-            ->public();
+        $this->checkViewPermission();
+        
+        $user = Auth::user();
+        $query = Infografis::with('user');
+
+        // Filter berdasarkan role
+        if ($user->hasRole('super-admin')) {
+            // Super admin bisa melihat semua
+            $query->active()->public();
+        } elseif ($user->hasRole('opd')) {
+            // OPD hanya bisa melihat miliknya sendiri
+            $query->where('user_id', $user->id);
+        } elseif ($user->hasRole('penanggung-jawab')) {
+            // Penanggung jawab bisa melihat semua data aktif dan publik
+            $query->active()->public();
+        }
 
         // Filter berdasarkan topic
         if ($request->filled('topic')) {
@@ -60,19 +152,24 @@ class InfografisController extends Controller
         $perPage = $request->get('per_page', 12);
         $infografis = $query->paginate($perPage)->withQueryString();
 
-        // Data untuk filters
-        $topics = $this->getTopicsWithCount();
-        $popularTags = $this->getPopularTags();
+        // Data untuk filters (hanya untuk yang bisa melihat semua data)
+        $topics = [];
+        $popularTags = [];
+        $stats = [];
+        $featured = collect();
 
-        // Stats
-        $stats = $this->getStats();
-
-        // Featured/Popular infografis
-        $featured = Infografis::active()
-            ->public()
-            ->popular()
-            ->limit(6)
-            ->get();
+        if ($user->hasRole(['super-admin', 'penanggung-jawab'])) {
+            $topics = $this->getTopicsWithCount();
+            $popularTags = $this->getPopularTags();
+            $stats = $this->getStats();
+            
+            // Featured/Popular infografis
+            $featured = Infografis::active()
+                ->public()
+                ->popular()
+                ->limit(6)
+                ->get();
+        }
 
         return view('infografis.index', compact(
             'infografis',
@@ -88,6 +185,8 @@ class InfografisController extends Controller
      */
     public function create()
     {
+        $this->checkCreatePermission();
+
         $topics = Infografis::TOPICS;
         return view('infografis.create', compact('topics'));
     }
@@ -97,6 +196,8 @@ class InfografisController extends Controller
      */
     public function store(Request $request)
     {
+        $this->checkCreatePermission();
+
         $validated = $request->validate([
             'nama' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
@@ -138,10 +239,8 @@ class InfografisController extends Controller
      */
     public function show(Infografis $infografis)
     {
-        // Check if active and public (or user owns it)
-        if (!$infografis->is_active || (!$infografis->is_public && $infografis->user_id !== auth()->id())) {
-            abort(404);
-        }
+        $this->checkViewPermission();
+        $this->checkInfografisAccess($infografis);
 
         // Increment views
         $infografis->incrementViews();
@@ -182,10 +281,8 @@ class InfografisController extends Controller
      */
     public function edit(Infografis $infografis)
     {
-        // Check authorization
-        if (auth()->id() !== $infografis->user_id && !auth()->user()->can('update', $infografis)) {
-            abort(403);
-        }
+        $this->checkEditPermission();
+        $this->checkInfografisAccess($infografis);
         
         $topics = Infografis::TOPICS;
         return view('infografis.edit', compact('infografis', 'topics'));
@@ -196,10 +293,8 @@ class InfografisController extends Controller
      */
     public function update(Request $request, Infografis $infografis)
     {
-        // Check authorization
-        if (auth()->id() !== $infografis->user_id && !auth()->user()->can('update', $infografis)) {
-            abort(403);
-        }
+        $this->checkEditPermission();
+        $this->checkInfografisAccess($infografis);
 
         $validated = $request->validate([
             'nama' => 'required|string|max:255',
@@ -246,10 +341,8 @@ class InfografisController extends Controller
      */
     public function destroy(Infografis $infografis)
     {
-        // Check authorization
-        if (auth()->id() !== $infografis->user_id && !auth()->user()->can('delete', $infografis)) {
-            abort(403);
-        }
+        $this->checkEditPermission();
+        $this->checkInfografisAccess($infografis);
 
         // Delete associated file
         if ($infografis->gambar && Storage::disk('public')->exists($infografis->gambar)) {
@@ -268,9 +361,18 @@ class InfografisController extends Controller
      */
     public function download(Infografis $infografis)
     {
-        // Check if active and public
-        if (!$infografis->is_active || !$infografis->is_public) {
-            abort(404);
+        $this->checkDownloadPermission();
+        
+        $user = Auth::user();
+
+        // Check authorization untuk download
+        if ($user->hasRole('super-admin')) {
+            // Super admin bisa download semua
+        } elseif ($user->hasRole(['opd', 'penanggung-jawab'])) {
+            // OPD dan Penanggung jawab bisa download yang aktif dan publik
+            if (!$infografis->is_active || !$infografis->is_public) {
+                abort(404, 'File tidak dapat diunduh.');
+            }
         }
 
         $filePath = storage_path('app/public/' . $infografis->gambar);
@@ -293,6 +395,8 @@ class InfografisController extends Controller
      */
     public function downloadTemplate()
     {
+        $this->checkCreatePermission();
+
         $templatePath = resource_path('templates/infografis_template.csv');
         
         if (!file_exists($templatePath)) {
@@ -313,6 +417,25 @@ class InfografisController extends Controller
      */
     public function exportMetadata(Infografis $infografis)
     {
+        $this->checkDownloadPermission();
+        
+        $user = Auth::user();
+
+        // Check authorization untuk export metadata
+        if ($user->hasRole('super-admin')) {
+            // Super admin bisa export semua
+        } elseif ($user->hasRole('opd')) {
+            // OPD hanya bisa export miliknya sendiri atau yang publik
+            if ($infografis->user_id !== $user->id && (!$infografis->is_active || !$infografis->is_public)) {
+                abort(403, 'Anda tidak memiliki akses untuk mengekspor metadata ini.');
+            }
+        } elseif ($user->hasRole('penanggung-jawab')) {
+            // Penanggung jawab bisa export yang aktif dan publik
+            if (!$infografis->is_active || !$infografis->is_public) {
+                abort(403, 'Anda tidak memiliki akses untuk mengekspor metadata ini.');
+            }
+        }
+
         $metadata = [
             'id' => $infografis->id,
             'nama' => $infografis->nama,
@@ -343,6 +466,25 @@ class InfografisController extends Controller
      */
     public function exportInfo(Infografis $infografis)
     {
+        $this->checkDownloadPermission();
+        
+        $user = Auth::user();
+
+        // Check authorization untuk export info (sama seperti export metadata)
+        if ($user->hasRole('super-admin')) {
+            // Super admin bisa export semua
+        } elseif ($user->hasRole('opd')) {
+            // OPD hanya bisa export miliknya sendiri atau yang publik
+            if ($infografis->user_id !== $user->id && (!$infografis->is_active || !$infografis->is_public)) {
+                abort(403, 'Anda tidak memiliki akses untuk mengekspor informasi ini.');
+            }
+        } elseif ($user->hasRole('penanggung-jawab')) {
+            // Penanggung jawab bisa export yang aktif dan publik
+            if (!$infografis->is_active || !$infografis->is_public) {
+                abort(403, 'Anda tidak memiliki akses untuk mengekspor informasi ini.');
+            }
+        }
+
         $info = "INFORMASI INFOGRAFIS\n";
         $info .= "===================\n\n";
         $info .= "Nama: " . $infografis->nama . "\n";
@@ -368,18 +510,34 @@ class InfografisController extends Controller
      */
     public function suggestions(Request $request)
     {
+        $this->checkViewPermission();
+        
+        $user = Auth::user();
         $query = $request->get('q');
         
         if (strlen($query) < 2) {
             return response()->json([]);
         }
 
-        $suggestions = Infografis::active()
-            ->public()
-            ->where('nama', 'ilike', "%{$query}%")
+        $infografisQuery = Infografis::where('nama', 'ilike', "%{$query}%")
             ->select('nama', 'slug', 'topic')
-            ->limit(10)
-            ->get();
+            ->limit(10);
+
+        // Filter berdasarkan role
+        if ($user->hasRole('super-admin')) {
+            $infografisQuery->active()->public();
+        } elseif ($user->hasRole('opd')) {
+            $infografisQuery->where(function($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhere(function($q2) {
+                      $q2->where('is_active', true)->where('is_public', true);
+                  });
+            });
+        } elseif ($user->hasRole('penanggung-jawab')) {
+            $infografisQuery->active()->public();
+        }
+
+        $suggestions = $infografisQuery->get();
 
         return response()->json($suggestions);
     }
@@ -389,12 +547,26 @@ class InfografisController extends Controller
      */
     public function byTopic($topic)
     {
-        $infografis = Infografis::active()
-            ->public()
-            ->byTopic($topic)
-            ->with('user')
-            ->latest()
-            ->paginate(12);
+        $this->checkViewPermission();
+        
+        $user = Auth::user();
+        $query = Infografis::with('user')->byTopic($topic);
+
+        // Filter berdasarkan role
+        if ($user->hasRole('super-admin')) {
+            $query->active()->public();
+        } elseif ($user->hasRole('opd')) {
+            $query->where(function($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhere(function($q2) {
+                      $q2->where('is_active', true)->where('is_public', true);
+                  });
+            });
+        } elseif ($user->hasRole('penanggung-jawab')) {
+            $query->active()->public();
+        }
+
+        $infografis = $query->latest()->paginate(12);
 
         if (request()->ajax()) {
             return response()->json([
@@ -416,11 +588,28 @@ class InfografisController extends Controller
      */
     public function search(Request $request)
     {
+        $this->checkViewPermission();
+        
+        $user = Auth::user();
         $query = $request->get('q');
         $topic = $request->get('topic');
         $limit = $request->get('limit', 20);
 
-        $infografisQuery = Infografis::active()->public()->with('user');
+        $infografisQuery = Infografis::with('user');
+
+        // Filter berdasarkan role
+        if ($user->hasRole('super-admin')) {
+            $infografisQuery->active()->public();
+        } elseif ($user->hasRole('opd')) {
+            $infografisQuery->where(function($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhere(function($q2) {
+                      $q2->where('is_active', true)->where('is_public', true);
+                  });
+            });
+        } elseif ($user->hasRole('penanggung-jawab')) {
+            $infografisQuery->active()->public();
+        }
 
         if ($query) {
             $infografisQuery->search($query);
@@ -443,10 +632,8 @@ class InfografisController extends Controller
      */
     public function toggleStatus(Request $request, Infografis $infografis)
     {
-        // Check authorization
-        if (auth()->id() !== $infografis->user_id && !auth()->user()->can('update', $infografis)) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
+        $this->checkEditPermission();
+        $this->checkInfografisAccess($infografis);
 
         $field = $request->get('field', 'is_active');
         

@@ -7,12 +7,21 @@ use App\Models\Organization;
 use Spatie\Permission\Models\Role;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
+     public function __construct()
+    {
+         $user = Auth::user();
+        
+        if (!$user->hasRole('super-admin')) {
+            abort(403, 'Anda tidak memiliki akses ');
+        }
+    }
     /**
      * Display a listing of the resource.
      */

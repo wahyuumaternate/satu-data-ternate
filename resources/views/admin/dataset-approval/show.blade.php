@@ -29,12 +29,12 @@
         }
 
         /* .approval-header.pending::before {
-                        background: #2563eb;
-                    }
+                                background: #2563eb;
+                            }
 
-                    .approval-header.approved::before {
-                        background: #2563eb;
-                    } */
+                            .approval-header.approved::before {
+                                background: #2563eb;
+                            } */
 
         .approval-header.rejected::before {
             background: #1e293b;
@@ -102,12 +102,12 @@
         }
 
         /* .pending-indicator {
-                                                    border-left: 5px solid #2563eb;
-                                                }
+                                                            border-left: 5px solid #2563eb;
+                                                        }
 
-                                                .approved-indicator {
-                                                    border-left: 5px solid #2563eb;
-                                                } */
+                                                        .approved-indicator {
+                                                            border-left: 5px solid #2563eb;
+                                                        } */
 
         .rejected-indicator {
             border-left: 5px solid #1e293b;
@@ -120,12 +120,6 @@
             padding: 20px;
         }
 
-        .page-header {
-            background: #ffffff;
-            padding: 32px 0;
-            border-bottom: 2px solid #e8f4fd;
-            margin-bottom: 32px;
-        }
 
         .breadcrumb {
             background: none;

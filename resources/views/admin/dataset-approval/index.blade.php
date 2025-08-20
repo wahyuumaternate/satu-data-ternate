@@ -142,8 +142,8 @@
         }
 
         /* .pending-indicator {
-                                border-left: 5px solid #f59e0b;
-                            } */
+                                    border-left: 5px solid #f59e0b;
+                                } */
 
         .filter-card {
             background: #ffffff;
@@ -658,11 +658,7 @@
                                                 <i class="bi bi-eye me-2"></i>Review Details
                                             </a>
                                         </li>
-                                        <li>
-                                            <a class="dropdown-item" href="{{ route('dataset.show', $dataset->slug) }}">
-                                                <i class="bi bi-database me-2"></i>View Dataset
-                                            </a>
-                                        </li>
+
                                     </ul>
                                 </div>
                             </div>

@@ -10,6 +10,14 @@ use Illuminate\Support\Facades\Auth;
 
 class DatasetApprovalController extends Controller
 {
+    public function __construct()
+    {
+         $user = Auth::user();
+        
+        if (!$user->hasRole(['super-admin', 'reviewer'])) {
+            abort(403, 'Hanya Super Admin dan Reviewer yang memiliki akses ke approval management.');
+        }
+    }
     /**
      * Display pending datasets for approval
      */

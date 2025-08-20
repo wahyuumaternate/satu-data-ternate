@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CaptchaPuzzleController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DatasetApprovalController;
 use App\Http\Controllers\DatasetController;
 use App\Http\Controllers\InfografisController;
@@ -27,9 +28,20 @@ Route::prefix('captcha-puzzle')->name('captcha.puzzle.')->group(function () {
 });
 
 // Dashboard Route
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Dashboard route
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Optional: Dashboard API endpoint for AJAX updates
+    Route::get('/dashboard/api/stats', [DashboardController::class, 'getStats'])->name('dashboard.api.stats');
+    Route::get('/dashboard/api/charts', [DashboardController::class, 'getCharts'])->name('dashboard.api.charts');
+});
+
+// Alternative: Redirect root to dashboard
 Route::get('/', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
+});
+
 
 /*
 |--------------------------------------------------------------------------

@@ -4,12 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\Organization;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class OrganizationController extends Controller
 {
+    public function __construct()
+    {
+        $user = Auth::user();
+        
+        if (!$user->hasRole('super-admin')) {
+            abort(403, 'Anda tidak memiliki akses ke infografis management.');
+        }
+
+    }
     /**
      * Display a listing of the resource.
      */

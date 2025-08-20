@@ -642,6 +642,9 @@
                             </div>
                             <div class="mt-3">Memuat captcha keamanan...</div>
                         </div>
+                        <div class="text-center mt-3">
+                            <small class="text-muted">Sumber gambar: Wonderful Ternate</small>
+                        </div>
                     </div>
                 </div>
             </div>
