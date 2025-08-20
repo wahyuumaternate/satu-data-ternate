@@ -12,7 +12,7 @@
         </li>
 
         <!-- Dataset Management - Super Admin & OPD -->
-        @hasanyrole('super-admin|opd')
+        @hasanyrole('super-admin|opd|penanggung-jawab')
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('dataset.*') && !request()->routeIs('admin.*') ? '' : 'collapsed' }}"
                     data-bs-target="#dataset-nav" data-bs-toggle="collapse" href="#">
@@ -27,7 +27,7 @@
                         <a href="{{ route('dataset.index') }}"
                             class="{{ request()->routeIs('dataset.index') ? 'active' : '' }}">
                             <i class="bi bi-circle"></i>
-                            <span>Kelola Dataset</span>
+                            <span>Semua Dataset</span>
                             @php
                                 // Super admin melihat semua dataset, OPD hanya milik sendiri
                                 $myApprovedDatasets = auth()->user()->hasRole('super-admin')
@@ -41,34 +41,37 @@
                             @endif
                         </a>
                     </li>
-                    <li>
-                        <a href="{{ route('dataset.create') }}"
-                            class="{{ request()->routeIs('dataset.create') ? 'active' : '' }}">
-                            <i class="bi bi-circle"></i>
-                            <span>Upload Dataset</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('dataset.history') }}"
-                            class="{{ request()->routeIs('dataset.history') ? 'active' : '' }}">
-                            <i class="bi bi-circle"></i>
-                            <span>Riwayat Dataset</span>
-                            @php
-                                // Super admin melihat semua, OPD hanya milik sendiri
-                                $myHistoryCount = auth()->user()->hasRole('super-admin')
-                                    ? \App\Models\Dataset::whereNotNull('approval_status')
-                                        ->where('approval_status', '!=', 'approved')
-                                        ->count()
-                                    : \App\Models\Dataset::where('user_id', auth()->id())
-                                        ->whereNotNull('approval_status')
-                                        ->where('approval_status', '!=', 'approved')
-                                        ->count();
-                            @endphp
-                            @if ($myHistoryCount > 0)
-                                <span class="badge bg-secondary ms-auto">{{ $myHistoryCount }}</span>
-                            @endif
-                        </a>
-                    </li>
+                    @hasanyrole('super-admin|opd')
+
+                        <li>
+                            <a href="{{ route('dataset.create') }}"
+                                class="{{ request()->routeIs('dataset.create') ? 'active' : '' }}">
+                                <i class="bi bi-circle"></i>
+                                <span>Upload Dataset</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('dataset.history') }}"
+                                class="{{ request()->routeIs('dataset.history') ? 'active' : '' }}">
+                                <i class="bi bi-circle"></i>
+                                <span>Riwayat Dataset</span>
+                                @php
+                                    // Super admin melihat semua, OPD hanya milik sendiri
+                                    $myHistoryCount = auth()->user()->hasRole('super-admin')
+                                        ? \App\Models\Dataset::whereNotNull('approval_status')
+                                            ->where('approval_status', '!=', 'approved')
+                                            ->count()
+                                        : \App\Models\Dataset::where('user_id', auth()->id())
+                                            ->whereNotNull('approval_status')
+                                            ->where('approval_status', '!=', 'approved')
+                                            ->count();
+                                @endphp
+                                @if ($myHistoryCount > 0)
+                                    <span class="badge bg-secondary ms-auto">{{ $myHistoryCount }}</span>
+                                @endif
+                            </a>
+                        </li>
+                    @endhasanyrole
                 </ul>
             </li>
         @endhasanyrole
@@ -150,7 +153,7 @@
         @endhasanyrole
 
         <!-- Organisasi - Super Admin, Penanggung Jawab -->
-        @hasanyrole('super-admin|penanggung-jawab')
+        @hasanyrole('super-adminb')
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('organisasi.*') ? '' : 'collapsed' }}"
                     href="{{ route('organizations.index') }}">
