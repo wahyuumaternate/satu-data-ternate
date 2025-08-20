@@ -11,18 +11,18 @@
     <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
         <li class="dropdown-header">
             <h6>{{ Auth::user()->name ?? '' }}</h6>
-            <span>{{ Auth::user()->role->name ?? '' }}</span>
+            <span>{{ Auth::user()->email ?? '' }}</span>
         </li>
         <li>
             <hr class="dropdown-divider">
         </li>
 
-        <li>
+        {{-- <li>
             <a class="dropdown-item d-flex align-items-center" href="#!">
                 <i class="bi bi-person"></i>
                 <span>My Profile</span>
             </a>
-        </li>
+        </li> --}}
         <li>
             <hr class="dropdown-divider">
         </li>

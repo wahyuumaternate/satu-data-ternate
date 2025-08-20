@@ -29,12 +29,12 @@
         }
 
         /* .approval-header.pending::before {
-                                background: #2563eb;
-                            }
+                                    background: #2563eb;
+                                }
 
-                            .approval-header.approved::before {
-                                background: #2563eb;
-                            } */
+                                .approval-header.approved::before {
+                                    background: #2563eb;
+                                } */
 
         .approval-header.rejected::before {
             background: #1e293b;
@@ -102,12 +102,12 @@
         }
 
         /* .pending-indicator {
-                                                            border-left: 5px solid #2563eb;
-                                                        }
+                                                                border-left: 5px solid #2563eb;
+                                                            }
 
-                                                        .approved-indicator {
-                                                            border-left: 5px solid #2563eb;
-                                                        } */
+                                                            .approved-indicator {
+                                                                border-left: 5px solid #2563eb;
+                                                            } */
 
         .rejected-indicator {
             border-left: 5px solid #1e293b;
@@ -457,7 +457,7 @@
                                         <tr>
                                             <td>Organization:</td>
                                             <td style="color: #1e293b; font-weight: 500;">
-                                                {{ $dataset->organization ?? 'Not specified' }}</td>
+                                                {{ $dataset->user->organization->name ?? 'Not specified' }}
                                         </tr>
                                         <tr>
                                             <td>Submitted:</td>

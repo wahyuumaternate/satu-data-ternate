@@ -17,8 +17,8 @@
         }
 
         /* .approved-indicator {
-                            border-left: 5px solid #2563eb;
-                        } */
+                                    border-left: 5px solid #2563eb;
+                                } */
 
         .approval-header {
             background: #f8faff;
@@ -381,25 +381,25 @@
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
-                                        <li>
+                                        {{-- <li>
                                             <a class="dropdown-item" href="{{ route('dataset.show', $dataset->slug) }}">
                                                 <i class="bi bi-eye me-2"></i>View Dataset
                                             </a>
-                                        </li>
+                                        </li> --}}
                                         <li>
                                             <a class="dropdown-item"
                                                 href="{{ route('admin.dataset-approval.show', $dataset) }}">
                                                 <i class="bi bi-file-text me-2"></i>Approval Details
                                             </a>
                                         </li>
-                                        <li>
+                                        {{-- <li>
                                             <hr class="dropdown-divider">
                                         </li>
                                         <li>
                                             <a class="dropdown-item" href="{{ route('dataset.download', $dataset) }}">
                                                 <i class="bi bi-download me-2"></i>Download Dataset
                                             </a>
-                                        </li>
+                                        </li> --}}
                                     </ul>
                                 </div>
                             </div>

@@ -89,64 +89,7 @@
                     </div>
                 @endif
 
-                <!-- Data Table -->
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="card-title">
-                                <i class="bi bi-table me-2"></i>Data Sumber
-                            </h5>
-                            <div class="btn-group" role="group">
-                                <button class="btn btn-outline-secondary btn-sm" onclick="toggleDataView('table')"
-                                    id="btn-table">
-                                    <i class="bi bi-table"></i> Tabel
-                                </button>
-                                <button class="btn btn-outline-secondary btn-sm" onclick="toggleDataView('raw')"
-                                    id="btn-raw">
-                                    <i class="bi bi-code"></i> Raw Data
-                                </button>
-                            </div>
-                        </div>
 
-                        <!-- Table View -->
-                        <div id="data-table-view">
-                            <div class="table-responsive">
-                                <table class="table table-striped" id="data-table">
-                                    <thead class="table-primary">
-                                        <tr id="table-headers">
-                                            <!-- Headers akan di-generate dari JavaScript -->
-                                        </tr>
-                                    </thead>
-                                    <tbody id="table-body">
-                                        <!-- Data akan di-generate dari JavaScript -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Raw Data View -->
-                        <div id="data-raw-view" style="display: none;">
-                            <pre class="bg-light p-3 rounded"><code id="raw-data-content"></code></pre>
-                        </div>
-
-                        <!-- Export Data Options -->
-                        <div class="mt-3">
-                            <div class="btn-group" role="group">
-                                <button class="btn btn-outline-success btn-sm" onclick="exportData('csv')">
-                                    <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
-                                </button>
-                                <button class="btn btn-outline-info btn-sm" onclick="exportData('json')">
-                                    <i class="bi bi-file-earmark-code"></i> Export JSON
-                                </button>
-                                @if ($visualisasi->data_source === 'file' && $visualisasi->source_file)
-                                    <a href="{{ $visualisasi->file_url }}" class="btn btn-outline-primary btn-sm" download>
-                                        <i class="bi bi-download"></i> Download Original
-                                    </a>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Sidebar -->
@@ -183,8 +126,7 @@
                                     <span class="ms-2">
                                         <i class="bi bi-file-earmark-text text-primary"></i> File
                                         @if ($visualisasi->source_file)
-                                            <br><small
-                                                class="text-muted">{{ basename($visualisasi->source_file) }}</small>
+                                            <br><small class="text-muted">{{ basename($visualisasi->source_file) }}</small>
                                             @if ($visualisasi->file_size)
                                                 <br><small class="text-muted">{{ $visualisasi->file_size }}</small>
                                             @endif
@@ -250,45 +192,6 @@
                     </div>
                 </div>
 
-                <!-- Actions Card -->
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">
-                            <i class="bi bi-gear me-2"></i>Aksi
-                        </h5>
-
-                        <div class="d-grid gap-2">
-                            @can('update', $visualisasi)
-                                <a href="{{ route('visualisasi.edit', $visualisasi) }}" class="btn btn-warning">
-                                    <i class="bi bi-pencil"></i> Edit Visualisasi
-                                </a>
-                            @endcan
-
-                            <button class="btn btn-primary" onclick="fullscreenChart()">
-                                <i class="bi bi-arrows-fullscreen"></i> Fullscreen
-                            </button>
-
-                            <button class="btn btn-outline-primary" onclick="embedChart()">
-                                <i class="bi bi-code-slash"></i> Embed Code
-                            </button>
-
-                            <button class="btn btn-outline-secondary" onclick="printChart()">
-                                <i class="bi bi-printer"></i> Print
-                            </button>
-
-                            @can('delete', $visualisasi)
-                                <form action="{{ route('visualisasi.destroy', $visualisasi) }}" method="POST"
-                                    onsubmit="return confirm('Apakah Anda yakin ingin menghapus visualisasi ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-danger">
-                                        <i class="bi bi-trash"></i> Hapus
-                                    </button>
-                                </form>
-                            @endcan
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Related Visualizations -->
                 @if ($relatedVisualizations->count() > 0)
@@ -313,6 +216,64 @@
                         </div>
                     </div>
                 @endif
+            </div>
+            <!-- Data Table -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title">
+                            <i class="bi bi-table me-2"></i>Data Sumber
+                        </h5>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="toggleDataView('table')"
+                                id="btn-table">
+                                <i class="bi bi-table"></i> Tabel
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="toggleDataView('raw')"
+                                id="btn-raw">
+                                <i class="bi bi-code"></i> Raw Data
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Table View -->
+                    <div id="data-table-view">
+                        <div class="table-responsive">
+                            <table class="table table-stripe" id="data-table">
+                                <thead class="table-primary">
+                                    <tr id="table-headers">
+                                        <!-- Headers akan di-generate dari JavaScript -->
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body">
+                                    <!-- Data akan di-generate dari JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Raw Data View -->
+                    <div id="data-raw-view" style="display: none;">
+                        <pre class="bg-light p-3 rounded"><code id="raw-data-content"></code></pre>
+                    </div>
+
+                    <!-- Export Data Options -->
+                    <div class="mt-3">
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-outline-success btn-sm" onclick="exportData('csv')">
+                                <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" onclick="exportData('json')">
+                                <i class="bi bi-file-earmark-code"></i> Export JSON
+                            </button>
+                            @if ($visualisasi->data_source === 'file' && $visualisasi->source_file)
+                                <a href="{{ $visualisasi->file_url }}" class="btn btn-outline-primary btn-sm" download>
+                                    <i class="bi bi-download"></i> Download Original
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -384,8 +345,6 @@
 @endpush
 
 @push('scripts')
- 
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const chartContainer = document.getElementById('chart-container');

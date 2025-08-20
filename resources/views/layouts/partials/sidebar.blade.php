@@ -179,7 +179,7 @@
             </li>
         @endrole
 
-        <!-- Settings - Super Admin Only -->
+        {{-- <!-- Settings - Super Admin Only -->
         @role('super-admin')
             <li class="nav-item">
                 <a class="nav-link collapsed" href="#!">
@@ -187,7 +187,7 @@
                     <span>Pengaturan</span>
                 </a>
             </li>
-        @endrole
+        @endrole --}}
 
     </ul>
 

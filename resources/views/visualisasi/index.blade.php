@@ -186,7 +186,7 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <div class="btn-group" role="group">
+                                                <div class="btn-group gap-2" role="group">
                                                     <a href="{{ route('visualisasi.show', $item) }}"
                                                         class="btn btn-outline-primary btn-sm" title="Lihat">
                                                         <i class="bi bi-eye"></i>
