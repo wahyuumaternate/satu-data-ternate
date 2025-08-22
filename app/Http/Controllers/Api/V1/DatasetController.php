@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Dataset;
+use App\Models\Infografis;
+use App\Models\Mapset;
+use App\Models\Visualisasi;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -23,170 +26,300 @@ class DatasetController extends Controller
      * Get list of datasets with pagination and filters
      */
     public function index(Request $request): JsonResponse
-    {
-        try {
-            $query = Dataset::where('approval_status', 'approved')
-                ->with(['user']);
+{
+    try {
+             $query = Dataset::where('approval_status', 'approved')
+                    ->where('classification', 'publik') // hanya dataset public
+                    ->with([
+                        'user.organization:id,name'
+                    ]);
 
-            // Apply filters
-            $this->applyCommonFilters($query, $request);
 
-            // Apply sorting
-            $sortBy = $request->get('sort_by', 'created_at');
-            $sortDirection = $request->get('sort_direction', 'desc');
+        // Filter umum (misal pakai helper kalau perlu)
+        $this->applyCommonFilters($query, $request);
 
-            $allowedSortColumns = [
-                'created_at', 'title', 'view_count', 'download_count', 
-                'total_rows', 'total_columns', 'file_size', 'updated_at'
-            ];
+        // Sorting (default created_at desc)
+        $allowedSort = ['created_at', 'title', 'view_count', 'download_count', 'total_rows', 'total_columns', 'file_size'];
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortDir = $request->get('sort_direction', 'desc');
 
-            if (in_array($sortBy, $allowedSortColumns)) {
-                $query->orderBy($sortBy, $sortDirection);
-            } else {
-                $query->orderBy('created_at', 'desc');
-            }
+        $query->orderBy(in_array($sortBy, $allowedSort) ? $sortBy : 'created_at', $sortDir);
 
-            // Pagination
-            $perPage = min($request->get('per_page', $this->defaultLimit), $this->maxLimit);
-            $datasets = $query->paginate($perPage);
-
-            // Process datasets like in backend controller
-            $datasets->getCollection()->transform(function ($dataset) {
-                // Process tags like in backend controller
-                if (is_string($dataset->tags)) {
-                    $dataset->tags = json_decode($dataset->tags, true) ?? [];
-                }
-                if (!is_array($dataset->tags)) {
-                    $dataset->tags = [];
-                }
-
-                // Add formatted file size
-                $dataset->file_size_formatted = $this->formatFileSize($dataset->file_size);
-                
-                // Remove sensitive file path for API
-                unset($dataset->file_path);
-                
-                return $dataset;
-            });
-
-            return $this->successResponse([
-                'datasets' => $datasets->items(),
-                'pagination' => $this->getPaginationMeta($datasets),
-                'filters' => $this->getAppliedFilters($request),
-                'stats' => $this->getPublicStats()
-            ], 'Datasets retrieved successfully');
-
-        } catch (\Exception $e) {
-            Log::error('Dataset index API error: ' . $e->getMessage());
-            return $this->errorResponse('Failed to retrieve datasets', 500);
-        }
-    }
-
-    /**
-     * Search datasets
-     */
-    public function search(Request $request): JsonResponse
-    {
-        $searchQuery = $request->get('q', '');
+        // Pagination
         $perPage = min($request->get('per_page', $this->defaultLimit), $this->maxLimit);
+        $datasets = $query->paginate($perPage);
 
-        if (empty($searchQuery)) {
-            return $this->errorResponse('Search query is required', 400);
-        }
+       $datasets->getCollection()->transform(function ($dataset) {
+    // Format tags
+    $dataset->tags = is_string($dataset->tags) 
+        ? json_decode($dataset->tags, true) ?? [] 
+        : (is_array($dataset->tags) ? $dataset->tags : []);
 
-        try {
-            $query = Dataset::where('approval_status', 'approved')
-                ->with(['user']);
+    // Tambahkan format ukuran file
+    $dataset->file_size_formatted = $this->formatFileSize($dataset->file_size);
 
-            // Apply search like in backend controller
-            $query->where(function ($q) use ($searchQuery) {
-                $q->where('title', 'like', "%{$searchQuery}%")
-                  ->orWhere('description', 'like', "%{$searchQuery}%")
-                  ->orWhere('organization', 'like', "%{$searchQuery}%")
-                  ->orWhere('filename', 'like', "%{$searchQuery}%")
-                  ->orWhere('original_filename', 'like', "%{$searchQuery}%")
-                  ->orWhere('sector', 'like', "%{$searchQuery}%")
-                  ->orWhere('data_source', 'like', "%{$searchQuery}%")
-                  ->orWhereJsonContains('tags', $searchQuery)
-                  ->orWhere('tags', 'like', "%{$searchQuery}%");
-            });
+    // Hapus field sensitif
+    unset($dataset->file_path, $dataset->headers, $dataset->data);
 
-            $datasets = $query->orderBy('view_count', 'desc')
-                             ->paginate($perPage);
+    // Tambahkan nama organisasi
+    $dataset->organization_name = $dataset->user->organization->name ?? null;
 
-            // Process results like in backend
-            $datasets->getCollection()->transform(function ($dataset) {
-                if (is_string($dataset->tags)) {
-                    $dataset->tags = json_decode($dataset->tags, true) ?? [];
-                }
-                if (!is_array($dataset->tags)) {
-                    $dataset->tags = [];
-                }
-                $dataset->file_size_formatted = $this->formatFileSize($dataset->file_size);
-                unset($dataset->file_path);
-                return $dataset;
-            });
+    return $dataset;
+});
 
-            return $this->successResponse([
-                'datasets' => $datasets->items(),
-                'pagination' => $this->getPaginationMeta($datasets),
-                'search_query' => $searchQuery,
-                'total_found' => $datasets->total(),
-            ], 'Search completed successfully');
 
-        } catch (\Exception $e) {
-            Log::error('Dataset search API error: ' . $e->getMessage());
-            return $this->errorResponse('Search failed', 500);
-        }
+        return $this->successResponse([
+            'datasets'   => $datasets->items(),
+            'pagination' => $this->getPaginationMeta($datasets),
+        ], 'Datasets retrieved successfully');
+    } catch (\Exception $e) {
+        Log::error('Dataset index API error: ' . $e->getMessage());
+        return $this->errorResponse('Failed to retrieve datasets', 500);
     }
+}
+
 
     /**
      * Get single dataset details
      */
     public function show(string $slug): JsonResponse
-    {
-        try {
-            $dataset = Dataset::where('slug', $slug)
-                ->where('approval_status', 'approved')
-                ->with(['user'])
-                ->firstOrFail();
+{
+    try {
+      
+        // Cari dataset dengan kondisi yang lebih specific
+        $dataset = Dataset::where('slug', $slug)
+            ->where('approval_status', 'approved')
+            ->where('is_public', true)
+            ->where('publish_status', 'published') // Pastikan published
+            ->with(['user.organization:id,name'])
+            ->first();
 
-            // Increment view count like in backend
+        // Debug: Log jika dataset tidak ditemukan
+        if (!$dataset) {
+            Log::warning('Dataset not found', [
+                'slug' => $slug,
+                'criteria' => [
+                    'approval_status' => 'approved',
+                    'is_public' => true,
+                    'publish_status' => 'published'
+                ]
+            ]);
+
+            // Cek apakah dataset exists dengan slug tapi tidak memenuhi kriteria
+            $existingDataset = Dataset::where('slug', $slug)->first();
+            if ($existingDataset) {
+                Log::info('Dataset exists but does not meet criteria', [
+                    'slug' => $slug,
+                    'approval_status' => $existingDataset->approval_status,
+                    'is_public' => $existingDataset->is_public,
+                    'publish_status' => $existingDataset->publish_status ?? 'null'
+                ]);
+            }
+
+            return $this->errorResponse('Dataset not found or not publicly available', 404);
+        }
+
+        Log::info('Dataset found', ['dataset_id' => $dataset->id]);
+
+        // Tambah view count dengan error handling
+        try {
             if (Schema::hasColumn('datasets', 'view_count')) {
                 $dataset->increment('view_count');
+                Log::info('View count incremented', ['dataset_id' => $dataset->id]);
             }
+        } catch (\Exception $e) {
+            Log::warning('Failed to increment view count', [
+                'dataset_id' => $dataset->id,
+                'error' => $e->getMessage()
+            ]);
+            // Continue execution even if view count fails
+        }
 
-            // Process tags like in backend
+        // Format tags dengan error handling
+        try {
             if (is_string($dataset->tags)) {
-                $dataset->tags = json_decode($dataset->tags, true) ?? [];
-            }
-            if (!is_array($dataset->tags)) {
+                $decodedTags = json_decode($dataset->tags, true);
+                $dataset->tags = $decodedTags !== null ? $decodedTags : [];
+            } elseif (!is_array($dataset->tags)) {
                 $dataset->tags = [];
             }
-
-            $dataset->file_size_formatted = $this->formatFileSize($dataset->file_size);
-            
-            // Remove sensitive file path
-            unset($dataset->file_path);
-
-            return $this->successResponse([
-                'dataset' => $dataset,
-                'statistics' => [
-                    'views' => $dataset->view_count ?? 0,
-                    'downloads' => $dataset->download_count ?? 0,
-                    'total_rows' => $dataset->total_rows ?? 0,
-                    'total_columns' => $dataset->total_columns ?? count($dataset->headers ?? []),
-                ],
-                'download_url' => route('api.v1.datasets.download', $slug)
-            ], 'Dataset retrieved successfully');
-
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return $this->errorResponse('Dataset not found', 404);
         } catch (\Exception $e) {
-            Log::error('Dataset show API error: ' . $e->getMessage());
-            return $this->errorResponse('Failed to retrieve dataset', 500);
+            Log::warning('Failed to format tags', [
+                'dataset_id' => $dataset->id,
+                'tags' => $dataset->tags,
+                'error' => $e->getMessage()
+            ]);
+            $dataset->tags = [];
         }
+
+        // Format file size dengan error handling
+        try {
+            $dataset->file_size_formatted = $this->formatFileSize($dataset->file_size ?? 0);
+        } catch (\Exception $e) {
+            Log::warning('Failed to format file size', [
+                'dataset_id' => $dataset->id,
+                'file_size' => $dataset->file_size,
+                'error' => $e->getMessage()
+            ]);
+            $dataset->file_size_formatted = '0 B';
+        }
+
+        // Tambahkan nama organisasi dengan error handling
+        try {
+            $dataset->organization_name = $dataset->user->organization->name ?? 'Unknown Organization';
+        } catch (\Exception $e) {
+            Log::warning('Failed to get organization name', [
+                'dataset_id' => $dataset->id,
+                'error' => $e->getMessage()
+            ]);
+            $dataset->organization_name = 'Unknown Organization';
+        }
+
+        // Ambil headers dan sample data jika file CSV/Excel
+        $headers = [];
+        $sampleData = [];
+        
+        try {
+            if (in_array(strtolower($dataset->file_type), ['csv', 'excel', 'xlsx', 'xls'])) {
+                $filePath = storage_path('app/datasets/' . $dataset->filename);
+                
+                if (file_exists($filePath)) {
+                    if (strtolower($dataset->file_type) === 'csv') {
+                        // Baca CSV headers dan sample data
+                        $handle = fopen($filePath, 'r');
+                        if ($handle) {
+                            // Ambil headers (baris pertama)
+                            $headers = fgetcsv($handle);
+                            
+                            // Ambil 5 baris sample data
+                            $rowCount = 0;
+                            while (($row = fgetcsv($handle)) !== false && $rowCount < 5) {
+                                $sampleData[] = $row;
+                                $rowCount++;
+                            }
+                            fclose($handle);
+                        }
+                    } elseif (in_array(strtolower($dataset->file_type), ['xlsx', 'xls', 'excel'])) {
+                        // Untuk Excel, butuh library PhpSpreadsheet
+                        // Implementasi basic jika ada
+                        $headers = ['Column 1', 'Column 2', 'Column 3']; // Placeholder
+                        $sampleData = [['Sample', 'Data', 'Row']]; // Placeholder
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to read file headers/data', [
+                'dataset_id' => $dataset->id,
+                'file_type' => $dataset->file_type,
+                'error' => $e->getMessage()
+            ]);
+            // Continue with empty headers/data
+        }
+
+        // Tambahkan headers dan sample data ke dataset
+        $dataset->headers = $headers;
+        $dataset->sample_data = $sampleData;
+        $dataset->has_preview = !empty($headers);
+
+        // Hapus field sensitif yang ada (jangan hapus headers dan data karena kita baru tambahkan)
+        $fieldsToRemove = ['file_path', 'processing_log'];
+        foreach ($fieldsToRemove as $field) {
+            if (property_exists($dataset, $field)) {
+                unset($dataset->$field);
+            }
+        }
+
+        // Build response dengan error handling
+        $response = [
+            'dataset' => $dataset,
+            'statistics' => [
+                'views'         => $dataset->view_count ?? 0,
+                'downloads'     => $dataset->download_count ?? 0,
+                'total_rows'    => $dataset->total_rows ?? 0,
+                'total_columns' => $dataset->total_columns ?? 0,
+                'file_size'     => $dataset->file_size ?? 0,
+            ],
+            'preview' => [
+                'headers' => $headers,
+                'sample_data' => $sampleData,
+                'has_preview' => !empty($headers),
+                'preview_rows' => count($sampleData)
+            ]
+        ];
+
+        // Add download URL with error handling
+        try {
+            $response['download_url'] = route('api.v1.datasets.download', $slug);
+        } catch (\Exception $e) {
+            Log::warning('Failed to generate download URL', [
+                'slug' => $slug,
+                'error' => $e->getMessage()
+            ]);
+            // Don't include download URL if route doesn't exist
+        }
+
+        Log::info('Dataset response prepared successfully', ['dataset_id' => $dataset->id]);
+
+        return $this->successResponse($response, 'Dataset retrieved successfully');
+
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        Log::warning('Dataset not found exception', [
+            'slug' => $slug,
+            'error' => $e->getMessage()
+        ]);
+        return $this->errorResponse('Dataset not found', 404);
+        
+    } catch (\Exception $e) {
+        Log::error('Dataset show API error', [
+            'slug' => $slug,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+        
+        return $this->errorResponse('Failed to retrieve dataset: ' . $e->getMessage(), 500);
     }
+}
+
+
+/**
+ * Debug method to check dataset existence
+ */
+public function debug(string $slug): JsonResponse
+{
+    try {
+        // Check if dataset exists with slug
+        $dataset = Dataset::where('slug', $slug)->first();
+        
+        if (!$dataset) {
+            return $this->errorResponse('No dataset found with this slug', 404);
+        }
+
+        // Return dataset info for debugging
+        return $this->successResponse([
+            'dataset_exists' => true,
+            'dataset_info' => [
+                'id' => $dataset->id,
+                'title' => $dataset->title,
+                'slug' => $dataset->slug,
+                'approval_status' => $dataset->approval_status,
+                'is_public' => $dataset->is_public,
+                'publish_status' => $dataset->publish_status ?? 'null',
+                'created_at' => $dataset->created_at,
+                'updated_at' => $dataset->updated_at,
+            ]
+        ], 'Dataset debug info');
+
+    } catch (\Exception $e) {
+        Log::error('Debug API error', [
+            'slug' => $slug,
+            'error' => $e->getMessage()
+        ]);
+        return $this->errorResponse('Debug failed: ' . $e->getMessage(), 500);
+    }
+}
+
 
     /**
      * Get dataset data/content with pagination (like backend show method)
@@ -396,25 +529,6 @@ class DatasetController extends Controller
         }
     }
 
-    /**
-     * Get public statistics (similar to getStatsBasedOnRole for public)
-     */
-    private function getPublicStats(): array
-    {
-        return Cache::remember('public_dataset_stats', 1800, function() {
-            $statsQuery = Dataset::where('approval_status', 'approved');
-            
-            return [
-                'total_datasets' => $statsQuery->count(),
-                'total_views' => $statsQuery->sum('view_count') ?? 0,
-                'total_downloads' => $statsQuery->sum('download_count') ?? 0,
-                'datasets_this_month' => Dataset::where('approval_status', 'approved')
-                    ->whereMonth('created_at', now()->month)
-                    ->whereYear('created_at', now()->year)
-                    ->count(),
-            ];
-        });
-    }
 
     // Helper Methods (same as backend controller)
 
@@ -526,22 +640,6 @@ class DatasetController extends Controller
             'from' => $paginator->firstItem(),
             'to' => $paginator->lastItem(),
             'has_more_pages' => $paginator->hasMorePages(),
-        ];
-    }
-
-    /**
-     * Get applied filters
-     */
-    private function getAppliedFilters(Request $request): array
-    {
-        return [
-            'search' => $request->search,
-            'topic' => $request->topic,
-            'classification' => $request->classification,
-            'status' => $request->status,
-            'file_type' => $request->file_type,
-            'organization' => $request->organization,
-            'year' => $request->year,
         ];
     }
 
@@ -684,4 +782,21 @@ class DatasetController extends Controller
             return $this->errorResponse('Failed to retrieve featured datasets', 500);
         }
     }
+
+    public function getPublicStats(): JsonResponse
+{
+    try {
+        $stats = [
+            'total_dataset'     => Dataset::all()->count(),
+            'total_mapset'      => Mapset::all()->count(),
+            'total_visualisasi' => Visualisasi::all()->count(),
+            'total_infografis'  => Infografis::all()->count(),
+        ];
+
+        return $this->successResponse($stats, 'Statistics retrieved successfully');
+    } catch (\Exception $e) {
+        return $this->errorResponse('Failed to retrieve statistics', 500);
+    }
+}
+
 }

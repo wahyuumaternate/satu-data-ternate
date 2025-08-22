@@ -34,34 +34,13 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::prefix('datasets')->name('datasets.')->group(function () {
         // List and search
         Route::get('/', [DatasetController::class, 'index'])->name('index');
-        Route::get('/search', [DatasetController::class, 'search'])->name('search');
-        Route::get('/topics', [DatasetController::class, 'getTopics'])->name('topics');
-        Route::get('/popular', [DatasetController::class, 'getPopular'])->name('popular');
-        Route::get('/recent', [DatasetController::class, 'getRecent'])->name('recent');
-        Route::get('/featured', [DatasetController::class, 'getFeatured'])->name('featured');
-        Route::get('/formats', [DatasetController::class, 'getFormats'])->name('formats');
-        Route::get('/years', [DatasetController::class, 'getAvailableYears'])->name('years');
+       
         
         // Individual dataset
         Route::get('/{dataset:slug}', [DatasetController::class, 'show'])->name('show');
-        Route::get('/{dataset:slug}/data', [DatasetController::class, 'getData'])->name('data');
-        Route::get('/{dataset:slug}/metadata', [DatasetController::class, 'getMetadata'])->name('metadata');
-        Route::get('/{dataset:slug}/statistics', [DatasetController::class, 'getStatistics'])->name('statistics');
-        Route::get('/{dataset:slug}/download', [DatasetController::class, 'download'])->name('download');
-        Route::get('/{dataset:slug}/preview', [DatasetController::class, 'preview'])->name('preview');
-        
-        // Filter routes
-        Route::get('/by-topic/{topic}', [DatasetController::class, 'getByTopic'])->name('by-topic');
-        Route::get('/by-organization/{organization}', [DatasetController::class, 'getByOrganization'])->name('by-organization');
-        Route::get('/by-year/{year}', [DatasetController::class, 'getByYear'])->name('by-year');
-        
-        // Comparison and analysis
-        Route::get('/compare', [DatasetController::class, 'compare'])->name('compare');
-        
-        // Export catalog
-        Route::get('/catalog/export', [DatasetController::class, 'exportCatalog'])->name('export-catalog');
+           
     });
-
+    Route::get('/total-data', [DatasetController::class, 'getPublicStats'])->name('total-data');
     /*
     |--------------------------------------------------------------------------
     | Infografis Routes (Read Only)
@@ -99,29 +78,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::prefix('mapsets')->name('mapsets.')->group(function () {
         // List and search
         Route::get('/', [MapsetController::class, 'index'])->name('index');
-        Route::get('/search', [MapsetController::class, 'search'])->name('search');
-        Route::get('/recent', [MapsetController::class, 'getRecent'])->name('recent');
-        Route::get('/featured', [MapsetController::class, 'getFeatured'])->name('featured');
-        Route::get('/statistics', [MapsetController::class, 'getStatistics'])->name('statistics');
+        Route::get('/{mapset:slug}', [MapsetController::class, 'show'])->name('show');
         
-        // Individual mapset
-        Route::get('/{mapset:uuid}', [MapsetController::class, 'show'])->name('show');
-        Route::get('/{mapset:uuid}/data', [MapsetController::class, 'getData'])->name('data');
-        Route::get('/{mapset:uuid}/geojson', [MapsetController::class, 'getGeojson'])->name('geojson');
-        Route::get('/{mapset:uuid}/download', [MapsetController::class, 'download'])->name('download');
-        Route::get('/{mapset:uuid}/preview', [MapsetController::class, 'preview'])->name('preview');
-        
-        // Map utilities
-        Route::get('/all-geojson', [MapsetController::class, 'getAllGeojson'])->name('all-geojson');
-        Route::get('/dbf-columns', [MapsetController::class, 'getDbfColumns'])->name('dbf-columns');
-        Route::get('/dbf-values/{column}', [MapsetController::class, 'getDbfColumnValues'])->name('dbf-values');
-        
-        // Filter routes
-        Route::get('/by-organization/{organization}', [MapsetController::class, 'getByOrganization'])->name('by-organization');
-        Route::get('/by-region/{region}', [MapsetController::class, 'getByRegion'])->name('by-region');
-        
-        // Export catalog
-        Route::get('/catalog/export', [MapsetController::class, 'exportCatalog'])->name('export-catalog');
     });
 
     /*

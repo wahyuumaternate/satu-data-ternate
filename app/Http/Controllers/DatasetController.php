@@ -357,10 +357,10 @@ class DatasetController extends Controller
                 $shouldResetApproval = true;
             }
             
-            // Also reset approval if file is being updated
-            if ($request->hasFile('file')) {
-                $shouldResetApproval = true;
-            }
+            // // Also reset approval if file is being updated
+            // if ($request->hasFile('file')) {
+            //     $shouldResetApproval = true;
+            // }
             
             // Handle file if updated
             if ($request->hasFile('file')) {

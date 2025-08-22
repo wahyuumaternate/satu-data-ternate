@@ -153,7 +153,7 @@
         @endhasanyrole
 
         <!-- Organisasi - Super Admin, Penanggung Jawab -->
-        @hasanyrole('super-adminb')
+        @hasanyrole('super-admin')
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('organisasi.*') ? '' : 'collapsed' }}"
                     href="{{ route('organizations.index') }}">

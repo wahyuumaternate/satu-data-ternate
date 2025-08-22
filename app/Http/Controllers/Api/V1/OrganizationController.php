@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class OrganizationController extends Controller
 {
@@ -25,77 +26,186 @@ class OrganizationController extends Controller
      * Get list of organizations with pagination and filters
      */
     public function index(Request $request): JsonResponse
-    {
-        try {
-            $query = Organization::query();
+{
+    try {
+        $query = Organization::query();
 
-            // Apply filters like in backend controller
-            $this->applyFilters($query, $request);
-
-            // Apply sorting like in backend
-            $sort = $request->get('sort', 'name');
-            $direction = $request->get('direction', 'asc');
-            
-            switch ($sort) {
-                case 'name':
-                    $query->orderBy('name', $direction);
-                    break;
-                case 'code':
-                    $query->orderBy('code', $direction);
-                    break;
-                case 'created_at':
-                    $query->orderBy('created_at', $direction);
-                    break;
-                default:
-                    $query->orderBy('name', 'asc');
-                    break;
-            }
-
-            // Add content counts for each organization
-            $query->withCount([
-                'datasets as total_datasets' => function($q) {
-                    $q->where('approval_status', 'approved');
-                },
-                'infografis as total_infografis' => function($q) {
-                    $q->where('is_public', true);
-                },
-                'mapsets as total_mapsets',
-                'visualisasi as total_visualisasi' => function($q) {
-                    $q->where('is_active', true)->where('is_public', true);
-                }
-            ]);
-
-            // Pagination
-            $perPage = min($request->get('per_page', $this->defaultLimit), $this->maxLimit);
-            $organizations = $query->paginate($perPage);
-
-            // Process organizations data
-            $organizations->getCollection()->transform(function ($organization) {
-                // Add computed fields
-                $organization->total_content = 
-                    $organization->total_datasets + 
-                    $organization->total_infografis + 
-                    $organization->total_mapsets + 
-                    $organization->total_visualisasi;
-                
-                $organization->logo_url = $organization->logo ? 
-                    asset('storage/' . $organization->logo) : null;
-                
-                return $organization;
-            });
-
-            return $this->successResponse([
-                'organizations' => $organizations->items(),
-                'pagination' => $this->getPaginationMeta($organizations),
-                'filters' => $this->getAppliedFilters($request),
-                'stats' => $this->getPublicStats()
-            ], 'Organizations retrieved successfully');
-
-        } catch (\Exception $e) {
-            Log::error('Organization index API error: ' . $e->getMessage());
-            return $this->errorResponse('Failed to retrieve organizations', 500);
+        // Apply search filter (menggunakan scope yang sama dengan backend)
+        if ($request->filled('search')) {
+            $query->search($request->search);
         }
+
+        // Apply sorting (menggunakan logika yang sama dengan backend)
+        $sort = $request->get('sort', 'name');
+        $direction = $request->get('direction', 'asc');
+        
+        switch ($sort) {
+            case 'name':
+                $query->orderBy('name', $direction);
+                break;
+            case 'code':
+                $query->orderBy('code', $direction);
+                break;
+            case 'created_at':
+                $query->orderBy('created_at', $direction);
+                break;
+            default:
+                $query->orderBy('name', 'asc');
+                break;
+        }
+
+        // Add counts untuk content yang dibuat oleh users dari organization ini
+        $query->withCount(['users'])
+              ->addSelect([
+                  'organizations.*', // Pastikan semua field organization tetap ada
+                  
+                  // Count datasets yang approved dan publik
+                  'total_datasets' => DB::table('datasets')
+                      ->join('users', 'datasets.user_id', '=', 'users.id')
+                      ->whereColumn('users.organization_id', 'organizations.id')
+                      ->where('datasets.approval_status', 'approved')
+                      ->where('datasets.classification', 'publik')
+                      ->selectRaw('count(*)'),
+                  
+                  // Count infografis yang public
+                  'total_infografis' => DB::table('infografis')
+                      ->join('users', 'infografis.user_id', '=', 'users.id')
+                      ->whereColumn('users.organization_id', 'organizations.id')
+                      ->where('infografis.is_public', true)
+                      ->selectRaw('count(*)'),
+                  
+                  // Count mapsets
+                  'total_mapsets' => DB::table('mapsets')
+                      ->join('users', 'mapsets.user_id', '=', 'users.id')
+                      ->whereColumn('users.organization_id', 'organizations.id')
+                      ->selectRaw('count(*)'),
+                  
+                  // Count visualisasi yang active dan public
+                  'total_visualisasi' => DB::table('visualisasi')
+                      ->join('users', 'visualisasi.user_id', '=', 'users.id')
+                      ->whereColumn('users.organization_id', 'organizations.id')
+                      ->where('visualisasi.is_active', true)
+                      ->where('visualisasi.is_public', true)
+                      ->selectRaw('count(*)')
+              
+              ]);
+
+        // Pagination
+        $perPage = max(1, min((int)$request->get('per_page', 15), 100));
+        $organizations = $query->paginate($perPage);
+
+        // Transform data
+        $organizations->getCollection()->transform(function ($organization) {
+            // Menggunakan accessor yang sudah ada di model
+            $organization->logo_url = $organization->logo_url;
+            $organization->formatted_website = $organization->formatted_website;
+            
+            // Count data dari addSelect query
+            $organization->users_count = $organization->users_count ?? 0;
+            $organization->total_datasets = $organization->total_datasets ?? 0;
+            $organization->total_infografis = $organization->total_infografis ?? 0;
+            $organization->total_mapsets = $organization->total_mapsets ?? 0;
+            $organization->total_visualisasi = $organization->total_visualisasi ?? 0;
+            
+            // Debug: cek apakah field ada
+            Log::info('Organization counts', [
+                'id' => $organization->id,
+                'name' => $organization->name,
+                'datasets' => $organization->total_datasets,
+                'infografis' => $organization->total_infografis,
+                'mapsets' => $organization->total_mapsets,
+                'visualisasi' => $organization->total_visualisasi,
+                'attributes' => $organization->getAttributes()
+            ]);
+            
+            // Total content
+            $organization->total_content = 
+                $organization->total_datasets + 
+                $organization->total_infografis + 
+                $organization->total_mapsets + 
+                $organization->total_visualisasi;
+            
+            return $organization;
+        });
+
+        // Response data
+        $responseData = [
+            'organizations' => $organizations->items(),
+            'pagination' => [
+                'total' => $organizations->total(),
+                'per_page' => $organizations->perPage(),
+                'current_page' => $organizations->currentPage(),
+                'last_page' => $organizations->lastPage(),
+                'from' => $organizations->firstItem(),
+                'to' => $organizations->lastItem(),
+                'has_more_pages' => $organizations->hasMorePages(),
+            ],
+            'filters' => [
+                'search' => $request->get('search'),
+                'sort' => $sort,
+                'direction' => $direction,
+            ]
+        ];
+
+        // Add stats (menggunakan method yang sama dengan backend)
+        try {
+            $responseData['stats'] = [
+                'total' => Organization::count(),
+                'this_month' => Organization::whereMonth('created_at', now()->month)->count(),
+                'with_website' => Organization::whereNotNull('website')->count(),
+                'with_logo' => Organization::whereNotNull('logo')->count(),
+            ];
+        } catch (\Exception $e) {
+            Log::warning('Failed to get organization stats: ' . $e->getMessage());
+        }
+
+        // Return response menggunakan helper method jika ada
+        if (method_exists($this, 'successResponse')) {
+            return $this->successResponse($responseData, 'Organizations retrieved successfully');
+        }
+
+        // Fallback response
+        return response()->json([
+            'success' => true,
+            'data' => $responseData,
+            'message' => 'Organizations retrieved successfully'
+        ]);
+
+    } catch (\Illuminate\Database\QueryException $e) {
+        Log::error('Database error in Organization API index', [
+            'message' => $e->getMessage(),
+            'sql' => $e->getSql(),
+            'bindings' => $e->getBindings(),
+            'request' => $request->all()
+        ]);
+        
+        return $this->handleError('Database error occurred', 500);
+        
+    } catch (\Exception $e) {
+        Log::error('Organization API index error', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'request' => $request->all()
+        ]);
+        
+        return $this->handleError('Failed to retrieve organizations', 500);
     }
+}
+
+private function handleError($message, $code = 500)
+{
+    // Gunakan method dari base controller jika ada
+    if (method_exists($this, 'errorResponse')) {
+        return $this->errorResponse($message, $code);
+    }
+    
+    // Fallback response
+    return response()->json([
+        'success' => false,
+        'message' => $message,
+        'timestamp' => now()->toISOString()
+    ], $code);
+}
 
     /**
      * Search organizations
