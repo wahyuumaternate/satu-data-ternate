@@ -23,55 +23,60 @@ class VisualisasiController extends Controller
      * Get list of visualisasi with pagination and filters
      */
     public function index(Request $request): JsonResponse
-    {
-        try {
-            $query = Visualisasi::where('is_active', true)
-                ->where('is_public', true)
-                ->with(['user']);
+{
+    try {
+        $query = Visualisasi::where('is_active', true)
+            ->where('is_public', true)
+            ->with(['user.organization']); // Tambahkan relasi organization
 
-            // Apply filters like in backend controller
-            $this->applyFilters($query, $request);
+        // Apply filters like in backend controller
+        $this->applyFilters($query, $request);
 
-            // Apply sorting
-            $sortBy = $request->get('sort_by', 'created_at');
-            $sortDirection = $request->get('sort_direction', 'desc');
+        // Apply sorting
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortDirection = $request->get('sort_direction', 'desc');
 
-            $allowedSortColumns = ['created_at', 'nama', 'views', 'topic', 'tipe'];
+        $allowedSortColumns = ['created_at', 'nama', 'views', 'topic', 'tipe'];
 
-            if (in_array($sortBy, $allowedSortColumns)) {
-                $query->orderBy($sortBy, $sortDirection);
-            } else {
-                $query->latest();
-            }
-
-            // Pagination
-            $perPage = min($request->get('per_page', $this->defaultLimit), $this->maxLimit);
-            $visualisasi = $query->paginate($perPage);
-
-            // Process visualisasi data
-            $visualisasi->getCollection()->transform(function ($item) {
-                // Remove sensitive file paths
-                unset($item->source_file);
-                
-                // Add computed fields
-                $item->file_exists = $item->source_file ? $item->fileExists() : false;
-                $item->has_data = !empty($item->getProcessedData()['labels']);
-                
-                return $item;
-            });
-
-            return $this->successResponse([
-                'visualisasi' => $visualisasi->items(),
-                'pagination' => $this->getPaginationMeta($visualisasi),
-                'filters' => $this->getAppliedFilters($request),
-                'stats' => $this->getPublicStats()
-            ], 'Visualisasi retrieved successfully');
-
-        } catch (\Exception $e) {
-            Log::error('Visualisasi index API error: ' . $e->getMessage());
-            return $this->errorResponse('Failed to retrieve visualisasi', 500);
+        if (in_array($sortBy, $allowedSortColumns)) {
+            $query->orderBy($sortBy, $sortDirection);
+        } else {
+            $query->latest();
         }
+
+        // Pagination
+        $perPage = min($request->get('per_page', $this->defaultLimit), $this->maxLimit);
+        $visualisasi = $query->paginate($perPage);
+
+        // Process visualisasi data
+        $visualisasi->getCollection()->transform(function ($item) {
+            // Remove sensitive file paths
+            unset($item->source_file);
+            
+            // Add computed fields
+            $item->file_exists = $item->source_file ? $item->fileExists() : false;
+            $item->has_data = !empty($item->getProcessedData()['labels']);
+            
+            // Add organization name
+            $item->organization_name = $item->user && $item->user->organization 
+                ? $item->user->organization->name 
+                : null;
+            
+            return $item;
+        });
+
+        return $this->successResponse([
+            'visualisasi' => $visualisasi->items(),
+            'pagination' => $this->getPaginationMeta($visualisasi),
+            'filters' => $this->getAppliedFilters($request),
+            'stats' => $this->getPublicStats()
+        ], 'Visualisasi retrieved successfully');
+
+    } catch (\Exception $e) {
+        Log::error('Visualisasi index API error: ' . $e->getMessage());
+        return $this->errorResponse('Failed to retrieve visualisasi', 500);
     }
+}
 
     /**
      * Search visualisasi
@@ -125,51 +130,30 @@ class VisualisasiController extends Controller
     /**
      * Get single visualisasi details
      */
-    public function show(Visualisasi $visualisasi): JsonResponse
-    {
-        try {
-            // Check if visualisasi is public and active
-            if (!$visualisasi->is_active || !$visualisasi->is_public) {
-                return $this->errorResponse('Visualisasi not found or not accessible', 404);
-            }
-
-            $visualisasi->load(['user']);
-
-            // Increment views like in backend
-            $visualisasi->incrementViews();
-
-            // Remove sensitive file paths
-            unset($visualisasi->source_file);
-
-            // Get related visualizations (same topic or type)
-            $relatedVisualizations = Visualisasi::where('id', '!=', $visualisasi->id)
-                ->where('is_active', true)
-                ->where('is_public', true)
-                ->where(function($query) use ($visualisasi) {
-                    $query->where('topic', $visualisasi->topic)
-                          ->orWhere('tipe', $visualisasi->tipe);
-                })
-                ->latest()
-                ->limit(5)
-                ->get()
-                ->map(function($item) {
-                    unset($item->source_file);
-                    return $item;
-                });
-
-            return $this->successResponse([
-                'visualisasi' => $visualisasi,
-                'related_visualizations' => $relatedVisualizations,
-                'data_available' => !empty($visualisasi->getProcessedData()['labels']),
-                'data_url' => route('api.v1.visualisasi.data', $visualisasi->id),
-                'config_url' => route('api.v1.visualisasi.config', $visualisasi->id),
-            ], 'Visualisasi retrieved successfully');
-
-        } catch (\Exception $e) {
-            Log::error('Visualisasi show API error: ' . $e->getMessage());
-            return $this->errorResponse('Failed to retrieve visualisasi', 500);
+   public function show(Visualisasi $visualisasi): JsonResponse
+{
+    try {
+        // Validasi status
+        if (!$visualisasi->is_active || !$visualisasi->is_public) {
+            return $this->errorResponse('Visualisasi not found or not accessible', 404);
         }
+
+        $visualisasi->load(['user.organization:id,name']);
+
+        // Tambah view count
+        $visualisasi->increment('views');
+
+        return $this->successResponse([
+            'visualisasi' => $visualisasi,
+        ], 'Visualisasi retrieved successfully');
+
+    } catch (\Throwable $e) {
+        Log::error('Visualisasi show API error: ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString(),
+        ]);
+        return $this->errorResponse('Failed to retrieve visualisasi', 500);
     }
+}
 
     /**
      * Get visualisasi data for charts

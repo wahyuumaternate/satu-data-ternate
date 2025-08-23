@@ -54,6 +54,7 @@ class Visualisasi extends Model
             }
         });
     }
+    
  public function setTitleAttribute($value)
     {
         $this->attributes['nama'] = $value;

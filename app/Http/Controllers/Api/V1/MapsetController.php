@@ -158,7 +158,8 @@ class MapsetController extends Controller
             }
 
             // Increment views (with caching to prevent spam)
-            $this->incrementViews($mapset);
+             $mapset->increment('views');
+            // $this->incrementViews($mapset);
 
             // Get GeoJSON data
             $geojson = $this->getMapsetGeoJSON($mapset->id);
@@ -371,20 +372,7 @@ class MapsetController extends Controller
                 });
         });
     }
-
-    /**
-     * Increment view count with caching to prevent spam.
-     */
-    private function incrementViews($mapset)
-    {
-        $cacheKey = "mapset_view_{$mapset->id}_" . request()->ip() . "_" . now()->format('Y-m-d-H');
-        
-        if (!Cache::has($cacheKey)) {
-            $mapset->increment('views');
-            Cache::put($cacheKey, true, now()->addHour());
-        }
-    }
-
+    
     /**
      * Transform mapset data for list view.
      */
