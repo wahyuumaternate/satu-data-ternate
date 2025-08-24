@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\DatasetController;
+use App\Http\Controllers\Api\V1\GlobalSearchController;
 use App\Http\Controllers\Api\V1\InfografisApiController;
 use App\Http\Controllers\Api\V1\InfografisController;
 use App\Http\Controllers\Api\V1\MapsetController;
@@ -88,18 +89,20 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         
     });
 
-    /*
-    |--------------------------------------------------------------------------
+    /*|--------------------------------------------------------------------------
     | Global Search Routes
     |--------------------------------------------------------------------------
     */
     Route::prefix('search')->name('search.')->group(function () {
-        Route::get('/global', [DatasetController::class, 'globalSearch'])->name('global');
-        Route::get('/autocomplete', [DatasetController::class, 'autocomplete'])->name('autocomplete');
+        // Main global search endpoint
+        Route::get('/global', [GlobalSearchController::class, 'globalSearch'])->name('global');
+        
+        // Search utilities
+        Route::get('/autocomplete', [GlobalSearchController::class, 'autocomplete'])->name('autocomplete');
+        
+        // Legacy search endpoints (keep for backward compatibility)
         Route::get('/suggestions', [DatasetController::class, 'getSearchSuggestions'])->name('suggestions');
-        Route::get('/popular-terms', [DatasetController::class, 'getPopularSearchTerms'])->name('popular-terms');
     });
-
 
   
 });
