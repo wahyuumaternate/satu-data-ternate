@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
-class OrganizationController extends Controller
+class OrganizationApiController extends Controller
 {
     /**
      * Default pagination limit

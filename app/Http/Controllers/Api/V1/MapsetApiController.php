@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 
-class MapsetController extends Controller
+class MapsetApiController extends Controller
 {
     /**
      * Display a listing of public mapsets.

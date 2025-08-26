@@ -1,12 +1,11 @@
 <?php
 
-use App\Http\Controllers\Api\V1\DatasetController;
-use App\Http\Controllers\Api\V1\GlobalSearchController;
+use App\Http\Controllers\Api\V1\DatasetApiController;
+use App\Http\Controllers\Api\V1\GlobalSearchApiController;
 use App\Http\Controllers\Api\V1\InfografisApiController;
-use App\Http\Controllers\Api\V1\InfografisController;
-use App\Http\Controllers\Api\V1\MapsetController;
-use App\Http\Controllers\Api\V1\VisualisasiController;
-use App\Http\Controllers\Api\V1\OrganizationController;
+use App\Http\Controllers\Api\V1\MapsetApiController;
+use App\Http\Controllers\Api\V1\VisualisasiApiController;
+use App\Http\Controllers\Api\V1\OrganizationApiController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -24,14 +23,14 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     */
     Route::prefix('datasets')->name('datasets.')->group(function () {
         // List and search
-        Route::get('/', [DatasetController::class, 'index'])->name('index');
+        Route::get('/', [DatasetApiController::class, 'index'])->name('index');
        
         
         // Individual dataset
-        Route::get('/{dataset:slug}', [DatasetController::class, 'show'])->name('show');
+        Route::get('/{dataset:slug}', [DatasetApiController::class, 'show'])->name('show');
            
     });
-    Route::get('/total-data', [DatasetController::class, 'getPublicStats'])->name('total-data');
+    Route::get('/total-data', [DatasetApiController::class, 'getPublicStats'])->name('total-data');
     /*
     |--------------------------------------------------------------------------
     | Infografis Routes (Read Only)
@@ -57,8 +56,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     */
     Route::prefix('mapsets')->name('mapsets.')->group(function () {
         // List and search
-        Route::get('/', [MapsetController::class, 'index'])->name('index');
-        Route::get('/{mapset:slug}', [MapsetController::class, 'show'])->name('show');
+        Route::get('/', [MapsetApiController::class, 'index'])->name('index');
+        Route::get('/{mapset:slug}', [MapsetApiController::class, 'show'])->name('show');
         
     });
 
@@ -69,10 +68,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     */
     Route::prefix('visualisasi')->name('visualisasi.')->group(function () {
         // List and search
-        Route::get('/', [VisualisasiController::class, 'index'])->name('index');
+        Route::get('/', [VisualisasiApiController::class, 'index'])->name('index');
        
         // Individual visualisasi
-        Route::get('/{visualisasi:slug}', [VisualisasiController::class, 'show'])->name('show');
+        Route::get('/{visualisasi:slug}', [VisualisasiApiController::class, 'show'])->name('show');
     });
 
     /*
@@ -82,10 +81,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     */
     Route::prefix('organizations')->name('organizations.')->group(function () {
         // List and search
-        Route::get('/', [OrganizationController::class, 'index'])->name('index');     
+        Route::get('/', [OrganizationApiController::class, 'index'])->name('index');     
         
         // Individual organization
-        Route::get('/{organization:slug}', [OrganizationController::class, 'show'])->name('show');
+        Route::get('/{organization:slug}', [OrganizationApiController::class, 'show'])->name('show');
         
     });
 
@@ -95,13 +94,13 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     */
     Route::prefix('search')->name('search.')->group(function () {
         // Main global search endpoint
-        Route::get('/global', [GlobalSearchController::class, 'globalSearch'])->name('global');
+        Route::get('/global', [GlobalSearchApiController::class, 'globalSearch'])->name('global');
         
         // Search utilities
-        Route::get('/autocomplete', [GlobalSearchController::class, 'autocomplete'])->name('autocomplete');
+        Route::get('/autocomplete', [GlobalSearchApiController::class, 'autocomplete'])->name('autocomplete');
         
         // Legacy search endpoints (keep for backward compatibility)
-        Route::get('/suggestions', [DatasetController::class, 'getSearchSuggestions'])->name('suggestions');
+        Route::get('/suggestions', [DatasetApiController::class, 'getSearchSuggestions'])->name('suggestions');
     });
 
   

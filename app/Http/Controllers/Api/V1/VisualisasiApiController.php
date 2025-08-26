@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
-class VisualisasiController extends Controller
+class VisualisasiApiController extends Controller
 {
     /**
      * Default pagination limit

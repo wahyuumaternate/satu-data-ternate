@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 
-class DatasetController extends Controller
+class DatasetApiController extends Controller
 {
     /**
      * Default pagination limit
