@@ -559,11 +559,11 @@
                                             title="Paste data dari clipboard (Ctrl+Shift+V)">
                                             <i class="bi bi-clipboard"></i> Paste dari Clipboard
                                         </button>
-                                        {{-- <!-- Tambahkan setelah tombol "Paste dari Clipboard" di toolbar -->
+                                        <!-- Tambahkan setelah tombol "Paste dari Clipboard" di toolbar -->
                                         <button type="button" class="toolbar-btn" onclick="trimSpreadsheet()"
                                             title="Hapus baris dan kolom kosong yang tidak diperlukan">
                                             <i class="bi bi-scissors"></i> Trim
-                                        </button> --}}
+                                        </button>
                                         <!-- Tambahkan setelah tombol "Hapus Baris" di toolbar -->
                                         <button type="button" class="toolbar-btn" id="deleteSelectedBtn"
                                             onclick="deleteSelected()" disabled style="opacity: 0.5;"
@@ -573,8 +573,8 @@
                                         <div class="upload-options">
                                             <label class="csv-upload-btn">
                                                 <i class="bi bi-upload"></i> Upload CSV
-                                                <input type="file" id="csvFile" accept=".csv" style="display: none;"
-                                                    onchange="handleFileUpload(event)">
+                                                <input type="file" id="csvFile" accept=".csv,.xlsx,.xls"
+                                                    style="display: none;" onchange="handleFileUpload(event)">
                                             </label>
                                         </div>
                                     </div>
@@ -1200,7 +1200,7 @@
                     console.error('Failed to read clipboard: ', err);
                     alert(
                         'Gagal membaca clipboard. Pastikan browser mendukung fitur ini dan data telah dicopy.'
-                    );
+                        );
                 });
             };
 

@@ -61,8 +61,8 @@ return new class extends Migration
             $table->json('style_config')->nullable(); // styling tambahan
             
             // Status
-            $table->boolean('is_active')->default(true);
-            $table->boolean('is_public')->default(true);
+            $table->boolean('is_active')->default(false);
+            $table->boolean('is_public')->default(false);
             $table->integer('views')->default(0);
             
             $table->timestamps();

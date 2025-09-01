@@ -221,6 +221,13 @@ class InfografisController extends Controller
             $validated['gambar'] = $file->storeAs('infografis', $filename, 'public');
         }
 
+         if (!$request->has('is_active')) {
+          $validated['is_active'] = false;
+        }
+
+        if (!$request->has('is_public')) {
+            $validated['is_public'] = false;
+        }
         // Set user_id
         $validated['user_id'] = auth()->id();
 
@@ -328,7 +335,13 @@ class InfografisController extends Controller
         if ($validated['nama'] !== $infografis->nama) {
             $validated['slug'] = $this->generateUniqueSlug($validated['nama'], $infografis->id);
         }
+        if (!$request->has('is_active')) {
+          $validated['is_active'] = false;
+        }
 
+        if (!$request->has('is_public')) {
+            $validated['is_public'] = false;
+        }
         $infografis->update($validated);
 
         return redirect()

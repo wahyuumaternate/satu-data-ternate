@@ -119,8 +119,9 @@
                                         <th scope="col">Nama</th>
                                         <th scope="col">Topic</th>
                                         <th scope="col">Tipe</th>
-                                        <th scope="col">Sumber Data</th>
-                                        <th scope="col">Author</th>
+                                        @role('super-admin')
+                                            <th scope="col">Author</th>
+                                        @endrole
                                         <th scope="col">Views</th>
                                         <th scope="col">Status</th>
                                         <th scope="col">Aksi</th>
@@ -130,16 +131,12 @@
                                     @forelse($visualisasi as $item)
                                         <tr>
                                             <th scope="row">
-                                                {{ $loop->iteration + ($visualisasi->currentPage() - 1) * $visualisasi->perPage() }}
+                                                <small>{{ $loop->iteration + ($visualisasi->currentPage() - 1) * $visualisasi->perPage() }}</small>
                                             </th>
                                             <td>
                                                 <div>
-                                                    <strong>{{ $item->nama }}</strong>
-                                                    @if ($item->deskripsi)
-                                                        <br>
-                                                        <small
-                                                            class="text-muted">{{ Str::limit($item->deskripsi, 50) }}</small>
-                                                    @endif
+                                                    <small>{{ $item->nama }}</small>
+
                                                 </div>
                                             </td>
                                             <td>
@@ -154,18 +151,13 @@
                                                 <span class="badge bg-secondary">{{ $item->tipe_label }}</span>
                                             </td>
                                             <td>
-                                                @if ($item->data_source == 'file')
-                                                    <i class="bi bi-file-earmark-text text-primary"></i> File
-                                                @else
-                                                    <i class="bi bi-pencil-square text-success"></i> Manual
-                                                @endif
-                                            </td>
-                                            <td>
-                                                @if ($item->user)
-                                                    {{ $item->user->name }}
-                                                @else
-                                                    <span class="text-muted">-</span>
-                                                @endif
+                                                @role('super-admin')
+                                                    @if ($item->user)
+                                                        {{ $item->user->organization->name ?? $item->user->name }}
+                                                    @else
+                                                        <span class="text-muted">-</span>
+                                                    @endif
+                                                @endrole
                                             </td>
                                             <td>
                                                 <span class="badge bg-info">{{ number_format($item->views) }}</span>

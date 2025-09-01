@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
-use Illuminate\Support\FacadesStorage;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -214,7 +213,13 @@ class VisualisasiController extends Controller
         }
         
         $validated['slug'] = $slug;
+        if (!$request->has('is_active')) {
+            $validated['is_active'] = false;
+        }
 
+        if (!$request->has('is_public')) {
+            $validated['is_public'] = false;
+        }
         // Handle file upload
         if ($request->hasFile('source_file') && $request->data_source === 'file') {
             $file = $request->file('source_file');
@@ -337,6 +342,14 @@ class VisualisasiController extends Controller
             }
             
             $validated['slug'] = $slug;
+        }
+
+        if (!$request->has('is_active')) {
+          $validated['is_active'] = false;
+        }
+
+        if (!$request->has('is_public')) {
+            $validated['is_public'] = false;
         }
 
         // Handle file upload (only if new file is uploaded)

@@ -388,4 +388,17 @@ private function isValidDataRow($label, $value): bool
     
     return true;
 }
+
+
+
+    public function setIsActiveAttribute($value)
+    {
+        $this->attributes['is_active'] = $value ?? false;
+    }
+
+    public function setIsPublicAttribute($value)
+    {
+        $this->attributes['is_public'] = $value ?? false;
+    }
+
 }
