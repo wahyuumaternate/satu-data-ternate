@@ -4,39 +4,6 @@
 
 @push('styles')
     <style>
-        /* Selection styles - tambahkan setelah .selected-cell */
-        .row-selected {
-            background: rgba(0, 123, 255, 0.1) !important;
-            border-color: #007bff !important;
-        }
-
-        .col-selected {
-            background: rgba(40, 167, 69, 0.1) !important;
-            border-color: #28a745 !important;
-        }
-
-        .row-header:hover,
-        .column-header:hover {
-            background: rgba(108, 117, 125, 0.1) !important;
-            cursor: pointer;
-        }
-
-        .row-header.row-selected {
-            background: #007bff !important;
-            color: white !important;
-        }
-
-        .column-header.col-selected {
-            background: #28a745 !important;
-            color: white !important;
-        }
-
-        /* Disabled button style */
-        .toolbar-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
         .import-wizard {
             background: white;
             border-radius: 16px;
@@ -105,174 +72,45 @@
             background: white;
         }
 
-        /* Spreadsheet Styles */
-        .spreadsheet-container {
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            overflow: hidden;
-            background: white;
-            position: relative;
+        .form-group {
+            margin-bottom: 20px;
         }
 
-        .spreadsheet-toolbar {
-            background: #f8f9fa;
-            border-bottom: 1px solid #e9ecef;
-            padding: 12px 15px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .toolbar-btn {
-            background: white;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            padding: 8px 12px;
-            font-size: 0.85rem;
-            color: #495057;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.2s ease;
-        }
-
-        .toolbar-btn:hover {
-            background: #e9ecef;
-            border-color: #adb5bd;
-        }
-
-        .toolbar-btn.active {
-            background: #4154f1;
-            color: white;
-            border-color: #4154f1;
-        }
-
-        .upload-options {
-            margin-left: auto;
-            display: flex;
-            gap: 8px;
-        }
-
-        .csv-upload-btn {
-            background: #28a745;
-            color: white;
-            border: 1px solid #28a745;
-            border-radius: 6px;
-            padding: 8px 12px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.2s ease;
-        }
-
-        .csv-upload-btn:hover {
-            background: #218838;
-            border-color: #1e7e34;
-        }
-
-        .spreadsheet-wrapper {
-            height: 400px;
-            overflow: auto;
-            position: relative;
-            border: 1px solid #e9ecef;
-        }
-
-        .spreadsheet-table {
-            border-collapse: separate;
-            border-spacing: 0;
-            width: 100%;
-            min-width: 800px;
-            font-size: 0.9rem;
-            background: white;
-        }
-
-        .spreadsheet-table th,
-        .spreadsheet-table td {
-            border: 1px solid #e9ecef;
-            padding: 0;
-            position: relative;
-            min-width: 120px;
-            height: 32px;
-        }
-
-        .spreadsheet-table th {
-            background: #f8f9fa;
+        .form-label {
             font-weight: 600;
-            text-align: center;
-            color: #495057;
-            position: sticky;
-            top: 0;
-            z-index: 2;
-            padding: 8px;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
         }
 
-        .spreadsheet-table .row-number {
-            background: #f8f9fa;
-            color: #6c757d;
-            font-weight: 600;
-            text-align: center;
-            min-width: 50px;
-            width: 50px;
-            position: sticky;
-            left: 0;
-            z-index: 1;
-            border-right: 2px solid #dee2e6;
-            padding: 8px;
+        .form-label .required {
+            color: #dc3545;
+            margin-left: 3px;
         }
 
-        .spreadsheet-table .row-number.header {
-            z-index: 3;
-        }
-
-        .cell-input {
-            border: none;
-            background: transparent;
-            width: 100%;
-            height: 100%;
-            padding: 6px 8px;
-            outline: none;
-            font-size: 0.9rem;
-            resize: none;
-        }
-
-        .cell-input:focus {
-            background: #fff;
-            box-shadow: inset 0 0 0 2px #4154f1;
-            z-index: 10;
-            position: relative;
-        }
-
-        .selected-cell {
-            background: rgba(65, 84, 241, 0.1) !important;
-            border-color: #4154f1 !important;
-        }
-
-        .data-preview {
-            margin-top: 15px;
-            padding: 15px;
-            background: #f8f9fa;
+        .form-control {
             border-radius: 8px;
             border: 1px solid #e9ecef;
+            padding: 12px 15px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
         }
 
-        .preview-title {
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .form-control:focus {
+            border-color: #4154f1;
+            box-shadow: 0 0 0 0.2rem rgba(65, 84, 241, 0.25);
         }
 
-        .preview-stats {
-            font-size: 0.85rem;
-            color: #6c757d;
-            display: flex;
-            gap: 20px;
+        .form-select {
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            padding: 12px 15px;
+            font-size: 0.95rem;
+        }
+
+        .form-select:focus {
+            border-color: #4154f1;
+            box-shadow: 0 0 0 0.2rem rgba(65, 84, 241, 0.25);
         }
 
         .file-upload-area {
@@ -337,48 +175,6 @@
             color: #6c757d;
             font-size: 0.85rem;
             margin-top: 5px;
-        }
-
-        /* Existing form styles */
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 8px;
-            font-size: 0.95rem;
-        }
-
-        .form-label .required {
-            color: #dc3545;
-            margin-left: 3px;
-        }
-
-        .form-control {
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-            padding: 12px 15px;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus {
-            border-color: #4154f1;
-            box-shadow: 0 0 0 0.2rem rgba(65, 84, 241, 0.25);
-        }
-
-        .form-select {
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-            padding: 12px 15px;
-            font-size: 0.95rem;
-        }
-
-        .form-select:focus {
-            border-color: #4154f1;
-            box-shadow: 0 0 0 0.2rem rgba(65, 84, 241, 0.25);
         }
 
         .form-check {
@@ -569,15 +365,6 @@
                 width: 100%;
                 justify-content: center;
             }
-
-            .spreadsheet-wrapper {
-                height: 300px;
-            }
-
-            .toolbar-btn {
-                padding: 6px 8px;
-                font-size: 0.8rem;
-            }
         }
     </style>
 @endpush
@@ -626,87 +413,59 @@
 
                         <div class="wizard-content">
                             <!-- Current File Info Section -->
-
-                            <!-- Data Input Section -->
                             <div class="section-card">
-                                <div class="section-header" data-bs-toggle="collapse" data-bs-target="#dataSection">
-                                    <h5><i class="bi bi-table me-2"></i>Edit Data</h5>
+                                <div class="section-header" data-bs-toggle="collapse" data-bs-target="#currentFileSection">
+                                    <h5><i class="bi bi-file-earmark-text me-2"></i>File Saat Ini</h5>
                                     <i class="bi bi-chevron-down toggle-icon"></i>
                                 </div>
-                                <div class="section-content collapse show" id="dataSection">
-                                    <div class="spreadsheet-container">
-                                        <!-- Toolbar -->
-                                        <div class="spreadsheet-toolbar">
-                                            <button type="button" class="toolbar-btn" onclick="addRow()">
-                                                <i class="bi bi-plus-circle"></i> Tambah Baris
-                                            </button>
-                                            <button type="button" class="toolbar-btn" onclick="addColumn()">
-                                                <i class="bi bi-plus-square"></i> Tambah Kolom
-                                            </button>
-                                            <button type="button" class="toolbar-btn" onclick="deleteRow()">
-                                                <i class="bi bi-dash-circle"></i> Hapus Baris
-                                            </button>
-                                            <button type="button" class="toolbar-btn" onclick="clearData()">
-                                                <i class="bi bi-eraser"></i> Bersihkan
-                                            </button>
-                                            {{-- <button type="button" class="toolbar-btn" onclick="pasteEntireSpreadsheet()"
-                                                title="Paste data dari clipboard (Ctrl+Shift+V)">
-                                                <i class="bi bi-clipboard"></i> Paste dari Clipboard
-                                            </button> --}}
-                                            <button type="button" class="toolbar-btn" id="deleteSelectedBtn"
-                                                onclick="deleteSelected()" disabled style="opacity: 0.5;"
-                                                title="Hapus baris/kolom terpilih (Delete)">
-                                                <i class="bi bi-trash"></i> Hapus Terpilih
-                                            </button>
-                                            <div class="upload-options">
-                                                <label class="csv-upload-btn">
-                                                    <i class="bi bi-upload"></i> Upload CSV
-                                                    <input type="file" id="csvFile" accept=".csv"
-                                                        style="display: none;" onchange="handleFileUpload(event)">
-                                                </label>
+                                <div class="section-content collapse show" id="currentFileSection">
+                                    <div class="current-file-info">
+                                        <div class="file-details">
+                                            <i
+                                                class="bi bi-file-earmark-{{ strtolower($dataset->file_type) }} file-icon"></i>
+                                            <div>
+                                                <strong>{{ $dataset->original_filename }}</strong>
+                                                <div class="file-meta">
+                                                    Ukuran: {{ number_format($dataset->file_size / 1024, 2) }} KB |
+                                                    Type: {{ strtoupper($dataset->file_type) }} |
+                                                    Diupload: {{ $dataset->created_at->format('d M Y H:i') }}
+                                                </div>
                                             </div>
                                         </div>
-
-                                        <!-- Spreadsheet -->
-                                        <div class="spreadsheet-wrapper">
-                                            <table class="spreadsheet-table" id="dataTable">
-                                                <thead>
-                                                    <tr>
-                                                        <th class="row-number header"></th>
-                                                        <th class="column-header" onclick="selectColumn('A')">A</th>
-                                                        <th class="column-header" onclick="selectColumn('B')">B</th>
-                                                        <th class="column-header" onclick="selectColumn('C')">C</th>
-                                                        <th class="column-header" onclick="selectColumn('D')">D</th>
-                                                        <th class="column-header" onclick="selectColumn('E')">E</th>
-                                                        <th class="column-header" onclick="selectColumn('F')">F</th>
-                                                        <th class="column-header" onclick="selectColumn('G')">G</th>
-                                                        <th class="column-header" onclick="selectColumn('H')">H</th>
-                                                        <th class="column-header" onclick="selectColumn('I')">I</th>
-                                                        <th class="column-header" onclick="selectColumn('J')">J</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="tableBody">
-                                                    <!-- Rows will be generated by JavaScript -->
-                                                </tbody>
-                                            </table>
-                                        </div>
                                     </div>
 
-                                    <!-- Data Preview -->
-                                    <div class="data-preview" id="dataPreview" style="display: none;">
-                                        <div class="preview-title">
-                                            <i class="bi bi-eye"></i>
-                                            Preview Data
+                                    <div class="warning-message">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        Upload file baru hanya jika Anda ingin mengganti file yang sudah ada. File baru akan
+                                        menimpa data yang sudah ada.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- File Upload Section (Optional for replacement) -->
+                            <div class="section-card">
+                                <div class="section-header" data-bs-toggle="collapse" data-bs-target="#uploadSection">
+                                    <h5><i class="bi bi-cloud-upload me-2"></i>Ganti File (Opsional)</h5>
+                                    <i class="bi bi-chevron-down toggle-icon collapsed"></i>
+                                </div>
+                                <div class="section-content collapse" id="uploadSection">
+                                    <div class="file-upload-area" onclick="document.getElementById('file').click()">
+                                        <i class="bi bi-cloud-upload upload-icon"></i>
+                                        <div class="upload-text">Pilih File Baru atau Drag & Drop</div>
+                                        <div class="upload-subtext">Format yang didukung: .xlsx, .xls, .csv (Max: 10MB)
                                         </div>
-                                        <div class="preview-stats" id="previewStats">
-                                            <span>Baris: <strong id="rowCount">0</strong></span>
-                                            <span>Kolom: <strong id="colCount">0</strong></span>
-                                            <span>Cells Terisi: <strong id="filledCells">0</strong></span>
+                                        <input type="file" id="file" name="file" accept=".xlsx,.xls,.csv"
+                                            style="display: none;">
+                                    </div>
+                                    <div id="file-info" class="mt-3" style="display: none;">
+                                        <div class="alert alert-success">
+                                            <i class="bi bi-check-circle me-2"></i>
+                                            <span id="file-name"></span>
+                                            <button type="button" class="btn-close float-end"
+                                                onclick="clearFile()"></button>
                                         </div>
                                     </div>
-
-                                    <input type="hidden" name="spreadsheet_data" id="spreadsheetData">
-                                    @error('spreadsheet_data')
+                                    @error('file')
                                         <div class="text-danger mt-2">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -724,8 +483,8 @@
                                             <div class="form-group">
                                                 <label class="form-label">Judul <span class="required">*</span></label>
                                                 <input type="text"
-                                                    class="form-control @error('title') is-invalid @enderror"
-                                                    name="title" placeholder="Contoh: Indeks Keamanan Informasi"
+                                                    class="form-control @error('title') is-invalid @enderror" name="title"
+                                                    placeholder="Contoh: Indeks Keamanan Informasi"
                                                     value="{{ old('title', $dataset->title) }}" required>
                                                 @error('title')
                                                     <div class="text-danger help-text">{{ $message }}</div>
@@ -1058,21 +817,6 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Spreadsheet variables
-            let spreadsheetData = [];
-            let selectedCell = null;
-            let maxRows = 5;
-            let maxCols = 5;
-
-            // Variables untuk tracking selection
-            let selectedRows = new Set();
-            let selectedCols = new Set();
-            let isSelectingRows = false;
-            let isSelectingCols = false;
-
-            // Initialize spreadsheet with existing data if available
-            initSpreadsheet();
-
             // File upload handling
             const fileInput = document.getElementById('file');
             const fileUploadArea = document.querySelector('.file-upload-area');
@@ -1092,745 +836,84 @@
                 renderTags();
             }
 
-            // Initialize spreadsheet - load existing data or create empty
-            // Initialize spreadsheet - load existing data or create empty
-            function initSpreadsheet() {
-                // Try to load existing data from dataset
-                @if (isset($dataset))
-                    try {
-                        // First, try to load from spreadsheet_data if available
-                        @if (isset($dataset->spreadsheet_data) && !empty($dataset->spreadsheet_data))
-                            const existingSpreadsheetData = @json($dataset->spreadsheet_data);
-                            if (existingSpreadsheetData && Array.isArray(existingSpreadsheetData) &&
-                                existingSpreadsheetData.length > 0) {
-                                spreadsheetData = existingSpreadsheetData;
-                                // Set dimensions exactly to match data
-                                maxRows = existingSpreadsheetData.length;
-                                maxCols = Math.max(...existingSpreadsheetData.map(row => Array.isArray(row) ? row
-                                    .length : 0));
-                                console.log('Loaded from spreadsheet_data:', spreadsheetData);
-                            } else {
-                                throw new Error('No valid spreadsheet_data found');
-                            }
-                        @else
-                            // If no spreadsheet_data, try to load from headers and data
-                            @if (isset($dataset->headers) && isset($dataset->data) && !empty($dataset->headers) && !empty($dataset->data))
-                                const headers = @json($dataset->headers);
-                                const data = @json($dataset->data);
+            // File upload events
+            fileInput.addEventListener('change', handleFileSelect);
 
-                                if (Array.isArray(headers) && Array.isArray(data)) {
-                                    // Convert object-based data to array-based spreadsheet format
-                                    spreadsheetData = [];
-
-                                    // Add headers as first row
-                                    spreadsheetData.push([...headers]);
-
-                                    // Convert data rows from objects to arrays
-                                    data.forEach(row => {
-                                        const rowArray = [];
-                                        headers.forEach(header => {
-                                            // Handle different data structures
-                                            let cellValue = '';
-                                            if (typeof row === 'object' && row !== null) {
-                                                cellValue = row[header] !== undefined ? String(row[
-                                                    header]) : '';
-                                            } else if (Array.isArray(row)) {
-                                                const headerIndex = headers.indexOf(header);
-                                                cellValue = headerIndex !== -1 && row[
-                                                    headerIndex] !== undefined ? String(row[
-                                                    headerIndex]) : '';
-                                            }
-                                            rowArray.push(cellValue);
-                                        });
-                                        spreadsheetData.push(rowArray);
-                                    });
-
-                                    // Set dimensions exactly to match data
-                                    maxRows = spreadsheetData.length;
-                                    maxCols = headers.length;
-                                    console.log('Loaded from headers/data:', spreadsheetData);
-                                } else {
-                                    throw new Error('Invalid headers or data format');
-                                }
-                            @else
-                                throw new Error('No data available');
-                            @endif
-                        @endif
-                    } catch (e) {
-                        console.log('Failed to load existing data, creating minimal empty spreadsheet:', e.message);
-                        // Create minimal empty spreadsheet as fallback
-                        maxRows = 1;
-                        maxCols = 1;
-                        spreadsheetData = [
-                            ['']
-                        ];
-                    }
-                @else
-                    // No dataset available, create minimal empty
-                    maxRows = 1;
-                    maxCols = 1;
-                    spreadsheetData = [
-                        ['']
-                    ];
-                @endif
-
-                // Ensure minimum of 1x1 for functionality
-                if (maxRows < 1) maxRows = 1;
-                if (maxCols < 1) maxCols = 1;
-
-                // Only add empty cells if we have a completely empty dataset
-                if (spreadsheetData.length === 0) {
-                    spreadsheetData = [
-                        ['']
-                    ];
-                    maxRows = 1;
-                    maxCols = 1;
-                }
-
-                buildSpreadsheetTable();
-                updatePreview();
-                updateHiddenData();
-            }
-
-            // Build/rebuild spreadsheet table structure
-            function buildSpreadsheetTable() {
-                const tableBody = document.getElementById('tableBody');
-                const headerRow = document.querySelector('#dataTable thead tr');
-
-                // Clear existing content
-                tableBody.innerHTML = '';
-
-                // Update header row
-                const existingHeaders = headerRow.querySelectorAll('th:not(.header)');
-                existingHeaders.forEach(header => header.remove());
-
-                // Add column headers with selection functionality
-                for (let col = 0; col < maxCols; col++) {
-                    const th = document.createElement('th');
-                    th.textContent = String.fromCharCode(65 + col);
-                    th.dataset.col = col;
-                    th.className = 'column-header';
-                    th.onclick = (e) => selectColumn(col, e);
-                    headerRow.appendChild(th);
-                }
-
-                // Generate rows with data
-                for (let row = 0; row < maxRows; row++) {
-                    const tr = document.createElement('tr');
-
-                    // Row number with selection functionality
-                    const rowNumCell = document.createElement('td');
-                    rowNumCell.className = 'row-number row-header';
-                    rowNumCell.textContent = row + 1;
-                    rowNumCell.dataset.row = row;
-                    rowNumCell.onclick = (e) => selectRow(row, e);
-                    tr.appendChild(rowNumCell);
-
-                    // Data cells
-                    for (let col = 0; col < maxCols; col++) {
-                        const td = document.createElement('td');
-                        const input = document.createElement('input');
-                        input.type = 'text';
-                        input.className = 'cell-input';
-                        input.dataset.row = row;
-                        input.dataset.col = col;
-
-                        // Set value from data array
-                        input.value = spreadsheetData[row][col] || '';
-
-                        input.addEventListener('input', handleCellInput);
-                        input.addEventListener('focus', handleCellFocus);
-                        input.addEventListener('keydown', handleCellKeydown);
-                        input.addEventListener('paste', handlePaste);
-
-                        td.appendChild(input);
-                        tr.appendChild(td);
-                    }
-
-                    tableBody.appendChild(tr);
-                }
-
-                updateSelectionDisplay();
-            }
-
-            // Handle cell input
-            function handleCellInput(e) {
-                const row = parseInt(e.target.dataset.row);
-                const col = parseInt(e.target.dataset.col);
-                spreadsheetData[row][col] = e.target.value;
-                updatePreview();
-                updateHiddenData();
-            }
-
-            // Handle paste
-            function handlePaste(e) {
+            // Drag and drop events
+            fileUploadArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
+                fileUploadArea.classList.add('dragover');
+            });
 
-                const clipboardData = e.clipboardData || window.clipboardData;
-                const pastedText = clipboardData.getData('text');
+            fileUploadArea.addEventListener('dragleave', () => {
+                fileUploadArea.classList.remove('dragover');
+            });
 
-                if (!pastedText) return;
+            fileUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileUploadArea.classList.remove('dragover');
 
-                const startRow = parseInt(e.target.dataset.row);
-                const startCol = parseInt(e.target.dataset.col);
-
-                // Parse pasted data
-                const lines = pastedText.split(/\r\n|\n|\r/);
-                const pastedData = lines.map(line => line.split('\t'));
-
-                // Remove empty last line if exists
-                if (pastedData.length > 0 && pastedData[pastedData.length - 1].length === 1 &&
-                    pastedData[pastedData.length - 1][0] === '') {
-                    pastedData.pop();
-                }
-
-                if (pastedData.length === 0) return;
-
-                // Calculate required dimensions
-                const requiredRows = startRow + pastedData.length;
-                const requiredCols = startCol + Math.max(...pastedData.map(row => row.length));
-
-                // Resize spreadsheet if needed
-                resizeSpreadsheet(requiredRows, requiredCols);
-
-                // Paste data into spreadsheet data array
-                pastedData.forEach((row, rowIndex) => {
-                    row.forEach((cell, colIndex) => {
-                        const targetRow = startRow + rowIndex;
-                        const targetCol = startCol + colIndex;
-
-                        if (targetRow < maxRows && targetCol < maxCols) {
-                            spreadsheetData[targetRow][targetCol] = cell;
-
-                            // Update the input field directly
-                            const input = document.querySelector(
-                                `input[data-row="${targetRow}"][data-col="${targetCol}"]`);
-                            if (input) {
-                                input.value = cell;
-                            }
-                        }
-                    });
-                });
-
-                updatePreview();
-                updateHiddenData();
-                showPasteConfirmation(pastedData.length, Math.max(...pastedData.map(row => row.length)));
-            }
-
-            // Resize spreadsheet
-            function resizeSpreadsheet(minRows, minCols) {
-                let needsRebuild = false;
-
-                // Expand data array for rows
-                while (maxRows < minRows) {
-                    maxRows++;
-                    spreadsheetData.push(Array(maxCols).fill(''));
-                    needsRebuild = true;
-                }
-
-                // Expand data array for columns
-                while (maxCols < minCols) {
-                    maxCols++;
-                    spreadsheetData.forEach(row => row.push(''));
-                    needsRebuild = true;
-                }
-
-                // Only rebuild table if size changed
-                if (needsRebuild) {
-                    buildSpreadsheetTable();
-                }
-            }
-
-            // Paste entire spreadsheet
-            window.pasteEntireSpreadsheet = function() {
-                navigator.clipboard.readText().then(text => {
-                    if (!text) {
-                        alert('Clipboard kosong atau tidak dapat diakses.');
-                        return;
-                    }
-
-                    // Parse data
-                    const lines = text.split(/\r\n|\n|\r/);
-                    const data = lines.map(line => line.split('\t'));
-
-                    // Remove empty last line if exists
-                    if (data.length > 0 && data[data.length - 1].length === 1 && data[data.length - 1][
-                            0
-                        ] === '') {
-                        data.pop();
-                    }
-
-                    if (data.length === 0) {
-                        alert('Tidak ada data yang valid dalam clipboard.');
-                        return;
-                    }
-
-                    // Set new dimensions
-                    maxRows = Math.max(data.length, 5);
-                    maxCols = Math.max(Math.max(...data.map(row => row.length)), 5);
-
-                    // Initialize new data array
-                    spreadsheetData = Array(maxRows).fill().map(() => Array(maxCols).fill(''));
-
-                    // Fill data
-                    data.forEach((row, rowIndex) => {
-                        row.forEach((cell, colIndex) => {
-                            if (rowIndex < maxRows && colIndex < maxCols) {
-                                spreadsheetData[rowIndex][colIndex] = cell;
-                            }
-                        });
-                    });
-
-                    // Rebuild table
-                    buildSpreadsheetTable();
-                    updatePreview();
-                    updateHiddenData();
-                    showPasteConfirmation(data.length, Math.max(...data.map(row => row.length)));
-
-                }).catch(err => {
-                    console.error('Failed to read clipboard: ', err);
-                    alert(
-                        'Gagal membaca clipboard. Pastikan browser mendukung fitur ini dan data telah dicopy.'
-                    );
-                });
-            };
-
-            // Delete selected rows/columns
-            window.deleteSelected = function() {
-                if (selectedRows.size === 0 && selectedCols.size === 0) {
-                    alert('Pilih baris atau kolom yang ingin dihapus terlebih dahulu');
-                    return;
-                }
-
-                let confirmMessage = '';
-                if (selectedRows.size > 0) {
-                    confirmMessage = `Apakah Anda yakin ingin menghapus ${selectedRows.size} baris terpilih?`;
-                } else {
-                    confirmMessage = `Apakah Anda yakin ingin menghapus ${selectedCols.size} kolom terpilih?`;
-                }
-
-                if (!confirm(confirmMessage)) {
-                    return;
-                }
-
-                if (selectedRows.size > 0) {
-                    deleteSelectedRows();
-                } else if (selectedCols.size > 0) {
-                    deleteSelectedColumns();
-                }
-
-                clearSelection();
-                buildSpreadsheetTable();
-                updatePreview();
-                updateHiddenData();
-            };
-
-            function deleteSelectedRows() {
-                // Convert set to sorted array (descending order untuk menghapus dari belakang)
-                const rowsToDelete = Array.from(selectedRows).sort((a, b) => b - a);
-
-                // Don't allow deleting all rows
-                if (rowsToDelete.length >= maxRows) {
-                    alert('Tidak dapat menghapus semua baris');
-                    return;
-                }
-
-                // Delete rows from data array
-                rowsToDelete.forEach(rowIndex => {
-                    spreadsheetData.splice(rowIndex, 1);
-                    maxRows--;
-                });
-
-                // Ensure minimum rows
-                if (maxRows < 1) {
-                    maxRows = 1;
-                    spreadsheetData = [Array(maxCols).fill('')];
-                }
-            }
-
-            function deleteSelectedColumns() {
-                // Convert set to sorted array (descending order untuk menghapus dari belakang)
-                const colsToDelete = Array.from(selectedCols).sort((a, b) => b - a);
-
-                // Don't allow deleting all columns
-                if (colsToDelete.length >= maxCols) {
-                    alert('Tidak dapat menghapus semua kolom');
-                    return;
-                }
-
-                // Delete columns from data array
-                colsToDelete.forEach(colIndex => {
-                    spreadsheetData.forEach(row => {
-                        row.splice(colIndex, 1);
-                    });
-                    maxCols--;
-                });
-
-                // Ensure minimum columns
-                if (maxCols < 1) {
-                    maxCols = 1;
-                    spreadsheetData.forEach(row => {
-                        if (row.length === 0) {
-                            row.push('');
-                        }
-                    });
-                }
-            }
-
-            // Toolbar functions
-            window.addRow = function() {
-                maxRows++;
-                spreadsheetData.push(Array(maxCols).fill(''));
-                buildSpreadsheetTable();
-                updatePreview();
-            };
-
-            window.addColumn = function() {
-                maxCols++;
-                spreadsheetData.forEach(row => row.push(''));
-                buildSpreadsheetTable();
-                updatePreview();
-            };
-
-            window.deleteRow = function() {
-                if (maxRows > 1) {
-                    maxRows--;
-                    spreadsheetData.pop();
-                    buildSpreadsheetTable();
-                    updatePreview();
-                    updateHiddenData();
-                }
-            };
-
-            window.clearData = function() {
-                if (confirm('Apakah Anda yakin ingin menghapus semua data?')) {
-                    maxRows = 5;
-                    maxCols = 5;
-                    spreadsheetData = Array(maxRows).fill().map(() => Array(maxCols).fill(''));
-                    buildSpreadsheetTable();
-                    updatePreview();
-                    updateHiddenData();
-                }
-            };
-
-            // Handle cell focus
-            function handleCellFocus(e) {
-                if (selectedCell) {
-                    selectedCell.classList.remove('selected-cell');
-                }
-                e.target.classList.add('selected-cell');
-                selectedCell = e.target;
-
-                // Clear row/column selections when focusing on a cell
-                clearSelection();
-            }
-
-            // Handle cell keyboard navigation
-            function handleCellKeydown(e) {
-                const row = parseInt(e.target.dataset.row);
-                const col = parseInt(e.target.dataset.col);
-
-                let newRow = row;
-                let newCol = col;
-
-                switch (e.key) {
-                    case 'ArrowUp':
-                        e.preventDefault();
-                        newRow = Math.max(0, row - 1);
-                        break;
-                    case 'ArrowDown':
-                    case 'Enter':
-                        e.preventDefault();
-                        newRow = Math.min(maxRows - 1, row + 1);
-                        break;
-                    case 'ArrowLeft':
-                        if (e.target.selectionStart === 0) {
-                            e.preventDefault();
-                            newCol = Math.max(0, col - 1);
-                        }
-                        break;
-                    case 'ArrowRight':
-                        if (e.target.selectionStart === e.target.value.length) {
-                            e.preventDefault();
-                            newCol = Math.min(maxCols - 1, col + 1);
-                        }
-                        break;
-                    case 'Tab':
-                        e.preventDefault();
-                        if (e.shiftKey) {
-                            newCol = Math.max(0, col - 1);
-                        } else {
-                            newCol = Math.min(maxCols - 1, col + 1);
-                        }
-                        break;
-                }
-
-                if (newRow !== row || newCol !== col) {
-                    const newCell = document.querySelector(`input[data-row="${newRow}"][data-col="${newCol}"]`);
-                    if (newCell) {
-                        newCell.focus();
-                        newCell.select();
-                    }
-                }
-            }
-
-            // Select row
-            function selectRow(rowIndex, event) {
-                event.stopPropagation();
-
-                if (event.ctrlKey || event.metaKey) {
-                    // Multi-select dengan Ctrl/Cmd
-                    if (selectedRows.has(rowIndex)) {
-                        selectedRows.delete(rowIndex);
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    if (isValidFileType(file)) {
+                        fileInput.files = files;
+                        handleFileSelect();
                     } else {
-                        selectedRows.add(rowIndex);
+                        alert('File yang dipilih tidak valid. Gunakan format .xlsx, .xls, atau .csv');
                     }
-                } else {
-                    // Single select
-                    selectedRows.clear();
-                    selectedRows.add(rowIndex);
-                }
-
-                selectedCols.clear(); // Clear column selection
-                isSelectingRows = true;
-                isSelectingCols = false;
-                updateSelectionDisplay();
-                updateToolbarButtons();
-            }
-
-            // Select column
-            function selectColumn(colIndex, event) {
-                event.stopPropagation();
-
-                if (event.ctrlKey || event.metaKey) {
-                    // Multi-select dengan Ctrl/Cmd
-                    if (selectedCols.has(colIndex)) {
-                        selectedCols.delete(colIndex);
-                    } else {
-                        selectedCols.add(colIndex);
-                    }
-                } else {
-                    // Single select
-                    selectedCols.clear();
-                    selectedCols.add(colIndex);
-                }
-
-                selectedRows.clear(); // Clear row selection
-                isSelectingRows = false;
-                isSelectingCols = true;
-                updateSelectionDisplay();
-                updateToolbarButtons();
-            }
-
-            // Update visual selection display
-            function updateSelectionDisplay() {
-                // Clear all previous selections
-                document.querySelectorAll('.row-selected, .col-selected').forEach(el => {
-                    el.classList.remove('row-selected', 'col-selected');
-                });
-
-                // Highlight selected rows
-                selectedRows.forEach(rowIndex => {
-                    const rowHeader = document.querySelector(`.row-header[data-row="${rowIndex}"]`);
-                    if (rowHeader) {
-                        rowHeader.classList.add('row-selected');
-                    }
-
-                    // Highlight all cells in selected rows
-                    document.querySelectorAll(`input[data-row="${rowIndex}"]`).forEach(input => {
-                        input.parentElement.classList.add('row-selected');
-                    });
-                });
-
-                // Highlight selected columns
-                selectedCols.forEach(colIndex => {
-                    const colHeader = document.querySelector(`.column-header[data-col="${colIndex}"]`);
-                    if (colHeader) {
-                        colHeader.classList.add('col-selected');
-                    }
-
-                    // Highlight all cells in selected columns
-                    document.querySelectorAll(`input[data-col="${colIndex}"]`).forEach(input => {
-                        input.parentElement.classList.add('col-selected');
-                    });
-                });
-            }
-
-            // Update toolbar buttons based on selection
-            function updateToolbarButtons() {
-                const deleteBtn = document.getElementById('deleteSelectedBtn');
-                if (deleteBtn) {
-                    if (selectedRows.size > 0 || selectedCols.size > 0) {
-                        deleteBtn.disabled = false;
-                        deleteBtn.style.opacity = '1';
-
-                        if (selectedRows.size > 0) {
-                            deleteBtn.innerHTML = `<i class="bi bi-trash"></i> Hapus ${selectedRows.size} Baris`;
-                        } else {
-                            deleteBtn.innerHTML = `<i class="bi bi-trash"></i> Hapus ${selectedCols.size} Kolom`;
-                        }
-                    } else {
-                        deleteBtn.disabled = true;
-                        deleteBtn.style.opacity = '0.5';
-                        deleteBtn.innerHTML = '<i class="bi bi-trash"></i> Hapus Terpilih';
-                    }
-                }
-            }
-
-            // Clear all selections
-            function clearSelection() {
-                selectedRows.clear();
-                selectedCols.clear();
-                isSelectingRows = false;
-                isSelectingCols = false;
-                updateSelectionDisplay();
-                updateToolbarButtons();
-            }
-
-            // File upload handler
-            window.handleFileUpload = function(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const text = e.target.result;
-                    parseCSVData(text);
-                };
-                reader.readAsText(file);
-            };
-
-            function parseCSVData(csvText) {
-                const lines = csvText.split('\n');
-                const data = lines.map(line => {
-                    return line.split(',').map(cell => cell.trim().replace(/^"|"$/g, ''));
-                });
-
-                // Remove empty rows
-                const filteredData = data.filter(row => row.some(cell => cell.trim()));
-
-                if (filteredData.length === 0) return;
-
-                // Set dimensions
-                maxRows = Math.max(filteredData.length, 5);
-                maxCols = Math.max(Math.max(...filteredData.map(row => row.length)), 5);
-
-                // Initialize data array
-                spreadsheetData = Array(maxRows).fill().map(() => Array(maxCols).fill(''));
-
-                // Fill with CSV data
-                filteredData.forEach((row, rowIndex) => {
-                    row.forEach((cell, colIndex) => {
-                        if (rowIndex < maxRows && colIndex < maxCols) {
-                            spreadsheetData[rowIndex][colIndex] = cell;
-                        }
-                    });
-                });
-
-                // Rebuild table
-                buildSpreadsheetTable();
-                updatePreview();
-                updateHiddenData();
-
-                // Auto-generate title
-                const titleInput = document.querySelector('input[name="title"]');
-                if (!titleInput.value && filteredData[0] && filteredData[0][0]) {
-                    titleInput.value = filteredData[0][0];
-                }
-            }
-
-            function showPasteConfirmation(rows, cols) {
-                // Remove existing messages
-                document.querySelectorAll('.paste-message').forEach(msg => msg.remove());
-
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'alert alert-success paste-message';
-                messageDiv.innerHTML = `
-            <i class="bi bi-check-circle"></i>
-            Data berhasil dipaste: ${rows} baris × ${cols} kolom
-        `;
-                messageDiv.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            min-width: 300px;
-            padding: 12px 15px;
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        `;
-
-                document.body.appendChild(messageDiv);
-
-                setTimeout(() => {
-                    messageDiv.remove();
-                }, 3000);
-            }
-
-            // Keyboard shortcuts - updated
-            document.addEventListener('keydown', function(e) {
-                if (e.ctrlKey && e.shiftKey && e.key === 'V') {
-                    e.preventDefault();
-                    pasteEntireSpreadsheet();
-                }
-
-                // Delete selected rows/columns with Delete key
-                if (e.key === 'Delete' && (selectedRows.size > 0 || selectedCols.size > 0)) {
-                    e.preventDefault();
-                    deleteSelected();
-                }
-
-                // Escape key to clear selection
-                if (e.key === 'Escape') {
-                    clearSelection();
-                }
-
-                // Click outside to clear selection
-                if (e.target.closest('.spreadsheet-table') === null && e.target.closest(
-                        '.spreadsheet-toolbar') === null) {
-                    clearSelection();
                 }
             });
 
-            // Add click listener to document for clearing selection
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.spreadsheet-table') && !e.target.closest('.spreadsheet-toolbar')) {
-                    clearSelection();
-                }
-            });
+            function isValidFileType(file) {
+                const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'application/vnd.ms-excel', 'text/csv'
+                ];
+                const validExtensions = ['.xlsx', '.xls', '.csv'];
 
-            function updatePreview() {
-                let filledCells = 0;
-                let hasData = false;
+                return validTypes.includes(file.type) ||
+                    validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+            }
 
-                spreadsheetData.forEach(row => {
-                    row.forEach(cell => {
-                        if (cell && cell.trim()) {
-                            filledCells++;
-                            hasData = true;
-                        }
-                    });
-                });
+            function handleFileSelect() {
+                const file = fileInput.files[0];
+                if (file) {
+                    if (!isValidFileType(file)) {
+                        alert('File yang dipilih tidak valid. Gunakan format .xlsx, .xls, atau .csv');
+                        clearFile();
+                        return;
+                    }
 
-                const preview = document.getElementById('dataPreview');
-                if (hasData) {
-                    preview.style.display = 'block';
-                    document.getElementById('rowCount').textContent = maxRows;
-                    document.getElementById('colCount').textContent = maxCols;
-                    document.getElementById('filledCells').textContent = filledCells;
-                } else {
-                    preview.style.display = 'none';
+                    if (file.size > 10 * 1024 * 1024) { // 10MB
+                        alert('Ukuran file terlalu besar. Maksimal 10MB');
+                        clearFile();
+                        return;
+                    }
+
+                    fileName.textContent = `${file.name} (${formatFileSize(file.size)})`;
+                    fileInfo.style.display = 'block';
+                    fileUploadArea.style.display = 'none';
+
+                    // Show warning about replacing current file
+                    showMessage('File baru akan mengganti file yang sudah ada dan memproses ulang data.',
+                        'warning');
                 }
             }
 
-            function updateHiddenData() {
-                document.getElementById('spreadsheetData').value = JSON.stringify(spreadsheetData);
+            window.clearFile = function() {
+                fileInput.value = '';
+                fileInfo.style.display = 'none';
+                fileUploadArea.style.display = 'block';
+                // Remove warning message
+                document.querySelectorAll('.warning-message.alert-message').forEach(msg => msg.remove());
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
             }
 
             // Tag system
@@ -1857,14 +940,14 @@
                     tags.push(value);
                     renderTags();
                     tagInputField.value = '';
-                    updateTagsHidden();
+                    updateHiddenInput();
                 }
             }
 
             window.removeTag = function(index) {
                 tags.splice(index, 1);
                 renderTags();
-                updateTagsHidden();
+                updateHiddenInput();
             }
 
             function renderTags() {
@@ -1875,14 +958,14 @@
                     const tagElement = document.createElement('div');
                     tagElement.className = 'tag-item';
                     tagElement.innerHTML = `
-                ${tag}
-                <span class="tag-remove" onclick="removeTag(${index})">×</span>
-            `;
+                        ${tag}
+                        <span class="tag-remove" onclick="removeTag(${index})">×</span>
+                    `;
                     tagInput.insertBefore(tagElement, tagInputField);
                 });
             }
 
-            function updateTagsHidden() {
+            function updateHiddenInput() {
                 tagsHidden.value = tags.join(',');
             }
 
@@ -1898,6 +981,7 @@
             const form = document.getElementById('datasetForm');
 
             form.addEventListener('submit', function(e) {
+                // Clear previous validation states
                 document.querySelectorAll('.is-invalid').forEach(field => {
                     field.classList.remove('is-invalid');
                 });
@@ -1905,6 +989,7 @@
                 let isValid = true;
                 let firstInvalidField = null;
 
+                // Validate required fields
                 const requiredFields = form.querySelectorAll('[required]');
                 requiredFields.forEach(field => {
                     if (field.type === 'radio') {
@@ -1926,6 +1011,7 @@
                     }
                 });
 
+                // Validate tags specifically
                 if (tags.length === 0) {
                     isValid = false;
                     tagInput.classList.add('is-invalid');
@@ -1934,30 +1020,11 @@
                     }
                 }
 
-                let hasSpreadsheetData = false;
-                spreadsheetData.forEach(row => {
-                    row.forEach(cell => {
-                        if (cell && cell.trim()) {
-                            hasSpreadsheetData = true;
-                        }
-                    });
-                });
-
-                if (!hasSpreadsheetData) {
-                    isValid = false;
-                    document.querySelector('.spreadsheet-container').style.borderColor = '#dc3545';
-                    if (!firstInvalidField) {
-                        firstInvalidField = document.querySelector('.cell-input');
-                    }
-                } else {
-                    document.querySelector('.spreadsheet-container').style.borderColor = '#e9ecef';
-                }
-
                 if (!isValid) {
                     e.preventDefault();
-                    showMessage(
-                        'Mohon lengkapi semua field yang wajib diisi dan masukkan data ke spreadsheet.',
-                        'error');
+
+                    // Show error message
+                    showMessage('Mohon lengkapi semua field yang wajib diisi (bertanda *).', 'error');
 
                     if (firstInvalidField) {
                         firstInvalidField.focus();
@@ -1969,12 +1036,35 @@
                     return false;
                 }
 
-                updateHiddenData();
+                // Show confirmation for file replacement
+                if (fileInput.files.length > 0) {
+                    const confirmed = confirm(
+                        'Anda akan mengganti file yang sudah ada. Data lama akan dihapus dan diganti dengan data dari file baru. Lanjutkan?'
+                    );
+                    if (!confirmed) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
 
+                // Show loading state
                 const submitBtn = e.submitter;
                 const originalText = submitBtn.innerHTML;
-                submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Memproses...';
+
+                if (submitBtn.value === 'update_and_reprocess') {
+                    submitBtn.innerHTML =
+                        '<i class="bi bi-hourglass-split me-2"></i>Memproses Ulang Data...';
+                } else {
+                    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Mengupdate...';
+                }
+
                 submitBtn.disabled = true;
+
+                // Re-enable button after some time in case of errors
+                setTimeout(() => {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }, 30000);
             });
 
             // Real-time validation feedback
@@ -1992,6 +1082,7 @@
                 });
             });
 
+            // Radio button validation
             document.querySelectorAll('input[type="radio"][required]').forEach(radio => {
                 radio.addEventListener('change', function() {
                     const radioGroup = document.querySelectorAll(`input[name="${this.name}"]`);
@@ -1999,11 +1090,32 @@
                 });
             });
 
+            // Dynamic behavior based on classification
+            const classificationSelect = document.querySelector('select[name="classification"]');
+            if (classificationSelect) {
+                classificationSelect.addEventListener('change', function() {
+                    const metadataSection = document.getElementById('metadataSection');
+                    const metadataHeader = metadataSection.previousElementSibling;
+
+                    if (this.value === 'rahasia' || this.value === 'terbatas') {
+                        // Collapse metadata section for sensitive data
+                        if (metadataSection.classList.contains('show')) {
+                            metadataHeader.click();
+                        }
+                        // Add warning
+                        showMessage('Data dengan klasifikasi rahasia/terbatas memiliki pembatasan akses.',
+                            'warning');
+                    }
+                });
+            }
+
+            // Utility function to show messages
             function showMessage(message, type = 'info') {
+                // Remove existing alert messages
                 document.querySelectorAll('.alert-message').forEach(msg => msg.remove());
 
                 const alertClass = type === 'error' ? 'error-message' :
-                    type === 'warning' ? 'alert alert-warning' : 'success-message';
+                    type === 'warning' ? 'warning-message' : 'success-message';
                 const iconClass = type === 'error' ? 'bi-exclamation-circle' :
                     type === 'warning' ? 'bi-exclamation-triangle' : 'bi-check-circle';
 
@@ -2014,6 +1126,7 @@
                 const wizardContent = document.querySelector('.wizard-content');
                 wizardContent.insertBefore(messageDiv, wizardContent.firstChild);
 
+                // Auto remove after 5 seconds for non-error messages
                 if (type !== 'error') {
                     setTimeout(() => {
                         messageDiv.remove();
@@ -2021,19 +1134,23 @@
                 }
             }
 
+            // Description textarea bullet point handling
             const textarea = document.getElementById("description");
+
             textarea.addEventListener("input", function(e) {
+                // Pisahkan baris
                 let lines = textarea.value.split("\n");
+
+                // Ubah setiap baris yang dimulai dengan "* " menjadi bullet
                 lines = lines.map(line => {
                     if (line.startsWith("* ")) {
                         return "• " + line.substring(2);
                     }
                     return line;
                 });
+
                 textarea.value = lines.join("\n");
             });
-
-            updateHiddenData();
         });
     </script>
 @endpush

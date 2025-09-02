@@ -158,8 +158,9 @@ class DatasetController extends Controller
     {
         $this->checkCreatePermission();
 
+        // Validasi untuk input spreadsheet
         $request->validate([
-            'file' => 'required|mimes:xlsx,xls,csv|max:10240',
+            'spreadsheet_data' => 'required|string',
             'title' => 'required|string|max:255|unique:datasets,title',
             'description' => 'required|string',
             'tags' => 'required|string',
@@ -175,6 +176,7 @@ class DatasetController extends Controller
             'update_frequency' => 'nullable|string',
             'geographic_coverage' => 'nullable|string',
         ], [
+            'spreadsheet_data.required' => 'Data spreadsheet harus diisi.',
             'title.unique' => 'Judul dataset sudah digunakan, silakan pilih judul lain.',
         ]);
 
@@ -182,13 +184,16 @@ class DatasetController extends Controller
             DB::beginTransaction();
             
             $user = Auth::user();
-            $file = $request->file('file');
-            $originalFilename = $file->getClientOriginalName();
-            $filename = time() . '_' . $originalFilename;
-            $fileSize = $file->getSize();
-            $fileType = $file->getClientOriginalExtension();
             
-            $filePath = $file->storeAs('datasets', $filename, 'public');
+            // Parse spreadsheet data
+            $spreadsheetData = json_decode($request->spreadsheet_data, true);
+            
+            if (!$spreadsheetData || !is_array($spreadsheetData)) {
+                throw new \Exception('Data spreadsheet tidak valid.');
+            }
+
+            // Process spreadsheet data
+            $processedData = $this->processSpreadsheetData($spreadsheetData);
             
             $publishStatus = 'published';
             if ($request->has('action') && $request->action === 'draft') {
@@ -205,16 +210,19 @@ class DatasetController extends Controller
                 $counter++;
             }
 
+            // Create filename based on title
+            $filename = Str::slug($request->title) . '_' . time() . '.json';
+
             $dataset = Dataset::create([
                 'title' => $request->title,
                 'slug' => $slug,
                 'description' => $request->description,
                 'tags' => $this->processTags($request->tags),
                 'filename' => $filename,
-                'original_filename' => $originalFilename,
-                'file_path' => $filePath,
-                'file_size' => $fileSize,
-                'file_type' => $fileType,
+                'original_filename' => $request->title . '.json',
+                'file_path' => null, // No actual file stored
+                'file_size' => strlen(json_encode($processedData['data'])),
+                'file_type' => 'spreadsheet',
                 'topic' => $request->topic,
                 'classification' => $request->classification,
                 'status' => $request->status,
@@ -230,38 +238,85 @@ class DatasetController extends Controller
                 'organization' => $user->organization->name ?? '',
                 'publish_status' => $publishStatus,
                 'approval_status' => 'pending', // Default pending approval
-                'headers' => [],
-                'data' => [],
-                'total_rows' => 0,
-                'total_columns' => 0
+                'headers' => $processedData['headers'],
+                'data' => $processedData['data'],
+                'total_rows' => $processedData['total_rows'],
+                'total_columns' => $processedData['total_columns']
             ]);
 
-            Log::info('Dataset record created with ID: ' . $dataset->id);
-            
-            Excel::import(new DynamicImport($dataset->id), $file);
+            Log::info('Dataset record created with ID: ' . $dataset->id . ' from spreadsheet input');
             
             DB::commit();
             
             if ($request->has('action') && $request->action === 'draft') {
                 return redirect()->route('dataset.index')
-                    ->with('success', 'Dataset berhasil disimpan sebagai draft: ' . $originalFilename);
+                    ->with('success', 'Dataset berhasil disimpan sebagai draft: ' . $request->title);
             }
 
             return redirect()->route('dataset.show', $slug)
-                ->with('success', 'Dataset berhasil diimport dan menunggu persetujuan: ' . $originalFilename);
+                ->with('success', 'Dataset berhasil dibuat dan menunggu persetujuan: ' . $request->title);
                 
         } catch (\Exception $e) {
             DB::rollback();
-            
-            if (isset($filePath) && Storage::disk('public')->exists($filePath)) {
-                Storage::disk('public')->delete($filePath);
-            }
             
             Log::error('Dataset store failed: ' . $e->getMessage());
             
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan: ' . $e->getMessage())
                 ->withInput();
+        }
+    }
+
+    /**
+     * Process spreadsheet data from frontend
+     */
+    private function processSpreadsheetData($spreadsheetData)
+    {
+        try {
+            // Filter out empty rows
+            $filteredData = array_filter($spreadsheetData, function($row) {
+                return array_filter($row, function($cell) {
+                    return !empty(trim($cell));
+                });
+            });
+
+            if (empty($filteredData)) {
+                throw new \Exception('Tidak ada data yang valid dalam spreadsheet.');
+            }
+
+            // Get first row as headers
+            $headers = array_shift($filteredData);
+            
+            // Clean headers - remove empty headers and generate column names
+            $cleanHeaders = [];
+            foreach ($headers as $index => $header) {
+                $cleanHeader = trim($header);
+                if (empty($cleanHeader)) {
+                    $cleanHeader = 'Column_' . ($index + 1);
+                }
+                $cleanHeaders[] = $cleanHeader;
+            }
+
+            // Process data rows
+            $processedData = [];
+            foreach ($filteredData as $rowData) {
+                $row = [];
+                foreach ($cleanHeaders as $index => $header) {
+                    $row[$header] = isset($rowData[$index]) ? trim($rowData[$index]) : '';
+                }
+                $processedData[] = $row;
+            }
+
+            return [
+                'headers' => $cleanHeaders,
+                'data' => $processedData,
+                'total_rows' => count($processedData),
+                'total_columns' => count($cleanHeaders)
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Error processing spreadsheet data: ' . $e->getMessage());
+            throw new \Exception('Gagal memproses data spreadsheet: ' . $e->getMessage());
         }
     }
 
@@ -327,7 +382,7 @@ class DatasetController extends Controller
         $this->checkDatasetAccess($dataset);
 
         $request->validate([
-            'file' => 'nullable|mimes:xlsx,xls,csv|max:10240',
+            'spreadsheet_data' => 'nullable|string',
             'title' => 'required|string|max:255|unique:datasets,title,' . $dataset->id,
             'description' => 'required|string',
             'tags' => 'required|string',
@@ -357,30 +412,23 @@ class DatasetController extends Controller
                 $shouldResetApproval = true;
             }
             
-            // // Also reset approval if file is being updated
-            // if ($request->hasFile('file')) {
-            //     $shouldResetApproval = true;
-            // }
-            
-            // Handle file if updated
-            if ($request->hasFile('file')) {
-                $file = $request->file('file');
-                $originalFilename = $file->getClientOriginalName();
-                $filename = time() . '_' . $originalFilename;
-                $fileSize = $file->getSize();
-                $fileType = $file->getClientOriginalExtension();
+            // Handle spreadsheet data update
+            if ($request->has('spreadsheet_data') && !empty($request->spreadsheet_data)) {
+                $spreadsheetData = json_decode($request->spreadsheet_data, true);
                 
-                if ($dataset->file_path && Storage::disk('public')->exists($dataset->file_path)) {
-                    Storage::disk('public')->delete($dataset->file_path);
+                if (!$spreadsheetData || !is_array($spreadsheetData)) {
+                    throw new \Exception('Data spreadsheet tidak valid.');
                 }
+
+                $processedData = $this->processSpreadsheetData($spreadsheetData);
                 
-                $filePath = $file->storeAs('datasets', $filename, 'public');
+                $dataset->headers = $processedData['headers'];
+                $dataset->data = $processedData['data'];
+                $dataset->total_rows = $processedData['total_rows'];
+                $dataset->total_columns = $processedData['total_columns'];
+                $dataset->file_size = strlen(json_encode($processedData['data']));
                 
-                $dataset->filename = $filename;
-                $dataset->original_filename = $originalFilename;
-                $dataset->file_path = $filePath;
-                $dataset->file_size = $fileSize;
-                $dataset->file_type = $fileType;
+                $shouldResetApproval = true; // Reset approval when data is updated
             }
 
             // Update slug if title changed
@@ -423,22 +471,8 @@ class DatasetController extends Controller
             
             $dataset->update($updateData);
 
-            // Re-import if file updated
-            if ($request->hasFile('file')) {
-                $dataset->update([
-                    'headers' => [],
-                    'data' => [],
-                    'total_rows' => 0,
-                    'total_columns' => 0,
-                ]);
-                
-                Excel::import(new DynamicImport($dataset->id), $file);
-                $successMessage = 'Dataset dan file berhasil diupdate: ' . $dataset->original_filename . 
-                    ($shouldResetApproval ? ' Status approval direset ke pending untuk review ulang.' : '');
-            } else {
-                $successMessage = 'Informasi dataset berhasil diupdate.' .
-                    ($shouldResetApproval ? ' Status approval direset ke pending untuk review ulang.' : '');
-            }
+            $successMessage = 'Dataset berhasil diupdate.' .
+                ($shouldResetApproval ? ' Status approval direset ke pending untuk review ulang.' : '');
             
             DB::commit();
             
@@ -447,10 +481,6 @@ class DatasetController extends Controller
                 
         } catch (\Exception $e) {
             DB::rollback();
-            
-            if (isset($filePath) && Storage::disk('public')->exists($filePath)) {
-                Storage::disk('public')->delete($filePath);
-            }
             
             Log::error('Dataset update failed: ' . $e->getMessage());
             
@@ -490,12 +520,18 @@ class DatasetController extends Controller
         $dataset = Dataset::where('slug', $slug)->firstOrFail();
         $this->checkDatasetAccess($dataset);
 
-        if (!isset($dataset->file_path) || !Storage::disk('public')->exists($dataset->file_path)) {
-            return redirect()->back()->with('error', 'File tidak ditemukan.');
-        }
-
         if (Schema::hasColumn('datasets', 'download_count')) {
             $dataset->increment('download_count');
+        }
+
+        // For spreadsheet-based datasets, generate CSV download
+        if ($dataset->file_type === 'spreadsheet') {
+            return $this->generateCsvDownload($dataset);
+        }
+
+        // For file-based datasets, download the original file
+        if (!isset($dataset->file_path) || !Storage::disk('public')->exists($dataset->file_path)) {
+            return redirect()->back()->with('error', 'File tidak ditemukan.');
         }
 
         $originalFilename = $dataset->original_filename ?? $dataset->filename;
@@ -504,6 +540,37 @@ class DatasetController extends Controller
             $dataset->file_path,
             $originalFilename
         );
+    }
+
+    /**
+     * Generate CSV download for spreadsheet-based datasets
+     */
+    private function generateCsvDownload($dataset)
+    {
+        $filename = Str::slug($dataset->title) . '_' . date('Y-m-d') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($dataset) {
+            $file = fopen('php://output', 'w');
+            
+            // Add headers
+            if (!empty($dataset->headers)) {
+                fputcsv($file, $dataset->headers);
+            }
+            
+            // Add data rows
+            foreach ($dataset->data as $row) {
+                fputcsv($file, array_values($row));
+            }
+            
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     // API endpoint dengan permission check

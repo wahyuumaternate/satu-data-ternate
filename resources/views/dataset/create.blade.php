@@ -554,16 +554,6 @@
                                         <button type="button" class="toolbar-btn" onclick="clearData()">
                                             <i class="bi bi-eraser"></i> Bersihkan
                                         </button>
-                                        <!-- Di dalam .spreadsheet-toolbar, tambahkan setelah tombol "Bersihkan": -->
-                                        <button type="button" class="toolbar-btn" onclick="pasteEntireSpreadsheet()"
-                                            title="Paste data dari clipboard (Ctrl+Shift+V)">
-                                            <i class="bi bi-clipboard"></i> Paste dari Clipboard
-                                        </button>
-                                        {{-- <!-- Tambahkan setelah tombol "Paste dari Clipboard" di toolbar -->
-                                        <button type="button" class="toolbar-btn" onclick="trimSpreadsheet()"
-                                            title="Hapus baris dan kolom kosong yang tidak diperlukan">
-                                            <i class="bi bi-scissors"></i> Trim
-                                        </button> --}}
                                         <!-- Tambahkan setelah tombol "Hapus Baris" di toolbar -->
                                         <button type="button" class="toolbar-btn" id="deleteSelectedBtn"
                                             onclick="deleteSelected()" disabled style="opacity: 0.5;"
