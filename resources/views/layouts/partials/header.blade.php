@@ -4,7 +4,7 @@
     <div class="d-flex align-items-center justify-content-between">
         <a href="{{ route('dashboard') }}" class="logo d-flex align-items-center">
             <img src="{{ asset('assets/img/logo_kota.png') }}" alt="">
-            <span class="d-none d-lg-block">SIDATA</span>
+            <span class="d-none d-lg-block">PALA TERNATE</span>
         </a>
         <i class="bi bi-list toggle-sidebar-btn"></i>
     </div><!-- End Logo -->

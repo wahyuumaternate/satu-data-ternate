@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
-    <title>@yield('title', 'Dashboard') - SITDATA</title>
+    <title>@yield('title', 'Dashboard') - PALA</title>
     <meta content="@yield('description')" name="description">
     <meta content="@yield('keywords')" name="keywords">
     {{-- SITDATA - Sistem Informasi Terpadu Data Ternate --}}

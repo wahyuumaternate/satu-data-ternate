@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Login - Satu Data Kota Ternate</title>
+    <title>Login - PORTAL DATA KOTA TERNATE</title>
     <link href="{{ asset('assets/img/logo_kota.png') }}" rel="icon">
 
     <link href="{{ asset('assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
@@ -296,7 +296,7 @@
             </div>
 
             <div>
-                <h1 class="welcome-text">SATU DATA TERNATE</h1>
+                <h1 class="welcome-text">PORTAL DATA KOTA TERNATE (PALA)</h1>
                 <p class="subtitle">Platform untuk pengelolaan dan berbagi pakai data antar Perangkat Daerah di
                     lingkungan Pemerintah Kota Ternate.</p>
             </div>
@@ -346,16 +346,16 @@
                     <input type="checkbox" id="remember_me" name="remember">
                     <label for="remember_me">Remember me</label>
                 </div>
-
+                <br>
                 <button type="submit" class="btn btn-login" id="loginButton">LOGIN</button>
 
-                @if (Route::has('password.request'))
+                {{-- @if (Route::has('password.request'))
                     <a href="{{ route('password.request') }}" class="forgot-password">
                         Forgot Password?
                     </a>
-                @endif
+                @endif --}}
             </form>
-
+            <br>
             <div class="copyright">
                 Copyright © {{ date('Y') }}
                 DISKOMSANDI KOTA TERNATE. All rights reserved.
