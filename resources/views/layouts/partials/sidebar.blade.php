@@ -76,48 +76,7 @@
             </li>
         @endhasanyrole
 
-        <!-- Dataset Approval - Super Admin & Reviewer -->
-        @hasanyrole('super-admin|reviewer')
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.dataset-approval.*') ? '' : 'collapsed' }}"
-                    data-bs-target="#dataset-approval-nav" data-bs-toggle="collapse" href="#">
-                    <i class="bi bi-shield-check"></i>
-                    <span>Dataset Approval</span>
-                    <i class="bi bi-chevron-down ms-auto"></i>
-                </a>
-                <ul id="dataset-approval-nav"
-                    class="nav-content collapse {{ request()->routeIs('admin.dataset-approval.*') ? 'show' : '' }}"
-                    data-bs-parent="#sidebar-nav">
-                    <li>
-                        <a href="{{ route('admin.dataset-approval.index') }}"
-                            class="{{ request()->routeIs('admin.dataset-approval.index') ? 'active' : '' }}">
-                            <i class="bi bi-circle"></i>
-                            <span>Pending Review</span>
-                            @php
-                                $pendingApproval = \App\Models\Dataset::where('approval_status', 'pending')->count();
-                            @endphp
-                            @if ($pendingApproval > 0)
-                                <span class="badge bg-warning text-dark ms-auto">{{ $pendingApproval }}</span>
-                            @endif
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('admin.dataset-approval.approved') }}"
-                            class="{{ request()->routeIs('admin.dataset-approval.approved') ? 'active' : '' }}">
-                            <i class="bi bi-circle"></i>
-                            <span>Approved</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('admin.dataset-approval.rejected') }}"
-                            class="{{ request()->routeIs('admin.dataset-approval.rejected') ? 'active' : '' }}">
-                            <i class="bi bi-circle"></i>
-                            <span>Rejected</span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-        @endhasanyrole
+
 
         <!-- Mapset - Super Admin, OPD, Penanggung Jawab -->
         @hasanyrole('super-admin|opd|penanggung-jawab')
@@ -167,7 +126,48 @@
         @role('super-admin')
             <li class="nav-heading">Sistem</li>
         @endrole
-
+        <!-- Dataset Approval - Super Admin & Reviewer -->
+        @hasanyrole('super-admin|reviewer')
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.dataset-approval.*') ? '' : 'collapsed' }}"
+                    data-bs-target="#dataset-approval-nav" data-bs-toggle="collapse" href="#">
+                    <i class="bi bi-shield-check"></i>
+                    <span>Dataset Approval</span>
+                    <i class="bi bi-chevron-down ms-auto"></i>
+                </a>
+                <ul id="dataset-approval-nav"
+                    class="nav-content collapse {{ request()->routeIs('admin.dataset-approval.*') ? 'show' : '' }}"
+                    data-bs-parent="#sidebar-nav">
+                    <li>
+                        <a href="{{ route('admin.dataset-approval.index') }}"
+                            class="{{ request()->routeIs('admin.dataset-approval.index') ? 'active' : '' }}">
+                            <i class="bi bi-circle"></i>
+                            <span>Pending Review</span>
+                            @php
+                                $pendingApproval = \App\Models\Dataset::where('approval_status', 'pending')->count();
+                            @endphp
+                            @if ($pendingApproval > 0)
+                                <span class="badge bg-warning text-dark ms-auto">{{ $pendingApproval }}</span>
+                            @endif
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.dataset-approval.approved') }}"
+                            class="{{ request()->routeIs('admin.dataset-approval.approved') ? 'active' : '' }}">
+                            <i class="bi bi-circle"></i>
+                            <span>Approved</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.dataset-approval.rejected') }}"
+                            class="{{ request()->routeIs('admin.dataset-approval.rejected') ? 'active' : '' }}">
+                            <i class="bi bi-circle"></i>
+                            <span>Rejected</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        @endhasanyrole
         <!-- User Management - Super Admin Only -->
         @role('super-admin')
             <li class="nav-item">
