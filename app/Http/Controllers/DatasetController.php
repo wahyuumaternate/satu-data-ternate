@@ -18,7 +18,7 @@ class DatasetController extends Controller
     private function checkViewPermission()
     {
         $user = Auth::user();
-        
+
         if ($user->hasRole('reviewer')) {
             abort(403, 'Reviewer tidak memiliki akses ke dataset management. Silakan gunakan menu approval.');
         }
@@ -27,15 +27,15 @@ class DatasetController extends Controller
     private function checkCreatePermission()
     {
         $user = Auth::user();
-        
+
         if ($user->hasRole('reviewer')) {
             abort(403, 'Reviewer tidak memiliki akses ke dataset management.');
         }
-        
+
         if ($user->hasRole('penanggung-jawab')) {
             abort(403, 'Penanggung jawab hanya dapat melihat dan mendownload dataset.');
         }
-        
+
         if (!$user->hasRole(['super-admin', 'opd'])) {
             abort(403, 'Hanya Super Admin dan OPD yang dapat membuat dataset.');
         }
@@ -44,15 +44,15 @@ class DatasetController extends Controller
     private function checkEditPermission()
     {
         $user = Auth::user();
-        
+
         if ($user->hasRole('reviewer')) {
             abort(403, 'Reviewer tidak memiliki akses ke dataset management.');
         }
-        
+
         if ($user->hasRole('penanggung-jawab')) {
             abort(403, 'Penanggung jawab hanya dapat melihat dan mendownload dataset.');
         }
-        
+
         if (!$user->hasRole(['super-admin', 'opd'])) {
             abort(403, 'Hanya Super Admin dan OPD yang dapat mengedit dataset.');
         }
@@ -61,12 +61,12 @@ class DatasetController extends Controller
     private function checkDatasetAccess($dataset)
     {
         $user = Auth::user();
-        
+
         // Super admin bisa akses semua
         if ($user->hasRole('super-admin')) {
             return;
         }
-        
+
         // OPD hanya bisa akses data miliknya
         if ($user->hasRole('opd')) {
             if ($dataset->user_id !== $user->id) {
@@ -74,7 +74,7 @@ class DatasetController extends Controller
             }
             return;
         }
-        
+
         // Penanggung jawab hanya bisa akses data yang approved
         if ($user->hasRole('penanggung-jawab')) {
             if ($dataset->approval_status !== 'approved') {
@@ -87,10 +87,10 @@ class DatasetController extends Controller
     public function index(Request $request)
     {
         $this->checkViewPermission();
-        
+
         $user = Auth::user();
         $query = Dataset::with(['user', 'approvedBy']);
-        
+
         // Role-based filtering untuk data yang ditampilkan
         if ($user->hasRole('super-admin')) {
             // Super admin bisa melihat semua data
@@ -137,14 +137,7 @@ class DatasetController extends Controller
             $breadcrumbs[] = ucfirst($currentFilter);
         }
 
-        return view('dataset.index', compact(
-            'datasets', 
-            'stats', 
-            'filterOptions', 
-            'pageTitle', 
-            'currentFilter',
-            'breadcrumbs'
-        ));
+        return view('dataset.index', compact('datasets', 'stats', 'filterOptions', 'pageTitle', 'currentFilter', 'breadcrumbs'));
     }
 
     public function create()
@@ -159,42 +152,45 @@ class DatasetController extends Controller
         $this->checkCreatePermission();
 
         // Validasi untuk input spreadsheet
-        $request->validate([
-            'spreadsheet_data' => 'required|string',
-            'title' => 'required|string|max:255|unique:datasets,title',
-            'description' => 'required|string',
-            'tags' => 'required|string',
-            'topic' => 'required|string',
-            'classification' => 'required|in:publik,internal,terbatas,rahasia',
-            'status' => 'required|in:sementara,tetap',
-            'license' => 'nullable|string',
-            'sector' => 'nullable|string',
-            'responsible_person' => 'nullable|string',
-            'contact' => 'nullable|string',
-            'data_source' => 'nullable|string',
-            'data_period' => 'nullable|string',
-            'update_frequency' => 'nullable|string',
-            'geographic_coverage' => 'nullable|string',
-        ], [
-            'spreadsheet_data.required' => 'Data spreadsheet harus diisi.',
-            'title.unique' => 'Judul dataset sudah digunakan, silakan pilih judul lain.',
-        ]);
+        $request->validate(
+            [
+                'spreadsheet_data' => 'required|string',
+                'title' => 'required|string|max:255|unique:datasets,title',
+                'description' => 'required|string',
+                'tags' => 'required|string',
+                'topic' => 'required|string',
+                'classification' => 'required|in:publik,internal,terbatas,rahasia',
+                'status' => 'required|in:sementara,tetap',
+                'license' => 'nullable|string',
+                'sector' => 'nullable|string',
+                'responsible_person' => 'nullable|string',
+                'contact' => 'nullable|string',
+                'data_source' => 'nullable|string',
+                'data_period' => 'nullable|string',
+                'update_frequency' => 'nullable|string',
+                'geographic_coverage' => 'nullable|string',
+            ],
+            [
+                'spreadsheet_data.required' => 'Data spreadsheet harus diisi.',
+                'title.unique' => 'Judul dataset sudah digunakan, silakan pilih judul lain.',
+            ],
+        );
 
         try {
             DB::beginTransaction();
-            
+
             $user = Auth::user();
-            
+
             // Parse spreadsheet data
             $spreadsheetData = json_decode($request->spreadsheet_data, true);
-            
+
             if (!$spreadsheetData || !is_array($spreadsheetData)) {
                 throw new \Exception('Data spreadsheet tidak valid.');
             }
 
             // Process spreadsheet data
             $processedData = $this->processSpreadsheetData($spreadsheetData);
-            
+
             $publishStatus = 'published';
             if ($request->has('action') && $request->action === 'draft') {
                 $publishStatus = 'draft';
@@ -204,7 +200,7 @@ class DatasetController extends Controller
             $baseSlug = Str::slug($request->title);
             $slug = $baseSlug;
             $counter = 1;
-            
+
             while (Dataset::where('slug', $slug)->exists()) {
                 $slug = $baseSlug . '-' . $counter;
                 $counter++;
@@ -241,27 +237,29 @@ class DatasetController extends Controller
                 'headers' => $processedData['headers'],
                 'data' => $processedData['data'],
                 'total_rows' => $processedData['total_rows'],
-                'total_columns' => $processedData['total_columns']
+                'total_columns' => $processedData['total_columns'],
             ]);
 
             Log::info('Dataset record created with ID: ' . $dataset->id . ' from spreadsheet input');
-            
+
             DB::commit();
-            
+
             if ($request->has('action') && $request->action === 'draft') {
-                return redirect()->route('dataset.index')
+                return redirect()
+                    ->route('dataset.index')
                     ->with('success', 'Dataset berhasil disimpan sebagai draft: ' . $request->title);
             }
 
-            return redirect()->route('dataset.show', $slug)
+            return redirect()
+                ->route('dataset.show', $slug)
                 ->with('success', 'Dataset berhasil dibuat dan menunggu persetujuan: ' . $request->title);
-                
         } catch (\Exception $e) {
             DB::rollback();
-            
+
             Log::error('Dataset store failed: ' . $e->getMessage());
-            
-            return redirect()->back()
+
+            return redirect()
+                ->back()
                 ->with('error', 'Terjadi kesalahan: ' . $e->getMessage())
                 ->withInput();
         }
@@ -274,8 +272,8 @@ class DatasetController extends Controller
     {
         try {
             // Filter out empty rows
-            $filteredData = array_filter($spreadsheetData, function($row) {
-                return array_filter($row, function($cell) {
+            $filteredData = array_filter($spreadsheetData, function ($row) {
+                return array_filter($row, function ($cell) {
                     return !empty(trim($cell));
                 });
             });
@@ -286,7 +284,7 @@ class DatasetController extends Controller
 
             // Get first row as headers
             $headers = array_shift($filteredData);
-            
+
             // Clean headers - remove empty headers and generate column names
             $cleanHeaders = [];
             foreach ($headers as $index => $header) {
@@ -311,9 +309,8 @@ class DatasetController extends Controller
                 'headers' => $cleanHeaders,
                 'data' => $processedData,
                 'total_rows' => count($processedData),
-                'total_columns' => count($cleanHeaders)
+                'total_columns' => count($cleanHeaders),
             ];
-
         } catch (\Exception $e) {
             Log::error('Error processing spreadsheet data: ' . $e->getMessage());
             throw new \Exception('Gagal memproses data spreadsheet: ' . $e->getMessage());
@@ -323,31 +320,31 @@ class DatasetController extends Controller
     public function show($slug, Request $request)
     {
         $this->checkViewPermission();
-        
+
         $dataset = Dataset::where('slug', $slug)->firstOrFail();
         $this->checkDatasetAccess($dataset);
-        
+
         // Increment view count if field exists
         if (Schema::hasColumn('datasets', 'view_count')) {
             $dataset->increment('view_count');
         }
-        
+
         $page = $request->get('page', 1);
         $perPage = $request->get('per_page', 10);
-        
+
         $filteredData = $this->applyFilters($dataset->data, $request);
-        
+
         $total = count($filteredData);
         $offset = ($page - 1) * $perPage;
-        
+
         $paginatedData = [
             'data' => array_slice($filteredData, $offset, $perPage),
             'total' => $total,
             'per_page' => $perPage,
             'current_page' => $page,
-            'last_page' => ceil($total / $perPage)
+            'last_page' => ceil($total / $perPage),
         ];
-        
+
         $user = Auth::user();
         if ($request->has('debug') && $user->hasRole('super-admin')) {
             return response()->json([
@@ -357,17 +354,17 @@ class DatasetController extends Controller
                 'filters_applied' => $request->get('filter', []),
                 'search_term' => $request->get('search', ''),
                 'filtered_count' => $total,
-                'original_count' => count($dataset->data)
+                'original_count' => count($dataset->data),
             ]);
         }
-        
+
         return view('dataset.show', compact('dataset', 'paginatedData'));
     }
 
     public function edit($slug)
     {
         $this->checkEditPermission();
-        
+
         $dataset = Dataset::where('slug', $slug)->firstOrFail();
         $this->checkDatasetAccess($dataset);
 
@@ -377,57 +374,60 @@ class DatasetController extends Controller
     public function update(Request $request, $id)
     {
         $this->checkEditPermission();
-        
+
         $dataset = Dataset::findOrFail($id);
         $this->checkDatasetAccess($dataset);
 
-        $request->validate([
-            'spreadsheet_data' => 'nullable|string',
-            'title' => 'required|string|max:255|unique:datasets,title,' . $dataset->id,
-            'description' => 'required|string',
-            'tags' => 'required|string',
-            'topic' => 'required|string',
-            'classification' => 'required|in:publik,internal,terbatas,rahasia',
-            'status' => 'required|in:sementara,tetap',
-            'license' => 'nullable|string',
-            'sector' => 'nullable|string',
-            'responsible_person' => 'nullable|string',
-            'contact' => 'nullable|string',
-            'data_source' => 'nullable|string',
-            'data_period' => 'nullable|string',
-            'update_frequency' => 'nullable|string',
-            'geographic_coverage' => 'nullable|string',
-        ], [
-            'title.unique' => 'Judul dataset sudah digunakan, silakan pilih judul lain.',
-        ]);
+        $request->validate(
+            [
+                'spreadsheet_data' => 'nullable|string',
+                'title' => 'required|string|max:255|unique:datasets,title,' . $dataset->id,
+                'description' => 'required|string',
+                'tags' => 'required|string',
+                'topic' => 'required|string',
+                'classification' => 'required|in:publik,internal,terbatas,rahasia',
+                'status' => 'required|in:sementara,tetap',
+                'license' => 'nullable|string',
+                'sector' => 'nullable|string',
+                'responsible_person' => 'nullable|string',
+                'contact' => 'nullable|string',
+                'data_source' => 'nullable|string',
+                'data_period' => 'nullable|string',
+                'update_frequency' => 'nullable|string',
+                'geographic_coverage' => 'nullable|string',
+            ],
+            [
+                'title.unique' => 'Judul dataset sudah digunakan, silakan pilih judul lain.',
+            ],
+        );
 
         try {
             DB::beginTransaction();
-            
+
             // Check if approval status should be reset to pending
             $shouldResetApproval = false;
-            
+
             // Reset approval to pending if current status is rejected
             if ($dataset->approval_status === 'rejected') {
                 $shouldResetApproval = true;
             }
-            
+
             // Handle spreadsheet data update
             if ($request->has('spreadsheet_data') && !empty($request->spreadsheet_data)) {
                 $spreadsheetData = json_decode($request->spreadsheet_data, true);
-                
+
                 if (!$spreadsheetData || !is_array($spreadsheetData)) {
                     throw new \Exception('Data spreadsheet tidak valid.');
                 }
 
                 $processedData = $this->processSpreadsheetData($spreadsheetData);
-                
+
                 $dataset->headers = $processedData['headers'];
                 $dataset->data = $processedData['data'];
                 $dataset->total_rows = $processedData['total_rows'];
                 $dataset->total_columns = $processedData['total_columns'];
                 $dataset->file_size = strlen(json_encode($processedData['data']));
-                
+
                 $shouldResetApproval = true; // Reset approval when data is updated
             }
 
@@ -436,15 +436,15 @@ class DatasetController extends Controller
                 $baseSlug = Str::slug($request->title);
                 $slug = $baseSlug;
                 $counter = 1;
-                
+
                 while (Dataset::where('slug', $slug)->where('id', '!=', $dataset->id)->exists()) {
                     $slug = $baseSlug . '-' . $counter;
                     $counter++;
                 }
-                
+
                 $dataset->slug = $slug;
             }
-            
+
             // Prepare update data
             $updateData = [
                 'title' => $request->title,
@@ -463,28 +463,26 @@ class DatasetController extends Controller
                 'geographic_coverage' => $request->geographic_coverage ?? '',
                 'updated_at' => now(),
             ];
-            
+
             // Add approval status reset if needed
             if ($shouldResetApproval) {
                 $updateData['approval_status'] = 'pending';
             }
-            
+
             $dataset->update($updateData);
 
-            $successMessage = 'Dataset berhasil diupdate.' .
-                ($shouldResetApproval ? ' Status approval direset ke pending untuk review ulang.' : '');
-            
+            $successMessage = 'Dataset berhasil diupdate.' . ($shouldResetApproval ? ' Status approval direset ke pending untuk review ulang.' : '');
+
             DB::commit();
-            
-            return redirect()->route('dataset.show', $dataset->slug)
-                ->with('success', $successMessage);
-                
+
+            return redirect()->route('dataset.show', $dataset->slug)->with('success', $successMessage);
         } catch (\Exception $e) {
             DB::rollback();
-            
+
             Log::error('Dataset update failed: ' . $e->getMessage());
-            
-            return redirect()->back()
+
+            return redirect()
+                ->back()
                 ->with('error', 'Terjadi kesalahan saat mengupdate dataset: ' . $e->getMessage())
                 ->withInput();
         }
@@ -493,22 +491,21 @@ class DatasetController extends Controller
     public function destroy($slug)
     {
         $this->checkEditPermission();
-        
-        $dataset = Dataset::where('slug', $slug)->firstOrFail();
+
+        $dataset = Dataset::where('id', $slug)->firstOrFail();
         $this->checkDatasetAccess($dataset);
 
         try {
             if (isset($dataset->file_path) && Storage::disk('public')->exists($dataset->file_path)) {
                 Storage::disk('public')->delete($dataset->file_path);
             }
-            
+
             $dataset->delete();
-            
-            return redirect()->route('dataset.index')
-                ->with('success', 'Dataset berhasil dihapus!');
-                
+
+            return redirect()->route('dataset.index')->with('success', 'Dataset berhasil dihapus!');
         } catch (\Exception $e) {
-            return redirect()->back()
+            return redirect()
+                ->back()
                 ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
@@ -516,7 +513,7 @@ class DatasetController extends Controller
     public function download($slug)
     {
         $this->checkViewPermission();
-        
+
         $dataset = Dataset::where('slug', $slug)->firstOrFail();
         $this->checkDatasetAccess($dataset);
 
@@ -536,10 +533,7 @@ class DatasetController extends Controller
 
         $originalFilename = $dataset->original_filename ?? $dataset->filename;
 
-        return Storage::disk('public')->download(
-            $dataset->file_path,
-            $originalFilename
-        );
+        return Storage::disk('public')->download($dataset->file_path, $originalFilename);
     }
 
     /**
@@ -548,25 +542,25 @@ class DatasetController extends Controller
     private function generateCsvDownload($dataset)
     {
         $filename = Str::slug($dataset->title) . '_' . date('Y-m-d') . '.csv';
-        
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function() use ($dataset) {
+        $callback = function () use ($dataset) {
             $file = fopen('php://output', 'w');
-            
+
             // Add headers
             if (!empty($dataset->headers)) {
                 fputcsv($file, $dataset->headers);
             }
-            
+
             // Add data rows
             foreach ($dataset->data as $row) {
                 fputcsv($file, array_values($row));
             }
-            
+
             fclose($file);
         };
 
@@ -577,10 +571,10 @@ class DatasetController extends Controller
     public function api($id)
     {
         $this->checkViewPermission();
-        
+
         $dataset = Dataset::findOrFail($id);
         $this->checkDatasetAccess($dataset);
-        
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -596,8 +590,8 @@ class DatasetController extends Controller
                 'classification' => $dataset->classification ?? '',
                 'tags' => $dataset->tags ?? [],
                 'created_at' => $dataset->created_at,
-                'updated_at' => $dataset->updated_at
-            ]
+                'updated_at' => $dataset->updated_at,
+            ],
         ]);
     }
 
@@ -605,12 +599,12 @@ class DatasetController extends Controller
     public function history(Request $request)
     {
         $user = Auth::user();
-        
+
         // Check permission - reviewer tidak bisa akses
         if ($user->hasRole('reviewer')) {
             abort(403, 'Reviewer tidak memiliki akses ke dataset management.');
         }
-        
+
         // Hanya OPD dan Super Admin yang bisa lihat history
         if (!$user->hasRole(['super-admin', 'opd'])) {
             abort(403, 'Anda tidak memiliki akses untuk melihat riwayat dataset.');
@@ -621,16 +615,14 @@ class DatasetController extends Controller
         if ($user->hasRole('opd')) {
             $query->where('user_id', $user->id);
         }
-        
+
         // Show non-approved datasets for history
         $query->where('approval_status', '!=', 'approved');
 
         // Apply filters
         $query = $this->applyFiltersToQuery($query, $request);
 
-        $datasets = $query->orderBy('updated_at', 'desc')
-            ->paginate(15)
-            ->appends($request->query());
+        $datasets = $query->orderBy('updated_at', 'desc')->paginate(15)->appends($request->query());
 
         return view('dataset.history', compact('datasets'));
     }
@@ -639,13 +631,13 @@ class DatasetController extends Controller
     private function getStatsBasedOnRole($user)
     {
         $statsQuery = Dataset::query();
-        
+
         if ($user->hasRole('opd')) {
             $statsQuery->where('user_id', $user->id);
         } elseif ($user->hasRole('penanggung-jawab')) {
             $statsQuery->where('approval_status', 'approved');
         }
-        
+
         return [
             'total_datasets' => (clone $statsQuery)->count(),
             'pending_approval' => (clone $statsQuery)->where('approval_status', 'pending')->count(),
@@ -661,7 +653,7 @@ class DatasetController extends Controller
     private function getFilterOptions($user)
     {
         $filterQuery = Dataset::query();
-        
+
         if ($user->hasRole('opd')) {
             $filterQuery->where('user_id', $user->id);
         } elseif ($user->hasRole('penanggung-jawab')) {
@@ -677,26 +669,26 @@ class DatasetController extends Controller
             'approval_statuses' => [
                 'pending' => 'Pending Review',
                 'approved' => 'Approved',
-                'rejected' => 'Rejected'
+                'rejected' => 'Rejected',
             ],
             'publish_statuses' => [
                 'draft' => 'Draft',
                 'published' => 'Published',
-                'archived' => 'Archived'
-            ]
+                'archived' => 'Archived',
+            ],
         ];
     }
 
     private function getPageTitle($user, $currentFilter)
     {
         $baseTitle = 'All Datasets';
-        
+
         if ($user->hasRole('opd')) {
             $baseTitle = 'My Datasets';
         } elseif ($user->hasRole('penanggung-jawab')) {
             $baseTitle = 'Approved Datasets';
         }
-        
+
         switch ($currentFilter) {
             case 'pending':
                 return $user->hasRole('super-admin') ? 'Pending Datasets' : 'My Pending Datasets';
@@ -716,14 +708,14 @@ class DatasetController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('organization', 'like', "%{$search}%")
-                  ->orWhere('filename', 'like', "%{$search}%")
-                  ->orWhere('original_filename', 'like', "%{$search}%")
-                  ->orWhere('sector', 'like', "%{$search}%")
-                  ->orWhere('data_source', 'like', "%{$search}%")
-                  ->orWhereJsonContains('tags', $search)
-                  ->orWhere('tags', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('organization', 'like', "%{$search}%")
+                    ->orWhere('filename', 'like', "%{$search}%")
+                    ->orWhere('original_filename', 'like', "%{$search}%")
+                    ->orWhere('sector', 'like', "%{$search}%")
+                    ->orWhere('data_source', 'like', "%{$search}%")
+                    ->orWhereJsonContains('tags', $search)
+                    ->orWhere('tags', 'like', "%{$search}%");
             });
         }
 
@@ -741,21 +733,18 @@ class DatasetController extends Controller
 
         if ($request->has('approval_status') && $request->approval_status) {
             $query->where('approval_status', $request->approval_status);
-            
+
             if (in_array($request->approval_status, ['approved', 'rejected'])) {
                 $query->orderBy('approved_at', 'desc');
             }
         }
 
         // Add other filters as needed...
-        
+
         $sortBy = $request->get('sort_by', 'created_at');
         $sortDirection = $request->get('sort_direction', 'desc');
 
-        $allowedSortColumns = [
-            'created_at', 'title', 'view_count', 'download_count', 
-            'total_rows', 'total_columns', 'file_size', 'updated_at'
-        ];
+        $allowedSortColumns = ['created_at', 'title', 'view_count', 'download_count', 'total_rows', 'total_columns', 'file_size', 'updated_at'];
 
         if (in_array($sortBy, $allowedSortColumns)) {
             $query->orderBy($sortBy, $sortDirection);
@@ -774,8 +763,8 @@ class DatasetController extends Controller
             $searchTerm = $request->search;
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('title', 'LIKE', "%{$searchTerm}%")
-                ->orWhere('description', 'LIKE', "%{$searchTerm}%")
-                ->orWhere('tags', 'LIKE', "%{$searchTerm}%");
+                    ->orWhere('description', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('tags', 'LIKE', "%{$searchTerm}%");
             });
         }
 
@@ -794,21 +783,21 @@ class DatasetController extends Controller
     private function applyFilters(array $data, Request $request): array
     {
         $filteredData = $data;
-        
+
         $filters = $request->get('filter', []);
         if (!empty($filters)) {
             foreach ($filters as $column => $value) {
                 if (!empty($value)) {
-                    $filteredData = array_filter($filteredData, function($row) use ($column, $value) {
+                    $filteredData = array_filter($filteredData, function ($row) use ($column, $value) {
                         return isset($row[$column]) && trim($row[$column]) == trim($value);
                     });
                 }
             }
         }
-        
+
         $searchTerm = $request->get('search');
         if (!empty($searchTerm)) {
-            $filteredData = array_filter($filteredData, function($row) use ($searchTerm) {
+            $filteredData = array_filter($filteredData, function ($row) use ($searchTerm) {
                 foreach ($row as $value) {
                     if (stripos($value, $searchTerm) !== false) {
                         return true;
@@ -817,7 +806,7 @@ class DatasetController extends Controller
                 return false;
             });
         }
-        
+
         return array_values($filteredData);
     }
 

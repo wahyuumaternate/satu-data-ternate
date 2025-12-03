@@ -23,7 +23,7 @@
                         <div class="user-avatar-profile">
                             {{ strtoupper(substr($user->name, 0, 2)) }}
                         </div>
-                        <h2>{{ $user->name }}</h2>
+                        {{-- <h2>{{ $user->name }}</h2> --}}
                         <h3 class="text-muted">{{ $user->email }}</h3>
 
                         <!-- Status Badges -->
@@ -34,11 +34,11 @@
                                 </span>
                             @endif
 
-                            @if ($user->organization)
+                            {{-- @if ($user->organization)
                                 <span class="badge bg-primary m-2">
                                     {{ $user->organization->name }}
                                 </span>
-                            @endif
+                            @endif --}}
 
                             @if ($user->email_verified_at)
                                 <span class="badge bg-primary">

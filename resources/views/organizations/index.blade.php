@@ -275,7 +275,7 @@
 
                                 <!-- Pagination for Grid -->
                                 <div class="d-flex justify-content-center mt-4">
-                                    {{ $organizations->links() }}
+                                    {{ $organizations->appends(request()->query())->links() }}
                                 </div>
                             </div>
 
@@ -359,6 +359,11 @@
                                             @endforeach
                                         </tbody>
                                     </table>
+                                </div>
+
+                                <!-- Pagination for Table -->
+                                <div class="d-flex justify-content-end mt-3">
+                                    {{ $organizations->appends(request()->query())->links() }}
                                 </div>
                             </div>
                         @else

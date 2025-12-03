@@ -209,11 +209,10 @@
                                                     <option value="">Semua Role</option>
                                                     @foreach ($roles as $role)
                                                         <option value="{{ $role->name }}"
-                                                            {{ old('role') == $role->name ? 'selected' : '' }}>
+                                                            {{ request('role') == $role->name ? 'selected' : '' }}>
                                                             {{ ucfirst(str_replace('-', ' ', $role->name)) }}
                                                         </option>
                                                     @endforeach
-                                                </select>
                                                 </select>
                                             </div>
                                             <div class="col-md-2">
@@ -297,9 +296,9 @@
 
                                                     <!-- Role & Organization -->
                                                     <div class="mb-3">
-                                                        @if ($user->role)
+                                                        @if ($user->roles->count() > 0)
                                                             <span
-                                                                class="badge bg-primary mb-1">{{ $user->role->name }}</span>
+                                                                class="badge bg-primary mb-1">{{ ucfirst(str_replace('-', ' ', $user->roles->first()->name)) }}</span>
                                                         @endif
                                                         @if ($user->organization)
                                                             <br><span
@@ -345,7 +344,7 @@
 
                                 <!-- Pagination for Grid -->
                                 <div class="d-flex justify-content-center mt-4">
-                                    {{ $users->links() }}
+                                    {{ $users->appends(request()->query())->links() }}
                                 </div>
                             </div>
 
@@ -413,7 +412,7 @@
                                                     </td>
                                                     <td>{{ $user->created_at->format('d M Y') }}</td>
                                                     <td>
-                                                        <div class="btn-group  gap-2">
+                                                        <div class="btn-group gap-2">
                                                             <a href="{{ route('users.show', $user) }}"
                                                                 class="btn btn-sm btn-outline-primary">
                                                                 <i class="bi bi-eye"></i>
@@ -434,6 +433,11 @@
                                             @endforeach
                                         </tbody>
                                     </table>
+                                </div>
+
+                                <!-- Pagination for Table -->
+                                <div class="d-flex justify-content-end mt-3">
+                                    {{ $users->appends(request()->query())->links() }}
                                 </div>
                             </div>
                         @else
