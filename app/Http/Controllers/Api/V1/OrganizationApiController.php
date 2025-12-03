@@ -19,7 +19,7 @@ class OrganizationApiController extends Controller
     /**
      * Default pagination limit
      */
-    protected int $defaultLimit = 15;
+    protected int $defaultLimit = 100;
     protected int $maxLimit = 100;
 
     /**
