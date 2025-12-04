@@ -125,6 +125,15 @@
                 <!-- Right side columns -->
                 <div class="col-lg-4">
 
+
+
+                    <!-- Data Distribution -->
+                    <div class="card">
+                        <div class="card-body pb-0">
+                            <h5 class="card-title">Data Distribution <span>| This Month</span></h5>
+                            <div id="topicChart" style="min-height: 400px;" class="echart"></div>
+                        </div>
+                    </div><!-- End Data Distribution -->
                     <!-- Recent Activity -->
                     <div class="card">
                         <div class="filter">
@@ -160,15 +169,6 @@
                             </div>
                         </div>
                     </div><!-- End Recent Activity -->
-
-                    <!-- Data Distribution -->
-                    <div class="card">
-                        <div class="card-body pb-0">
-                            <h5 class="card-title">Data Distribution <span>| This Month</span></h5>
-                            <div id="topicChart" style="min-height: 400px;" class="echart"></div>
-                        </div>
-                    </div><!-- End Data Distribution -->
-
                 </div><!-- End Right side columns -->
             @elseif(auth()->user()->hasRole('opd'))
                 {{-- OPD Dashboard --}}
