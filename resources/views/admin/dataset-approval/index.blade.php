@@ -142,8 +142,8 @@
         }
 
         /* .pending-indicator {
-                                    border-left: 5px solid #f59e0b;
-                                } */
+                                            border-left: 5px solid #f59e0b;
+                                        } */
 
         .filter-card {
             background: #ffffff;
@@ -855,41 +855,65 @@
 @endsection
 
 @push('scripts')
+    <!-- Script yang diperbaiki untuk bulk approval -->
     <script>
+        // Global variable untuk menyimpan selected datasets
         let selectedDatasets = [];
 
         document.addEventListener('DOMContentLoaded', function() {
+
+
             // Handle individual checkbox selection
             document.querySelectorAll('.dataset-checkbox').forEach(checkbox => {
                 checkbox.addEventListener('change', function() {
+
+
                     if (this.checked) {
-                        selectedDatasets.push(this.value);
+                        // Tambahkan ke array jika belum ada
+                        if (!selectedDatasets.includes(this.value)) {
+                            selectedDatasets.push(this.value);
+                        }
                     } else {
+                        // Remove dari array
                         selectedDatasets = selectedDatasets.filter(id => id !== this.value);
                     }
+
+
                     updateBulkActions();
                 });
             });
 
             // Handle select all checkbox
-            document.getElementById('selectAll').addEventListener('change', function() {
-                const checkboxes = document.querySelectorAll('.dataset-checkbox');
-                checkboxes.forEach(checkbox => {
-                    checkbox.checked = this.checked;
-                    if (this.checked && !selectedDatasets.includes(checkbox.value)) {
-                        selectedDatasets.push(checkbox.value);
-                    } else if (!this.checked) {
-                        selectedDatasets = selectedDatasets.filter(id => id !== checkbox.value);
-                    }
+            const selectAllCheckbox = document.getElementById('selectAll');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function() {
+
+
+                    const checkboxes = document.querySelectorAll('.dataset-checkbox');
+                    selectedDatasets = []; // Reset array
+
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = this.checked;
+                        if (this.checked) {
+                            selectedDatasets.push(checkbox.value);
+                        }
+                    });
+
+
+                    updateBulkActions();
                 });
-                updateBulkActions();
-            });
+            }
         });
 
+        /**
+         * Update tampilan bulk actions bar
+         */
         function updateBulkActions() {
             const count = selectedDatasets.length;
             const bulkActions = document.getElementById('bulkActions');
             const selectedCount = document.getElementById('selectedCount');
+
+
 
             if (count > 0) {
                 bulkActions.classList.add('show');
@@ -902,27 +926,46 @@
             const totalCheckboxes = document.querySelectorAll('.dataset-checkbox').length;
             const selectAllCheckbox = document.getElementById('selectAll');
 
-            if (count === 0) {
-                selectAllCheckbox.indeterminate = false;
-                selectAllCheckbox.checked = false;
-            } else if (count === totalCheckboxes) {
-                selectAllCheckbox.indeterminate = false;
-                selectAllCheckbox.checked = true;
-            } else {
-                selectAllCheckbox.indeterminate = true;
+            if (selectAllCheckbox) {
+                if (count === 0) {
+                    selectAllCheckbox.indeterminate = false;
+                    selectAllCheckbox.checked = false;
+                } else if (count === totalCheckboxes) {
+                    selectAllCheckbox.indeterminate = false;
+                    selectAllCheckbox.checked = true;
+                } else {
+                    selectAllCheckbox.indeterminate = true;
+                }
             }
         }
 
+        /**
+         * Clear semua selection
+         */
         function clearSelection() {
+
+
             selectedDatasets = [];
+
             document.querySelectorAll('.dataset-checkbox').forEach(checkbox => {
                 checkbox.checked = false;
             });
-            document.getElementById('selectAll').checked = false;
+
+            const selectAllCheckbox = document.getElementById('selectAll');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            }
+
             updateBulkActions();
         }
 
+        /**
+         * Show reject modal
+         */
         function showRejectModal(datasetId, datasetTitle) {
+
+
             document.getElementById('rejectDatasetTitle').textContent = datasetTitle;
             document.getElementById('rejectForm').action = `/admin/dataset-approval/${datasetId}/reject`;
 
@@ -934,54 +977,103 @@
             modal.show();
         }
 
+        /**
+         * Show bulk approve modal - FIXED VERSION
+         */
         function bulkApprove() {
+
+
+
+
             if (selectedDatasets.length === 0) {
                 alert('Please select at least one dataset to approve.');
                 return;
             }
 
-            document.getElementById('bulkCount').textContent = selectedDatasets.length;
-            document.getElementById('bulkDatasetIds').value = JSON.stringify(selectedDatasets);
+            // Update modal content
+            const bulkCountElement = document.getElementById('bulkCount');
+            const bulkDatasetIdsInput = document.getElementById('bulkDatasetIds');
+
+            if (bulkCountElement) {
+                bulkCountElement.textContent = selectedDatasets.length;
+            }
+
+            if (bulkDatasetIdsInput) {
+                // Convert array to JSON string
+                const jsonString = JSON.stringify(selectedDatasets);
+
+                bulkDatasetIdsInput.value = jsonString;
+            }
 
             // Clear previous form data
-            document.getElementById('bulk_approval_notes').value = '';
+            const notesTextarea = document.getElementById('bulk_approval_notes');
+            if (notesTextarea) {
+                notesTextarea.value = '';
+            }
 
-            const modal = new bootstrap.Modal(document.getElementById('bulkApproveModal'));
-            modal.show();
+            // Show modal
+            const modalElement = document.getElementById('bulkApproveModal');
+            if (modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            } else {
+                console.error('Bulk approve modal not found!');
+            }
         }
 
-        // Auto-refresh every 3 minutes to check for new submissions (only if no selections made)
-        setInterval(() => {
-            if (selectedDatasets.length === 0 && !document.querySelector('.modal.show')) {
-                // Only refresh if no modals are open and no selections made
-                window.location.reload();
-            }
-        }, 180000); // 3 minutes
-
         // Add visual feedback for form submissions
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', function() {
-                const submitBtn = this.querySelector('button[type="submit"]');
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                    const originalText = submitBtn.innerHTML;
-                    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Processing...';
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function(e) {
 
-                    // Re-enable after 5 seconds as fallback
-                    setTimeout(() => {
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalText;
-                    }, 5000);
-                }
+
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        const originalText = submitBtn.innerHTML;
+                        submitBtn.innerHTML =
+                            '<i class="bi bi-hourglass-split me-1"></i>Processing...';
+
+                        // Re-enable after 10 seconds as fallback
+                        setTimeout(() => {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalText;
+                        }, 10000);
+                    }
+                });
             });
+
+            // Log form submission for bulk approve
+            const bulkApproveForm = document.getElementById('bulkApproveForm');
+            if (bulkApproveForm) {
+                bulkApproveForm.addEventListener('submit', function(e) {
+                    const datasetIds = document.getElementById('bulkDatasetIds').value;
+
+
+
+
+                    // Validate that dataset_ids is not empty
+                    if (!datasetIds || datasetIds === '[]' || datasetIds === '') {
+                        e.preventDefault();
+                        alert('No datasets selected. Please select at least one dataset.');
+                        return false;
+                    }
+                });
+            }
         });
 
         // Add keyboard shortcuts
         document.addEventListener('keydown', function(e) {
-            // Ctrl/Cmd + A to select all
+            // Ctrl/Cmd + A to select all (only if not in input/textarea)
             if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
-                e.preventDefault();
-                document.getElementById('selectAll').click();
+                const activeElement = document.activeElement;
+                if (activeElement.tagName !== 'INPUT' && activeElement.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    const selectAllCheckbox = document.getElementById('selectAll');
+                    if (selectAllCheckbox) {
+                        selectAllCheckbox.click();
+                    }
+                }
             }
 
             // Escape to clear selection

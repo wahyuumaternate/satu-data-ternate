@@ -806,10 +806,10 @@ class DatasetApiController extends Controller
     {
         try {
             $stats = [
-                'total_dataset' => Dataset::all()->count(),
-                'total_mapset' => Mapset::all()->count(),
-                'total_visualisasi' => Visualisasi::all()->count(),
-                'total_infografis' => Infografis::all()->count(),
+                'total_dataset' => Dataset::where('approval_status', 'approved')->where('classification', 'publik')->count(),
+                'total_mapset' => Mapset::where('is_visible', 'true')->count(),
+                'total_visualisasi' => Visualisasi::where('is_public', 'true')->count(),
+                'total_infografis' => Infografis::where('is_public', 'true')->count(),
             ];
 
             return $this->successResponse($stats, 'Statistics retrieved successfully');

@@ -406,6 +406,7 @@ class DatasetController extends Controller
 
             // Check if approval status should be reset to pending
             $shouldResetApproval = false;
+            $dataChanged = false;
 
             // Reset approval to pending if current status is rejected
             if ($dataset->approval_status === 'rejected') {
@@ -422,13 +423,55 @@ class DatasetController extends Controller
 
                 $processedData = $this->processSpreadsheetData($spreadsheetData);
 
-                $dataset->headers = $processedData['headers'];
-                $dataset->data = $processedData['data'];
-                $dataset->total_rows = $processedData['total_rows'];
-                $dataset->total_columns = $processedData['total_columns'];
-                $dataset->file_size = strlen(json_encode($processedData['data']));
+                // 🎯 OPTIMIZED: Gunakan hash untuk perbandingan yang lebih cepat
+                // Terutama untuk dataset besar
+                $oldHeadersHash = md5(json_encode($dataset->headers));
+                $newHeadersHash = md5(json_encode($processedData['headers']));
 
-                $shouldResetApproval = true; // Reset approval when data is updated
+                $oldDataHash = md5(json_encode($dataset->data));
+                $newDataHash = md5(json_encode($processedData['data']));
+
+                $headersChanged = $oldHeadersHash !== $newHeadersHash;
+                $dataRowsChanged = $oldDataHash !== $newDataHash;
+
+                $dataChanged = $headersChanged || $dataRowsChanged;
+
+                // Hanya update jika data benar-benar berubah
+                if ($dataChanged) {
+                    $dataset->headers = $processedData['headers'];
+                    $dataset->data = $processedData['data'];
+                    $dataset->total_rows = $processedData['total_rows'];
+                    $dataset->total_columns = $processedData['total_columns'];
+                    $dataset->file_size = strlen(json_encode($processedData['data']));
+
+                    // ✅ Reset approval HANYA jika:
+                    // 1. Data berubah, DAN
+                    // 2. Status saat ini adalah approved
+                    if ($dataset->approval_status === 'approved') {
+                        $shouldResetApproval = true;
+                    }
+
+                    Log::info('Dataset data changed - approval status may be reset', [
+                        'dataset_id' => $dataset->id,
+                        'title' => $dataset->title,
+                        'headers_changed' => $headersChanged,
+                        'data_rows_changed' => $dataRowsChanged,
+                        'previous_approval_status' => $dataset->approval_status,
+                        'will_reset_to_pending' => $shouldResetApproval,
+                        'old_total_rows' => $dataset->total_rows,
+                        'new_total_rows' => $processedData['total_rows'],
+                        'old_total_columns' => $dataset->total_columns,
+                        'new_total_columns' => $processedData['total_columns'],
+                    ]);
+                } else {
+                    // ✅ Data tidak berubah, TETAP PERTAHANKAN status approval
+                    Log::info('Dataset data unchanged - keeping current approval status', [
+                        'dataset_id' => $dataset->id,
+                        'title' => $dataset->title,
+                        'approval_status' => $dataset->approval_status,
+                        'message' => 'No changes detected in headers or data rows',
+                    ]);
+                }
             }
 
             // Update slug if title changed
@@ -467,11 +510,21 @@ class DatasetController extends Controller
             // Add approval status reset if needed
             if ($shouldResetApproval) {
                 $updateData['approval_status'] = 'pending';
+                $updateData['approved_at'] = null;
+                $updateData['approved_by'] = null;
+                $updateData['approval_notes'] = null;
+
+                // Optional: Set publish status to draft if was published
+                if ($dataset->publish_status === 'published') {
+                    $updateData['publish_status'] = 'draft';
+                    $updateData['published_at'] = null;
+                }
             }
 
             $dataset->update($updateData);
 
-            $successMessage = 'Dataset berhasil diupdate.' . ($shouldResetApproval ? ' Status approval direset ke pending untuk review ulang.' : '');
+            // Build contextual success message
+            $successMessage = $this->buildUpdateSuccessMessage($dataset->approval_status, $shouldResetApproval, $dataChanged);
 
             DB::commit();
 
@@ -479,13 +532,39 @@ class DatasetController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
 
-            Log::error('Dataset update failed: ' . $e->getMessage());
+            Log::error('Dataset update failed', [
+                'dataset_id' => $id,
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->except(['spreadsheet_data']), // Don't log large data
+            ]);
 
             return redirect()
                 ->back()
                 ->with('error', 'Terjadi kesalahan saat mengupdate dataset: ' . $e->getMessage())
                 ->withInput();
         }
+    }
+
+    /**
+     * Build contextual success message based on update results
+     */
+    private function buildUpdateSuccessMessage($previousStatus, $shouldResetApproval, $dataChanged)
+    {
+        if (!$shouldResetApproval) {
+            return 'Dataset berhasil diupdate. Status approval tetap: ' . ucfirst($previousStatus) . '.';
+        }
+
+        if ($previousStatus === 'rejected') {
+            return 'Dataset berhasil diupdate. Status approval direset ke pending karena sebelumnya ditolak (rejected).';
+        }
+
+        if ($dataChanged && $previousStatus === 'approved') {
+            return 'Dataset berhasil diupdate. Karena data berubah, status approval direset ke pending untuk review ulang oleh reviewer.';
+        }
+
+        return 'Dataset berhasil diupdate. Status approval direset ke pending.';
     }
 
     public function destroy($slug)

@@ -8,6 +8,10 @@
             border: 2px solid #e8f4fd;
             transition: all 0.3s ease;
             background: #ffffff;
+            height: 100%;
+            /* 🎯 FIXED: Ensure all cards have same height */
+            display: flex;
+            flex-direction: column;
         }
 
         .approval-card:hover {
@@ -16,15 +20,20 @@
             border-color: #2563eb;
         }
 
-        /* .approved-indicator {
-                                    border-left: 5px solid #2563eb;
-                                } */
+        .approval-card .card-body {
+            flex: 1;
+            /* 🎯 FIXED: Card body expands to fill space */
+            display: flex;
+            flex-direction: column;
+        }
 
         .approval-header {
             background: #f8faff;
             border-bottom: 1px solid #e8f4fd;
             border-radius: 14px 14px 0 0;
             position: relative;
+            min-height: 120px;
+            /* 🎯 FIXED: Minimum height for header */
         }
 
         .approval-header::before {
@@ -34,7 +43,7 @@
             left: 0;
             right: 0;
             height: 3px;
-            /* background: #2563eb; */
+            background: #2563eb;
             border-radius: 14px 14px 0 0;
         }
 
@@ -49,7 +58,7 @@
         .nav-pills .nav-link {
             border-radius: 12px;
             padding: 12px 20px;
-            font-weight: 500;
+            font-weight: 600;
             color: #64748b;
             background: #ffffff;
             border: 2px solid #e8f4fd;
@@ -61,6 +70,7 @@
             background: #f8faff;
             color: #2563eb;
             border-color: #2563eb;
+            transform: translateY(-1px);
         }
 
         .nav-pills .nav-link.active {
@@ -85,6 +95,8 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            white-space: nowrap;
+            /* 🎯 FIXED: Prevent badge text wrapping */
         }
 
         .badge-approved {
@@ -128,9 +140,11 @@
         .btn-action {
             padding: 8px 16px;
             border-radius: 8px;
-            font-weight: 500;
+            font-weight: 600;
             font-size: 14px;
             transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .btn-primary-custom {
@@ -142,6 +156,7 @@
         .btn-primary-custom:hover {
             background: #1d4ed8;
             border-color: #1d4ed8;
+            color: #ffffff;
             transform: translateY(-1px);
         }
 
@@ -198,12 +213,14 @@
             padding: 12px 16px;
             font-weight: 500;
             transition: all 0.2s ease;
+            background: #ffffff;
         }
 
         .form-control:focus,
         .form-select:focus {
             border-color: #2563eb;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            background: #f8faff;
         }
 
         .breadcrumb {
@@ -215,7 +232,7 @@
         .breadcrumb-item a {
             color: #2563eb;
             text-decoration: none;
-            font-weight: 500;
+            font-weight: 600;
         }
 
         .breadcrumb-item.active {
@@ -235,6 +252,74 @@
             background: #ffffff;
             border: 1px solid #e8f4fd;
             border-radius: 12px;
+            height: 100%;
+            /* 🎯 FIXED: Equal height for user info boxes */
+        }
+
+        /* 🎯 FIXED: Title truncation for long titles */
+        .dataset-title {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-height: 3em;
+            line-height: 1.5em;
+        }
+
+        /* 🎯 FIXED: Consistent spacing */
+        .card-section {
+            margin-bottom: 1rem;
+        }
+
+        .card-section:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 🎯 FIXED: Pagination styles */
+        .pagination-wrapper .pagination {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .pagination-wrapper .page-link {
+            color: #2563eb;
+            background-color: #ffffff;
+            border: 2px solid #e8f4fd;
+            padding: 12px 16px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .pagination-wrapper .page-link:hover {
+            color: #ffffff;
+            background-color: #2563eb;
+            border-color: #2563eb;
+        }
+
+        .pagination-wrapper .page-item.active .page-link {
+            color: #ffffff;
+            background-color: #2563eb;
+            border-color: #2563eb;
+        }
+
+        .pagination-wrapper .page-item.disabled .page-link {
+            color: #cbd5e1;
+            background-color: #f8faff;
+            border-color: #e8f4fd;
+        }
+
+        /* 🎯 FIXED: Responsive adjustments */
+        @media (max-width: 768px) {
+            .approval-card {
+                margin-bottom: 1rem;
+            }
+
+            .dataset-title {
+                -webkit-line-clamp: 3;
+                min-height: 4.5em;
+            }
         }
     </style>
 @endpush
@@ -243,7 +328,7 @@
 
 @section('content')
     <div class="page-header">
-        <div class="pagetitle ">
+        <div class="pagetitle">
             <h1 style="color: #1e293b; font-weight: 700; margin-bottom: 8px;">Approved Datasets</h1>
             <nav>
                 <ol class="breadcrumb">
@@ -263,7 +348,7 @@
                 <ul class="nav nav-pills">
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('admin.dataset-approval.index') }}">
-                            <i class="bi bi-clock me-2"></i>Pending Approval
+                            <i class="bi bi-clock me-2"></i>Pending
                         </a>
                     </li>
                     <li class="nav-item">
@@ -288,7 +373,7 @@
                     <form method="GET" action="{{ route('admin.dataset-approval.approved') }}">
                         <div class="row g-3">
                             <div class="col-md-3">
-                                <label class="form-label fw-600" style="color: #1e293b;">Topic Category</label>
+                                <label class="form-label" style="color: #1e293b; font-weight: 600;">Topic Category</label>
                                 <select name="topic" class="form-select">
                                     <option value="">All Topics</option>
                                     <option value="Ekonomi" {{ request('topic') === 'Ekonomi' ? 'selected' : '' }}>Ekonomi
@@ -317,23 +402,23 @@
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-600" style="color: #1e293b;">Search Keywords</label>
+                                <label class="form-label" style="color: #1e293b; font-weight: 600;">Search Keywords</label>
                                 <input type="text" name="search" class="form-control"
                                     placeholder="Search by title or description..." value="{{ request('search') }}">
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label fw-600" style="color: #1e293b;">Approval Date</label>
+                                <label class="form-label" style="color: #1e293b; font-weight: 600;">Approval Date</label>
                                 <input type="date" name="approved_date" class="form-control"
                                     value="{{ request('approved_date') }}">
                             </div>
                             <div class="col-md-2">
                                 <label class="form-label">&nbsp;</label>
                                 <div class="d-flex gap-2">
-                                    <button type="submit" class="btn btn-primary-custom btn-action">
+                                    <button type="submit" class="btn btn-primary-custom btn-action flex-fill">
                                         <i class="bi bi-search me-1"></i>Filter
                                     </button>
                                     <a href="{{ route('admin.dataset-approval.approved') }}"
-                                        class="btn btn-outline-custom btn-action">
+                                        class="btn btn-outline-custom btn-action" title="Reset Filters">
                                         <i class="bi bi-arrow-clockwise"></i>
                                     </a>
                                 </div>
@@ -351,7 +436,7 @@
                     <div>
                         <h4 class="mb-1" style="color: #1e293b; font-weight: 700;">Approved Datasets</h4>
                         <p class="text-muted mb-0">{{ $approvedDatasets->total() }} datasets have been approved and are
-                            ready for publication</p>
+                            published</p>
                     </div>
                     <div>
                         <span class="stats-badge">
@@ -365,136 +450,139 @@
         <!-- Approved Datasets Grid -->
         <div class="row">
             @forelse($approvedDatasets as $dataset)
-                <div class="col-lg-6 mb-4">
-                    <div class="card approval-card approved-indicator">
+                <div class="col-lg-6 col-md-12 mb-4">
+                    <div class="card approval-card">
+                        <!-- Header Section -->
                         <div class="approval-header p-4">
                             <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div class="flex-grow-1">
-                                    <h5 class="fw-bold mb-2" style="color: #1e293b;">{{ $dataset->title }}</h5>
+                                <div class="flex-grow-1 pe-3">
+                                    <h5 class="fw-bold mb-2 dataset-title" style="color: #1e293b;"
+                                        title="{{ $dataset->title }}">
+                                        {{ $dataset->title }}
+                                    </h5>
                                     <span class="dataset-badge badge-approved">
-                                        <i class="bi bi-check-circle me-1"></i>Approved
+                                        <i class="bi bi-check-circle me-1"></i>APPROVED
                                     </span>
                                 </div>
 
                                 <div class="dropdown">
-                                    <button class="btn btn-outline-custom btn-sm" type="button" data-bs-toggle="dropdown">
+                                    <button class="btn btn-outline-custom btn-sm" type="button" data-bs-toggle="dropdown"
+                                        aria-expanded="false">
                                         <i class="bi bi-three-dots-vertical"></i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
-                                        {{-- <li>
-                                            <a class="dropdown-item" href="{{ route('dataset.show', $dataset->slug) }}">
-                                                <i class="bi bi-eye me-2"></i>View Dataset
-                                            </a>
-                                        </li> --}}
                                         <li>
                                             <a class="dropdown-item"
                                                 href="{{ route('admin.dataset-approval.show', $dataset) }}">
-                                                <i class="bi bi-file-text me-2"></i>Approval Details
+                                                <i class="bi bi-file-text me-2"></i>View Details
                                             </a>
                                         </li>
-                                        {{-- <li>
-                                            <hr class="dropdown-divider">
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="{{ route('dataset.download', $dataset) }}">
-                                                <i class="bi bi-download me-2"></i>Download Dataset
-                                            </a>
-                                        </li> --}}
                                     </ul>
                                 </div>
                             </div>
-
-
                         </div>
 
+                        <!-- Body Section -->
                         <div class="card-body p-4">
-                            <!-- User Information -->
-                            <div class="row g-3 mb-4">
-                                <div class="col-6">
-                                    <div class="user-info">
-                                        <small class="text-muted d-block mb-1">Submitted by</small>
-                                        <div class="fw-bold" style="color: #1e293b;">{{ $dataset->user->name }}</div>
-                                        <small style="color: #2563eb;">{{ $dataset->user->email }}</small>
+                            <!-- User Information Section -->
+                            <div class="card-section">
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <div class="user-info">
+                                            <small class="text-muted d-block mb-1 fw-600">Submitted by</small>
+                                            <div class="fw-bold text-truncate" style="color: #1e293b;"
+                                                title="{{ $dataset->user->name }}">
+                                                {{ $dataset->user->name }}
+                                            </div>
+                                            <small class="text-truncate d-block" style="color: #64748b;"
+                                                title="{{ $dataset->user->email }}">
+                                                {{ $dataset->user->email }}
+                                            </small>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="user-info">
-                                        <small class="text-muted d-block mb-1">Approved by</small>
-                                        <div class="fw-bold" style="color: #1e293b;">
-                                            {{ $dataset->approvedBy->name ?? 'System' }}</div>
-                                        <small
-                                            style="color: #2563eb;">{{ $dataset->approved_at->format('M d, Y H:i') }}</small>
+                                    <div class="col-6">
+                                        <div class="user-info">
+                                            <small class="text-muted d-block mb-1 fw-600">Approved by</small>
+                                            <div class="fw-bold text-truncate" style="color: #1e293b;"
+                                                title="{{ $dataset->approvedBy->name ?? 'System' }}">
+                                                {{ $dataset->approvedBy->name ?? 'System' }}
+                                            </div>
+                                            <small style="color: #64748b;">
+                                                {{ $dataset->approved_at->format('M d, Y') }}
+                                            </small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Dataset Metadata -->
-                            <div class="metadata-info mb-4">
-                                <div class="d-flex flex-wrap gap-2 mb-3">
-                                    <span class="dataset-badge badge-topic">{{ $dataset->topic }}</span>
-                                    <span
-                                        class="dataset-badge badge-{{ $dataset->classification === 'publik' ? 'public' : ($dataset->classification === 'internal' ? 'internal' : 'confidential') }}">
-                                        {{ ucfirst($dataset->classification) }}
-                                    </span>
-                                    <span
-                                        class="dataset-badge badge-file">{{ strtoupper($dataset->file_type ?? 'CSV') }}</span>
-                                    @if ($dataset->publish_status === 'published')
-                                        <span class="dataset-badge badge-published">Published</span>
-                                    @endif
-                                </div>
-
-                                <div class="d-flex flex-wrap gap-3 text-sm" style="color: #64748b;">
-                                    <div><i class="bi bi-list-ol me-1"></i>{{ number_format($dataset->total_rows) }} rows
+                            <!-- Dataset Metadata Section -->
+                            <div class="card-section">
+                                <div class="metadata-info">
+                                    <div class="d-flex flex-wrap gap-2 mb-3">
+                                        <span class="dataset-badge badge-topic">{{ $dataset->topic }}</span>
+                                        <span
+                                            class="dataset-badge badge-{{ $dataset->classification === 'publik' ? 'public' : ($dataset->classification === 'internal' ? 'internal' : 'confidential') }}">
+                                            {{ ucfirst($dataset->classification) }}
+                                        </span>
+                                        <span
+                                            class="dataset-badge badge-file">{{ strtoupper($dataset->file_type ?? 'CSV') }}</span>
+                                        @if ($dataset->publish_status === 'published')
+                                            <span class="dataset-badge badge-published">Published</span>
+                                        @endif
                                     </div>
-                                    <div><i class="bi bi-columns me-1"></i>{{ $dataset->total_columns }} columns</div>
-                                    <div><i class="bi bi-eye me-1"></i>{{ $dataset->view_count }} views</div>
-                                    <div><i class="bi bi-download me-1"></i>{{ $dataset->download_count }} downloads</div>
+
+                                    <div class="d-flex flex-wrap gap-3" style="color: #64748b; font-size: 14px;">
+                                        <div><i class="bi bi-list-ol me-1"></i>{{ number_format($dataset->total_rows) }}
+                                        </div>
+                                        <div><i class="bi bi-columns me-1"></i>{{ $dataset->total_columns }} cols</div>
+                                        <div><i class="bi bi-eye me-1"></i>{{ number_format($dataset->view_count) }}</div>
+                                        <div><i
+                                                class="bi bi-download me-1"></i>{{ number_format($dataset->download_count) }}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Approval Notes -->
+                            <!-- Approval Notes Section -->
                             @if ($dataset->approval_notes)
-                                <div class="mb-4">
+                                <div class="card-section">
                                     <small class="text-muted d-block mb-2 fw-600">Approval Notes:</small>
                                     <div class="alert-notes p-3">
-                                        <small>{{ $dataset->approval_notes }}</small>
+                                        <small
+                                            style="color: #475569;">{{ Str::limit($dataset->approval_notes, 150) }}</small>
                                     </div>
                                 </div>
                             @endif
 
-                            {{-- <!-- Action Buttons -->
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="d-flex gap-2">
-                                    <a href="{{ route('dataset.show', $dataset->slug) }}"
-                                        class="btn btn-primary-custom btn-action">
-                                        <i class="bi bi-eye me-1"></i>View Details
-                                    </a>
-                                    <a href="{{ route('dataset.download', $dataset) }}"
-                                        class="btn btn-outline-custom btn-action">
-                                        <i class="bi bi-download me-1"></i>Download
-                                    </a>
+                            <!-- Footer Info -->
+                            <div class="mt-auto pt-3 border-top" style="border-color: #e8f4fd !important;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small style="color: #64748b; font-weight: 500;">
+                                        <i class="bi bi-calendar3 me-1"></i>
+                                        Approved {{ $dataset->approved_at->diffForHumans() }}
+                                    </small>
+                                    <small style="color: #64748b; font-weight: 500;">
+                                        <i class="bi bi-clock-history me-1"></i>
+                                        Created {{ $dataset->created_at->format('M d, Y') }}
+                                    </small>
                                 </div>
-
-                                <small style="color: #64748b; font-weight: 500;">
-                                    Approved {{ $dataset->approved_at->diffForHumans() }}
-                                </small>
                             </div>
-                        </div> --}}
                         </div>
                     </div>
-                @empty
-                    <div class="col-12">
-                        <div class="empty-state">
-                            <i class="bi bi-inbox display-1" style="color: #cbd5e1;"></i>
-                            <h4 class="mt-4 mb-2" style="color: #64748b; font-weight: 600;">No Approved Datasets</h4>
-                            <p style="color: #94a3b8; margin-bottom: 24px;">No datasets have been approved yet. Check back
-                                later or review pending submissions.</p>
-                            <a href="{{ route('admin.dataset-approval.index') }}"
-                                class="btn btn-primary-custom btn-action">
-                                <i class="bi bi-arrow-left me-2"></i>View Pending Datasets
-                            </a>
-                        </div>
+                </div>
+            @empty
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="bi bi-inbox display-1 mb-4" style="color: #cbd5e1;"></i>
+                        <h4 class="mb-2" style="color: #64748b; font-weight: 600;">No Approved Datasets</h4>
+                        <p style="color: #94a3b8; margin-bottom: 24px;">
+                            No datasets have been approved yet. Check back later or review pending submissions.
+                        </p>
+                        <a href="{{ route('admin.dataset-approval.index') }}" class="btn btn-primary-custom btn-action">
+                            <i class="bi bi-arrow-left me-2"></i>View Pending Datasets
+                        </a>
                     </div>
+                </div>
             @endforelse
         </div>
 
@@ -511,34 +599,4 @@
             </div>
         @endif
     </section>
-
-    <style>
-        .pagination-wrapper .pagination {
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-        }
-
-        .pagination-wrapper .page-link {
-            color: #2563eb;
-            background-color: #ffffff;
-            border: 2px solid #e8f4fd;
-            padding: 12px 16px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .pagination-wrapper .page-link:hover {
-            color: #ffffff;
-            background-color: #2563eb;
-            border-color: #2563eb;
-        }
-
-        .pagination-wrapper .page-item.active .page-link {
-            color: #ffffff;
-            background-color: #2563eb;
-            border-color: #2563eb;
-        }
-    </style>
-
 @endsection
